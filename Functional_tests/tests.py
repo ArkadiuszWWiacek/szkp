@@ -38,4 +38,4 @@ class NewVisitorTest(LiveServerTestCase):
         self.selenium.get(self.live_server_url)
 
         # Zwróciła uwagę, że tytuł strony i nagłówek zawierają słowo Prawną.
-        self.assertIn("Prawną", self.selenium.title)
+        self.assertIn("Kancelarią", self.selenium.title)
