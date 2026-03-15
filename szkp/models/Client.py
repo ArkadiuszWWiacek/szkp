@@ -10,7 +10,7 @@ class ClientType(models.TextChoices):
 class Client(models.Model):
     first_name = models.CharField(max_length=100, blank=True, null=True)
     last_name = models.CharField(max_length=100, blank=True, null=True)
-    companyname = models.CharField(max_length=200, blank=True, null=True)
+    company_name = models.CharField(max_length=200, blank=True, null=True)
     type = models.CharField(max_length=20, choices=ClientType.choices, null=False)
     pesel = models.CharField(max_length=11, blank=True, null=True, validators=[RegexValidator(r'^\d{11}$')])
     nip = models.CharField(max_length=13, blank=True, null=True, validators=[RegexValidator(r'^\d{13}$')])

@@ -1,5 +1,4 @@
 from django.db import models
-from decimal import Decimal
 from .Case import Case
 from .Lawyer import Lawyer
 
