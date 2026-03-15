@@ -19,7 +19,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
-    path('', include('szkp.urls'), name='home'),
+    # path('', include('szkp.urls'), name='home'),
     path('admin/', admin.site.urls),
-    path('szkp/', include('szkp.urls'), name='szkp'),
+    path('', include('szkp.urls', namespace='szkp')),
 ]
