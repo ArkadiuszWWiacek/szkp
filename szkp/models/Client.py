@@ -31,8 +31,8 @@ class Client(models.Model):
             if not self.pesel:
                 raise ValidationError('PESEL wymagany dla osoby fizycznej.')
             self.nip = None
-            self.companyname = None
-        elif self.type == 'firma':
+            self.company_name = None
+        else:
             if not self.nip:
                 raise ValidationError('NIP wymagany dla firmy.')
             self.pesel = None

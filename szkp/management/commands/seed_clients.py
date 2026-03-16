@@ -5,7 +5,7 @@ django.setup()
 
 from django.core.management.base import BaseCommand
 from faker import Faker
-from szkp.models import Client  # Dostosuj app
+from szkp.models import Client
 
 fake = Faker('pl_PL')
 
@@ -28,7 +28,6 @@ class Command(BaseCommand):
                 pesel = None
                 company = fake.company()
                 first = None
-                last = None
             
             client = Client(
                 first_name=first,
