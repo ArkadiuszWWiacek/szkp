@@ -9,7 +9,6 @@ class NewVisitorTest(LiveServerTestCase):
     
     @classmethod
     def setUpClass(cls):
-        # FIX dla RPi + Django tests
         os.environ['MOZ_DISABLE_CONTENT_SANDBOX'] = '1'
         
         super().setUpClass()
@@ -18,7 +17,7 @@ class NewVisitorTest(LiveServerTestCase):
             log_output="/tmp/geckodriver.log"
         )
         cls.options = Options()
-        cls.options.binary_location = "/lib/firefox-esr/firefox-esr"  # PEŁNA ŚCIEŻKA!
+        cls.options.binary_location = "/lib/firefox-esr/firefox-esr"
         cls.options.add_argument("--headless")
         cls.options.add_argument("--no-sandbox")
         cls.options.add_argument("--disable-dev-shm-usage")
@@ -37,5 +36,11 @@ class NewVisitorTest(LiveServerTestCase):
         # Postanowiła więc przejść na stronę główną tej aplikacji.
         self.selenium.get(self.live_server_url)
 
-        # Zwróciła uwagę, że tytuł strony i nagłówek zawierają słowo Prawną.
+        # Zwróciła uwagę, że tytuł strony i nagłówek zawierają słowo "Prawną".
         self.assertIn("System Zarządzania Kancelarią Prawną", self.selenium.title)
+        
+        # Edyta zauważyła, że na stronie jest napis "SZKP" i kliknęła w ten napis.
+        header = self.selenium.find_element("css selector", ".navbar-brand")
+        self.assertEqual(header.text, "SZKP")
+        header.click()
+        self.assertEqual(self.selenium.current_url, self.live_server_url + "/szkp/")

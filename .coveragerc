@@ -3,6 +3,7 @@ omit =
     */migrations/*
     */tests/*
     */test_*
+    */Functional_tests/*
     manage.py
     */__init__.py
     */settings/*
@@ -14,6 +15,7 @@ omit =
     */migrations/*
     */tests/*
     */test_*
+    */Functional_tests/*
     manage.py
     */__init__.py
     */settings/*

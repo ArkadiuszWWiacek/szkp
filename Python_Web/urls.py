@@ -18,8 +18,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
+from . import views
+
 urlpatterns = [
-    # path('', include('szkp.urls'), name='home'),
+    path('', views.base, name='home'),
     path('admin/', admin.site.urls),
-    path('', include('szkp.urls', namespace='szkp')),
+    path('szkp/', include('szkp.urls', namespace='szkp')),
 ]
