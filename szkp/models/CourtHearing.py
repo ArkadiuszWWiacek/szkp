@@ -19,6 +19,7 @@ class CourtHearing(models.Model):
     responsible_lawyer = models.ForeignKey(Lawyer, on_delete=models.SET_NULL, blank=True, null=True, db_column='responsiblawyerid')
     court_name = models.CharField(max_length=200, null=False)
     courtroom = models.CharField(max_length=50, blank=True)
+    judge_name = models.CharField(max_length=100, blank=True)
     hearing_type = models.CharField(max_length=20, choices=HearingType.choices, null=False)
     scheduled_at = models.DateTimeField(null=False)
     status = models.CharField(max_length=20, choices=HearingStatus.choices, default=HearingStatus.PLANOWANY)
