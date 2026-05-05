@@ -1,4 +1,4 @@
-from .Case import Case
+from .Case import Case, CasePriority, CaseStatus, CaseType
 from .CaseLawyer import CaseLawyer
 from .Client import Client
 from .CourtHearing import CourtHearing
@@ -7,4 +7,4 @@ from .Invoice import Invoice
 from .Lawyer import Lawyer
 from .Task import Task
 
-__all__ = ['Case', 'CaseLawyer', 'Client', 'CourtHearing', 'Document', 'Invoice', 'Lawyer', 'Task']
+__all__ = ['Case', 'CasePriority', 'CaseStatus', 'CaseType', 'CaseLawyer', 'Client', 'CourtHearing', 'Document', 'Invoice', 'Lawyer', 'Task']
