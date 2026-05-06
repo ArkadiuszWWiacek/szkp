@@ -2,7 +2,6 @@ from django.contrib import admin
 from . import models
 
 
-admin.site.register(models.Document)
 admin.site.register(models.Invoice)
 admin.site.register(models.Task)
 
@@ -35,3 +34,15 @@ class CourtHearingAdmin(admin.ModelAdmin):
     list_display = ('case', 'responsible_lawyer', 'court_name', 'courtroom', 'judge_name', 'hearing_type', 'scheduled_at', 'status')
     search_fields = ('case__case_number', 'court_name', 'judge_name')
     list_filter = ('status', 'hearing_type', 'court_name', 'judge_name')
+    
+@admin.register(models.Document)
+class DocumentAdmin(admin.ModelAdmin):
+    list_display = ('title', 'document_type', 'created_at', 'updated_at', 'case', 'is_internal')
+    search_fields = ('title', 'description', 'case__case_number')
+    list_filter = ('document_type',)
+    
+@admin.register(models.DocumentVersion)
+class DocumentVersionAdmin(admin.ModelAdmin):
+    list_display = ('document', 'version_number', 'created_by_lawyer', 'created_at')
+    search_fields = ('document__title', 'created_by_lawyer__first_name', 'created_by_lawyer__last_name')
+    list_filter = ('created_at',)
