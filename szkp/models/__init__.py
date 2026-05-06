@@ -5,6 +5,6 @@ from .CourtHearing import CourtHearing, HearingStatus, HearingType
 from .Document import Document, DocumentVersion, DocumentType
 from .Invoice import Invoice, InvoiceStatus
 from .Lawyer import Lawyer
-from .Task import Task
+from .Task import Task, TaskPriority, TaskStatus
 
-__all__ = ['Case', 'CasePriority', 'CaseStatus', 'CaseType', 'CaseLawyer', 'CaseLawyerRole', 'Client', 'CourtHearing', 'HearingStatus', 'HearingType', 'Document', 'DocumentVersion', 'DocumentType', 'Invoice', 'InvoiceStatus', 'Lawyer', 'Task']
+__all__ = ['Case', 'CasePriority', 'CaseStatus', 'CaseType', 'CaseLawyer', 'CaseLawyerRole', 'Client', 'CourtHearing', 'HearingStatus', 'HearingType', 'Document', 'DocumentVersion', 'DocumentType', 'Invoice', 'InvoiceStatus', 'Lawyer', 'Task', 'TaskPriority', 'TaskStatus']

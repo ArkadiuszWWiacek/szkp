@@ -2,8 +2,6 @@ from django.contrib import admin
 from . import models
 
 
-admin.site.register(models.Task)
-
 @admin.register(models.Client)
 class ClientAdmin(admin.ModelAdmin):
     list_display = ('first_name', 'last_name', 'pesel', 'company_name', 'nip', 'email', 'phone', 'type', 'address_street', 'address_city', 'address_zip', 'country')
@@ -51,3 +49,9 @@ class InvoiceAdmin(admin.ModelAdmin):
     list_display = ('invoice_number', 'case', 'status', 'issue_date', 'due_date')
     search_fields = ('invoice_number', 'case__case_number',)
     list_filter = ('status', 'issue_date', 'due_date')
+    
+@admin.register(models.Task)
+class TaskAdmin(admin.ModelAdmin):
+    list_display = ('title', 'assigned_lawyer', 'created_by', 'case', 'priority', 'status', 'due_date', 'completed_at', 'parent_task')
+    search_fields = ('title', 'description', 'assigned_lawyer__first_name', 'assigned_lawyer__last_name', 'created_by__first_name', 'created_by__last_name', 'case__case_number', 'parent_task__title')
+    list_filter = ('priority', 'status', 'due_date', 'assigned_lawyer', 'created_by', 'parent_task')
