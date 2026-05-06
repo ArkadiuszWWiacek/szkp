@@ -3,7 +3,6 @@ from . import models
 
 
 admin.site.register(models.Document)
-admin.site.register(models.CourtHearing)
 admin.site.register(models.Invoice)
 admin.site.register(models.Task)
 
@@ -30,3 +29,9 @@ class CaseLawyerAdmin(admin.ModelAdmin):
     list_display = ('case', 'lawyer', 'role', 'assigned_at', 'unassigned_at')
     search_fields = ('case__case_number', 'lawyer__first_name', 'lawyer__last_name')
     list_filter = ('role',)
+    
+@admin.register(models.CourtHearing)
+class CourtHearingAdmin(admin.ModelAdmin):
+    list_display = ('case', 'responsible_lawyer', 'court_name', 'courtroom', 'judge_name', 'hearing_type', 'scheduled_at', 'status')
+    search_fields = ('case__case_number', 'court_name', 'judge_name')
+    list_filter = ('status', 'hearing_type', 'court_name', 'judge_name')
