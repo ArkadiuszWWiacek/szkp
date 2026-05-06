@@ -2,7 +2,6 @@ from django.contrib import admin
 from . import models
 
 
-admin.site.register(models.Invoice)
 admin.site.register(models.Task)
 
 @admin.register(models.Client)
@@ -46,3 +45,9 @@ class DocumentVersionAdmin(admin.ModelAdmin):
     list_display = ('document', 'version_number', 'created_by_lawyer', 'created_at')
     search_fields = ('document__title', 'created_by_lawyer__first_name', 'created_by_lawyer__last_name')
     list_filter = ('created_at',)
+    
+@admin.register(models.Invoice)
+class InvoiceAdmin(admin.ModelAdmin):
+    list_display = ('invoice_number', 'case', 'status', 'issue_date', 'due_date')
+    search_fields = ('invoice_number', 'case__case_number',)
+    list_filter = ('status', 'issue_date', 'due_date')
