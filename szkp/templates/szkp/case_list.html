@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}Sprawy — SZKP{% endblock %}
+
+{% block content %}
+<div class="szkp-page">
+
+    <div class="szkp-page-header">
+        <div>
+            <div class="label-brass mb-1">Lista spraw</div>
+            <h1 class="szkp-page-title">Sprawy</h1>
+        </div>
+        <a href="#" class="btn-szkp btn-szkp--primary">+ Nowa sprawa</a>
+    </div>
+
+    <!-- Toolbar: wyszukiwanie + filtry -->
+    <form method="get" class="szkp-toolbar mb-3">
+        <div class="szkp-search">
+            <svg class="szkp-search__icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.4"/>
+                <path d="M9.5 9.5L12.5 12.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+            </svg>
+            <input type="search" name="q" value="{{ q }}" placeholder="numer, sygnatura, nazwisko klienta…"
+                   aria-label="Szukaj spraw">
+        </div>
+        <select name="status" class="szkp-select" aria-label="Filtr statusu" onchange="this.form.submit()">
+            <option value="">Wszystkie statusy</option>
+            {% for val, label in status_choices %}
+            <option value="{{ val }}"{% if status == val %} selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <select name="type" class="szkp-select" aria-label="Filtr typu" onchange="this.form.submit()">
+            <option value="">Wszystkie typy</option>
+            {% for val, label in type_choices %}
+            <option value="{{ val }}"{% if case_type == val %} selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn-szkp btn-szkp--outline">Szukaj</button>
+        {% if q or status or case_type %}
+        <a href="{% url 'szkp:case_list' %}" class="btn-szkp btn-szkp--outline text-muted-szkp">Wyczyść</a>
+        {% endif %}
+        <!-- Ukryte pola dla sortowania -->
+        {% if sort %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %}
+        {% if direction %}<input type="hidden" name="dir" value="{{ direction }}">{% endif %}
+    </form>
+
+    <!-- Tabela spraw -->
+    {% if page_obj %}
+    <div class="szkp-table-wrap">
+        <table class="szkp-table">
+            <thead>
+                <tr>
+                    <th class="{% if sort == 'case_number' %}szkp-sort-active{% endif %}">
+                        <a href="?q={{ q }}&status={{ status }}&type={{ case_type }}&sort=case_number&dir={% if sort == 'case_number' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                            Sygnatura
+                            <span class="szkp-sort-icon {% if sort == 'case_number' %}szkp-sort-icon--{% if direction == 'asc' %}asc{% else %}desc{% endif %}{% endif %}"></span>
+                        </a>
+                    </th>
+                    <th class="{% if sort == 'client' %}szkp-sort-active{% endif %}">
+                        <a href="?q={{ q }}&status={{ status }}&type={{ case_type }}&sort=client&dir={% if sort == 'client' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                            Klient
+                            <span class="szkp-sort-icon {% if sort == 'client' %}szkp-sort-icon--{% if direction == 'asc' %}asc{% else %}desc{% endif %}{% endif %}"></span>
+                        </a>
+                    </th>
+                    <th class="{% if sort == 'case_type' %}szkp-sort-active{% endif %}">
+                        <a href="?q={{ q }}&status={{ status }}&type={{ case_type }}&sort=case_type&dir={% if sort == 'case_type' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                            Typ
+                            <span class="szkp-sort-icon {% if sort == 'case_type' %}szkp-sort-icon--{% if direction == 'asc' %}asc{% else %}desc{% endif %}{% endif %}"></span>
+                        </a>
+                    </th>
+                    <th class="{% if sort == 'status' %}szkp-sort-active{% endif %}">
+                        <a href="?q={{ q }}&status={{ status }}&type={{ case_type }}&sort=status&dir={% if sort == 'status' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                            Status
+                            <span class="szkp-sort-icon {% if sort == 'status' %}szkp-sort-icon--{% if direction == 'asc' %}asc{% else %}desc{% endif %}{% endif %}"></span>
+                        </a>
+                    </th>
+                    <th class="{% if sort == 'case_priority' %}szkp-sort-active{% endif %}">
+                        <a href="?q={{ q }}&status={{ status }}&type={{ case_type }}&sort=case_priority&dir={% if sort == 'case_priority' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                            Priorytet
+                            <span class="szkp-sort-icon {% if sort == 'case_priority' %}szkp-sort-icon--{% if direction == 'asc' %}asc{% else %}desc{% endif %}{% endif %}"></span>
+                        </a>
+                    </th>
+                    <th>Prawnicy</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for case in page_obj %}
+                <tr onclick="window.location='{% url 'szkp:case_detail' case.pk %}'">
+                    <td>
+                        <span class="sig">
+                            <span class="sig-bar sig-bar--{{ case.case_type }}"></span>
+                            {{ case.case_number }}
+                        </span>
+                        {% if case.court_case_number %}
+                        <div class="font-mono text-faint" style="font-size:11px;margin-top:2px;">{{ case.court_case_number }}</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if case.client.type == 'osobafizyczna' %}
+                            {{ case.client.first_name }} {{ case.client.last_name }}
+                        {% else %}
+                            {{ case.client.company_name }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="type-chip type-chip--{{ case.case_type }}">{{ case.get_case_type_display }}</span>
+                    </td>
+                    <td>
+                        <span class="badge-status badge-status--{{ case.status }}">{{ case.get_status_display }}</span>
+                    </td>
+                    <td>
+                        <span class="badge-prio badge-prio--{{ case.case_priority }}">{{ case.get_case_priority_display }}</span>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-wrap gap-1">
+                            {% for cl in case.caselawyer_set.all %}
+                            <span class="lawyer-avatar" title="{{ cl.lawyer.first_name }} {{ cl.lawyer.last_name }} ({{ cl.get_role_display }})">
+                                {{ cl.lawyer.first_name.0 }}{{ cl.lawyer.last_name.0 }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Paginacja -->
+        <div class="szkp-pagination">
+            <div class="szkp-pagination__info">
+                Pokazano {{ page_obj.start_index }}–{{ page_obj.end_index }} z {{ page_obj.paginator.count }}
+            </div>
+            <div class="szkp-pagination__pages">
+                {% if page_obj.has_previous %}
+                <a class="szkp-page-btn" href="?q={{ q }}&status={{ status }}&type={{ case_type }}&sort={{ sort }}&dir={{ direction }}&page={{ page_obj.previous_page_number }}">‹</a>
+                {% else %}
+                <span class="szkp-page-btn szkp-page-btn--disabled">‹</span>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <span class="szkp-page-btn active">{{ num }}</span>
+                {% elif num >= page_obj.number|add:"-3" and num <= page_obj.number|add:"3" %}
+                <a class="szkp-page-btn" href="?q={{ q }}&status={{ status }}&type={{ case_type }}&sort={{ sort }}&dir={{ direction }}&page={{ num }}">{{ num }}</a>
+                {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                <a class="szkp-page-btn" href="?q={{ q }}&status={{ status }}&type={{ case_type }}&sort={{ sort }}&dir={{ direction }}&page={{ num }}">{{ num }}</a>
+                {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <a class="szkp-page-btn" href="?q={{ q }}&status={{ status }}&type={{ case_type }}&sort={{ sort }}&dir={{ direction }}&page={{ page_obj.next_page_number }}">›</a>
+                {% else %}
+                <span class="szkp-page-btn szkp-page-btn--disabled">›</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="szkp-card">
+        <div class="szkp-empty">
+            <div class="szkp-empty__title">Brak spraw{% if q or status or case_type %} pasujących do filtrów{% endif %}</div>
+            <div class="szkp-empty__desc">
+                {% if q or status or case_type %}
+                Spróbuj zmienić kryteria wyszukiwania.
+                {% else %}
+                Nie ma jeszcze żadnych spraw. Dodaj pierwszą.
+                {% endif %}
+            </div>
+            {% if q or status or case_type %}
+            <a href="{% url 'szkp:case_list' %}" class="btn-szkp btn-szkp--outline">Wyczyść filtry</a>
+            {% else %}
+            <a href="#" class="btn-szkp btn-szkp--primary">+ Nowa sprawa</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

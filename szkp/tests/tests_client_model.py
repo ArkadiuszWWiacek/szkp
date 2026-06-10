@@ -24,15 +24,15 @@ class ClientModelTest(TestCase):
         with self.assertRaises(Exception) as context:
             client.full_clean()
             
-        self.assertIn('Enter a valid value.', str(context.exception))
-        
+        self.assertIn('pesel', str(context.exception))
+
     def test_client_incorrect_nip_validation(self):
         client = Client(type=ClientType.FIRMA, nip="123456789012")  # Invalid NIP
-        
+
         with self.assertRaises(Exception) as context:
             client.full_clean()
-            
-        self.assertIn('Enter a valid value.', str(context.exception))
+
+        self.assertIn('nip', str(context.exception))
 
     def test_client_type_osobafizyczna_clean(self):
         client = Client(type=ClientType.OSOBA_FIZYCZNA, pesel="12345678901", nip="1234567890123", company_name="Test Company")

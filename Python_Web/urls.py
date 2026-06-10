@@ -23,5 +23,6 @@ from . import views
 urlpatterns = [
     path("", views.base, name="home"),
     path("admin/", admin.site.urls),
+    path("accounts/", include("django.contrib.auth.urls")),
     path("szkp/", include("szkp.urls", namespace="szkp")),
 ]

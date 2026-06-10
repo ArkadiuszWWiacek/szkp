@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+{% block title %}{{ case.case_number }} — SZKP{% endblock %}
+
+{% block content %}
+<div class="szkp-page">
+
+    <!-- Okruszki -->
+    <div class="szkp-breadcrumb mb-2">
+        <a href="{% url 'szkp:case_list' %}">Sprawy</a>
+        <span class="szkp-breadcrumb__sep">›</span>
+        <span class="font-mono">{{ case.case_number }}</span>
+    </div>
+
+    <!-- Nagłówek sprawy + panel akcji -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-8">
+            <div class="szkp-card h-100">
+                <div class="szkp-card__body">
+                    <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+                        <div class="sig-plate">
+                            <div class="sig-plate__bar bg-{{ case.case_type }}"
+                                 style="background:var(--type-{{ case.case_type }});"></div>
+                            <div class="sig-plate__body">
+                                <div class="sig-plate__label">Sygnatura akt</div>
+                                <div class="sig-plate__number">{{ case.case_number }}</div>
+                            </div>
+                        </div>
+                        <span class="type-chip type-chip--{{ case.case_type }}">{{ case.get_case_type_display }}</span>
+                        <span class="badge-status badge-status--{{ case.status }}">{{ case.get_status_display }}</span>
+                        <span class="badge-prio badge-prio--{{ case.case_priority }}">{{ case.get_case_priority_display }}</span>
+                    </div>
+
+                    <h1 class="font-display mb-2" style="font-size:22px;font-weight:600;color:var(--szkp-ink);">{{ case.title }}</h1>
+
+                    <div class="d-flex flex-wrap gap-4" style="font-size:13.5px;color:var(--szkp-text-muted);">
+                        <div>
+                            <div class="label-caps mb-1">Klient</div>
+                            <div class="text-ink fw-medium">
+                                {% if case.client.type == 'osobafizyczna' %}
+                                    {{ case.client.first_name }} {{ case.client.last_name }}
+                                {% else %}
+                                    {{ case.client.company_name }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if case.court_case_number %}
+                        <div>
+                            <div class="label-caps mb-1">Sygnatura sądowa</div>
+                            <div class="font-mono text-ink">{{ case.court_case_number }}</div>
+                        </div>
+                        {% endif %}
+                        {% with lead=lawyers|first %}
+                        {% if lead %}
+                        <div>
+                            <div class="label-caps mb-1">Prowadzący</div>
+                            <div class="text-ink fw-medium">{{ lead.lawyer.first_name }} {{ lead.lawyer.last_name }}</div>
+                        </div>
+                        {% endif %}
+                        {% endwith %}
+                        {% if case.opened_at %}
+                        <div>
+                            <div class="label-caps mb-1">Data otwarcia</div>
+                            <div class="font-mono text-ink">{{ case.opened_at|date:"d.m.Y" }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if case.description %}
+                    <div class="mt-3" style="font-size:13.5px;color:var(--szkp-text-muted);line-height:1.6;">
+                        {{ case.description|linebreaksbr }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel: zmiana statusu + zamknięcie -->
+        <div class="col-lg-4">
+            <div class="szkp-card h-100">
+                <div class="szkp-card__header">
+                    <h2 class="szkp-card__title">Akcje sprawy</h2>
+                </div>
+                <div class="szkp-card__body">
+                    <form method="post" class="mb-3">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="change_status">
+                        <label class="szkp-label mb-2">Zmień status</label>
+                        <select name="status" class="szkp-select-full mb-2">
+                            {% for val, label in status_choices %}
+                            <option value="{{ val }}"{% if case.status == val %} selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn-szkp btn-szkp--primary w-100" style="justify-content:center;">
+                            Zapisz status
+                        </button>
+                    </form>
+
+                    <hr class="divider">
+
+                    {% if case.status != 'zakończona' and case.status != 'archiwalna' %}
+                    <form method="post" onsubmit="return confirm('Czy na pewno zamknąć sprawę?')">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="close_case">
+                        <button type="submit" class="btn-szkp btn-szkp--danger w-100" style="justify-content:center;">
+                            Zamknij sprawę
+                        </button>
+                    </form>
+                    {% else %}
+                    <div class="text-faint text-center" style="font-size:12.5px;padding:var(--sp-2) 0;">
+                        Sprawa {{ case.get_status_display|lower }}
+                        {% if case.closed_at %} · {{ case.closed_at|date:"d.m.Y" }}{% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Zakładki -->
+    <div class="szkp-tabs">
+        <a class="szkp-tab{% if active_tab == 'terminy' %} active{% endif %}"
+           href="?tab=terminy">
+            Terminy <span class="szkp-tab__count">{{ tab_counts.terminy }}</span>
+        </a>
+        <a class="szkp-tab{% if active_tab == 'dokumenty' %} active{% endif %}"
+           href="?tab=dokumenty">
+            Dokumenty <span class="szkp-tab__count">{{ tab_counts.dokumenty }}</span>
+        </a>
+        <a class="szkp-tab{% if active_tab == 'zadania' %} active{% endif %}"
+           href="?tab=zadania">
+            Zadania <span class="szkp-tab__count">{{ tab_counts.zadania }}</span>
+        </a>
+        <a class="szkp-tab{% if active_tab == 'faktury' %} active{% endif %}"
+           href="?tab=faktury">
+            Faktury <span class="szkp-tab__count">{{ tab_counts.faktury }}</span>
+        </a>
+        <a class="szkp-tab{% if active_tab == 'prawnicy' %} active{% endif %}"
+           href="?tab=prawnicy">
+            Prawnicy <span class="szkp-tab__count">{{ tab_counts.prawnicy }}</span>
+        </a>
+    </div>
+
+    <!-- Zawartość zakładek -->
+    {% if active_tab == 'terminy' %}
+    <div class="szkp-card">
+        <div class="szkp-card__header">
+            <h2 class="szkp-card__title">Terminy sądowe</h2>
+            <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Dodaj termin</a>
+        </div>
+        {% if hearings %}
+        {% for h in hearings %}
+        <div class="hearing-item">
+            <div class="hearing-item__date">{{ h.scheduled_at|date:"d.m.Y" }}</div>
+            <div class="hearing-item__type">{{ h.get_hearing_type_display }}</div>
+            <div class="hearing-item__court flex-grow-1">
+                {{ h.court_name }}{% if h.courtroom %}, sala {{ h.courtroom }}{% endif %}
+                {% if h.judge_name %} · sędzia: {{ h.judge_name }}{% endif %}
+            </div>
+            <span class="badge-status badge-status--{{ h.status }}">{{ h.get_status_display }}</span>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="szkp-empty" style="padding:var(--sp-8);">
+            <div class="szkp-empty__title">Brak terminów</div>
+            <div class="szkp-empty__desc">Nie dodano jeszcze żadnych terminów sądowych.</div>
+            <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Dodaj termin</a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% elif active_tab == 'dokumenty' %}
+    <div class="szkp-card">
+        <div class="szkp-card__header">
+            <h2 class="szkp-card__title">Dokumenty</h2>
+            <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Dodaj dokument</a>
+        </div>
+        {% if documents %}
+        {% for doc in documents %}
+        <div class="doc-item">
+            <div class="doc-item__title">{{ doc.title }}</div>
+            <span style="font-size:12px;color:var(--szkp-text-faint);">{{ doc.get_document_type_display }}</span>
+            {% if doc.is_internal %}
+            <span class="label-caps" style="color:var(--szkp-brass-dark);">wewn.</span>
+            {% endif %}
+            <div class="doc-item__date">{{ doc.created_at|date:"d.m.Y" }}</div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="szkp-empty" style="padding:var(--sp-8);">
+            <div class="szkp-empty__title">Brak dokumentów</div>
+            <div class="szkp-empty__desc">Nie dodano jeszcze żadnych dokumentów.</div>
+            <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Dodaj dokument</a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% elif active_tab == 'zadania' %}
+    <div class="szkp-card">
+        <div class="szkp-card__header">
+            <h2 class="szkp-card__title">Zadania</h2>
+            <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Dodaj zadanie</a>
+        </div>
+        {% if tasks %}
+        {% for task in tasks %}
+        <div class="szkp-task{% if task.status == 'zakończone' %} szkp-task--done{% endif %}">
+            <div class="szkp-task__icon{% if task.status == 'zakończone' %} szkp-task__icon--done{% endif %}">
+                {% if task.status == 'zakończone' %}✓{% endif %}
+            </div>
+            <div class="szkp-task__body">
+                <div class="szkp-task__title">{{ task.title }}</div>
+                <div class="szkp-task__meta">
+                    <span class="badge-prio badge-prio--{{ task.priority }}">{{ task.get_priority_display }}</span>
+                    <span class="badge-status badge-status--{{ task.status }}" style="font-size:11px;padding:2px 7px;">{{ task.get_status_display }}</span>
+                    {% if task.assigned_lawyer %}
+                    <span class="szkp-task__meta-item">
+                        <span class="lawyer-avatar" style="width:20px;height:20px;font-size:9px;">{{ task.assigned_lawyer.first_name.0 }}{{ task.assigned_lawyer.last_name.0 }}</span>
+                        {{ task.assigned_lawyer.first_name }} {{ task.assigned_lawyer.last_name }}
+                    </span>
+                    {% endif %}
+                    {% if task.due_date %}
+                    <span class="szkp-task__meta-item font-mono" style="font-size:11px;">{{ task.due_date|date:"d.m.Y" }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% if task.task_set.exists %}
+        <div class="szkp-subtask">
+            {% for sub in task.task_set.all %}
+            <div class="szkp-task{% if sub.status == 'zakończone' %} szkp-task--done{% endif %}" style="border-bottom:1px solid var(--szkp-border);">
+                <div class="szkp-task__icon{% if sub.status == 'zakończone' %} szkp-task__icon--done{% endif %}">
+                    {% if sub.status == 'zakończone' %}✓{% endif %}
+                </div>
+                <div class="szkp-task__body">
+                    <div class="szkp-task__title" style="font-size:13px;">{{ sub.title }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endfor %}
+        {% else %}
+        <div class="szkp-empty" style="padding:var(--sp-8);">
+            <div class="szkp-empty__title">Brak zadań</div>
+            <div class="szkp-empty__desc">Nie dodano jeszcze żadnych zadań do tej sprawy.</div>
+            <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Dodaj zadanie</a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% elif active_tab == 'faktury' %}
+    <div class="szkp-card">
+        <div class="szkp-card__header">
+            <h2 class="szkp-card__title">Faktury</h2>
+            <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Wystaw fakturę</a>
+        </div>
+        {% if invoices %}
+        {% for inv in invoices %}
+        <div class="invoice-item">
+            <div class="invoice-item__number">{{ inv.invoice_number }}</div>
+            <div class="font-mono text-faint" style="font-size:11px;">
+                {{ inv.issue_date|date:"d.m.Y" }}
+                {% if inv.due_date %} · termin: {{ inv.due_date|date:"d.m.Y" }}{% endif %}
+            </div>
+            <div class="flex-grow-1"></div>
+            <div class="invoice-item__amount">{{ inv.gross_amount|floatformat:2 }} {{ inv.currency }}</div>
+            <span class="badge-status badge-status--{{ inv.status }} ms-3">{{ inv.get_status_display }}</span>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="szkp-empty" style="padding:var(--sp-8);">
+            <div class="szkp-empty__title">Brak faktur</div>
+            <div class="szkp-empty__desc">Nie wystawiono jeszcze żadnych faktur dla tej sprawy.</div>
+            <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Wystaw fakturę</a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% elif active_tab == 'prawnicy' %}
+    <div class="szkp-card">
+        <div class="szkp-card__header">
+            <h2 class="szkp-card__title">Przypisani prawnicy</h2>
+            <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Przypisz prawnika</a>
+        </div>
+        {% if lawyers %}
+        {% for cl in lawyers %}
+        <div class="lawyer-item">
+            <div class="lawyer-avatar">{{ cl.lawyer.first_name.0 }}{{ cl.lawyer.last_name.0 }}</div>
+            <div>
+                <div class="lawyer-item__name">{{ cl.lawyer.first_name }} {{ cl.lawyer.last_name }}</div>
+                <div class="lawyer-item__role">{{ cl.get_role_display }}{% if cl.lawyer.bar_number %} · {{ cl.lawyer.bar_number }}{% endif %}</div>
+            </div>
+            <div class="flex-grow-1"></div>
+            {% if cl.lawyer.email %}
+            <a href="mailto:{{ cl.lawyer.email }}" class="text-faint" style="font-size:12.5px;">{{ cl.lawyer.email }}</a>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="szkp-empty" style="padding:var(--sp-8);">
+            <div class="szkp-empty__title">Brak przypisanych prawników</div>
+            <div class="szkp-empty__desc">Przypisz prawników do tej sprawy.</div>
+            <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Przypisz prawnika</a>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
