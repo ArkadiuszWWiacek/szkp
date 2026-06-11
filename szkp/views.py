@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db.models import Q, Count, When, Case as DbCase, IntegerField, Value
 from django.utils import timezone
@@ -63,6 +64,9 @@ def dashboard(request):
 def case_list(request):
     qs = Case.objects.select_related('client').prefetch_related('caselawyer_set__lawyer')
 
+    if not request.user.is_staff:
+        qs = qs.filter(caselawyer__lawyer__user=request.user).distinct()
+
     q = request.GET.get('q', '').strip()
     if q:
         qs = qs.filter(
@@ -114,6 +118,10 @@ def case_list(request):
 @login_required
 def case_detail(request, pk):
     case = get_object_or_404(Case.objects.select_related('client'), pk=pk)
+
+    if not request.user.is_staff:
+        if not CaseLawyer.objects.filter(case=case, lawyer__user=request.user).exists():
+            raise PermissionDenied
 
     if request.method == 'POST':
         action = request.POST.get('action')

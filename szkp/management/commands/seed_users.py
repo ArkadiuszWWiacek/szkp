@@ -58,24 +58,29 @@ class Command(BaseCommand):
         skipped = 0
 
         for lawyer in lawyers:
-            if User.objects.filter(
+            existing = User.objects.filter(
                 first_name=lawyer.first_name, last_name=lawyer.last_name
-            ).exists():
+            ).first()
+
+            if existing:
                 self.stdout.write(f"  Pominięto (istnieje): {lawyer.first_name} {lawyer.last_name}")
                 skipped += 1
-                continue
+                user = existing
+            else:
+                username = _unique_username(lawyer.first_name, lawyer.last_name)
+                user = User.objects.create_user(
+                    username=username,
+                    email=lawyer.email or "",
+                    password=password,
+                    first_name=lawyer.first_name,
+                    last_name=lawyer.last_name,
+                )
+                self.stdout.write(f"  Utworzono: {username}  (hasło: {password})")
+                created += 1
 
-            username = _unique_username(lawyer.first_name, lawyer.last_name)
-
-            User.objects.create_user(
-                username=username,
-                email=lawyer.email or "",
-                password=password,
-                first_name=lawyer.first_name,
-                last_name=lawyer.last_name,
-            )
-            self.stdout.write(f"  Utworzono: {username}  (hasło: {password})")
-            created += 1
+            if lawyer.user_id != user.pk:
+                lawyer.user = user
+                lawyer.save(update_fields=['user'])
 
         self.stdout.write(
             self.style.SUCCESS(

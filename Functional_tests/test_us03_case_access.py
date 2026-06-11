@@ -68,8 +68,8 @@ class US03CaseAccessTest(SzkpSeleniumTestCase):
         self._zaloguj(username='andrzej_adamski', password='testpass123')
         self.selenium.get(self.live_server_url + '/szkp/sprawy/')
         src = self.selenium.page_source
-        self.assertIn(self.case_a.title, src)
-        self.assertNotIn(self.case_b.title, src)
+        self.assertIn(self.case_a.case_number, src)
+        self.assertNotIn(self.case_b.case_number, src)
 
     def test_bezposredni_dostep_do_cudzej_sprawy_jest_blokowany(self):
         """Bezpośrednie wejście pod URL cudzej sprawy nie ujawnia jej treści."""
@@ -82,8 +82,8 @@ class US03CaseAccessTest(SzkpSeleniumTestCase):
         self._zaloguj(username='admin_test', password='adminpass123')
         self.selenium.get(self.live_server_url + '/szkp/sprawy/')
         src = self.selenium.page_source
-        self.assertIn(self.case_a.title, src)
-        self.assertIn(self.case_b.title, src)
+        self.assertIn(self.case_a.case_number, src)
+        self.assertIn(self.case_b.case_number, src)
 
     def test_administrator_ma_dostep_do_szczegolu_kazdej_sprawy(self):
         """Administrator może wejść bezpośrednio na stronę dowolnej sprawy."""
