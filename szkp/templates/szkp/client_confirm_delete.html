@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Usuń klienta — SZKP{% endblock %}
+
+{% block content %}
+<div class="szkp-page szkp-page--narrow">
+
+    <div class="szkp-breadcrumb mb-2">
+        <a href="{% url 'szkp:client_list' %}">Klienci</a>
+        <span class="szkp-breadcrumb__sep">›</span>
+        <span>Usuń klienta</span>
+    </div>
+
+    <div class="szkp-page-header">
+        <h1 class="szkp-page-title">Usuń klienta</h1>
+    </div>
+
+    <div class="szkp-card">
+        <div class="szkp-card__body szkp-card__body--lg">
+
+            {% if error %}
+            <div class="alert alert-danger mb-4">{{ error }}</div>
+            {% endif %}
+
+            <p class="mb-1">Czy na pewno chcesz usunąć klienta:</p>
+            <p class="fw-medium fs-135 mb-4">
+                {% if client.type == 'osobafizyczna' %}
+                    {{ client.first_name }} {{ client.last_name }}
+                {% else %}
+                    {{ client.company_name }}
+                {% endif %}
+            </p>
+            <p class="text-muted-szkp fs-13 mb-4">
+                Tej operacji nie można cofnąć. Usunięcie jest możliwe tylko jeśli klient nie ma przypisanych spraw.
+            </p>
+
+            <div class="d-flex justify-content-end gap-3">
+                <a href="{% url 'szkp:client_list' %}" class="btn-szkp btn-szkp--outline">Anuluj</a>
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-szkp btn-szkp--danger">Usuń klienta</button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

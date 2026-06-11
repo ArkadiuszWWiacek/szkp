@@ -64,8 +64,9 @@
                     <td>
                         <span class="font-mono text-faint fs-115">{{ client.created_at|date:"d.m.Y" }}</span>
                     </td>
-                    <td>
+                    <td class="d-flex gap-2">
                         <a href="{% url 'szkp:client_edit' client.pk %}" class="btn-szkp btn-szkp--outline btn-szkp--sm">Edytuj</a>
+                        <a href="{% url 'szkp:client_delete' client.pk %}" class="btn-szkp btn-szkp--danger btn-szkp--sm">Usuń</a>
                     </td>
                 </tr>
                 {% endfor %}

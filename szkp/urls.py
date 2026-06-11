@@ -10,6 +10,7 @@ urlpatterns = [
     path('sprawy/<int:pk>/',        views.case_detail,  name='case_detail'),
     path('klienci/',                views.client_list,  name='client_list'),
     path('klienci/nowy/',           views.client_form,  name='client_new'),
-    path('klienci/<int:pk>/edytuj/',views.client_form,  name='client_edit'),
+    path('klienci/<int:pk>/edytuj/',views.client_form,   name='client_edit'),
+    path('klienci/<int:pk>/usun/', views.client_delete, name='client_delete'),
     path('zadania/',                views.my_tasks,     name='my_tasks'),
 ]

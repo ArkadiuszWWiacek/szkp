@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db.models import Q, Count, When, Case as DbCase, IntegerField, Value
+from django.db.models import RestrictedError
 from django.utils import timezone
 
 from .models import (
@@ -320,3 +321,20 @@ def my_tasks(request):
         'today': today,
     }
     return render(request, 'szkp/my_tasks.html', context)
+
+
+@login_required
+def client_delete(request, pk):
+    client = get_object_or_404(Client, pk=pk)
+    error = None
+    if request.method == 'POST':
+        try:
+            client.delete()
+            messages.success(request, 'Klient został usunięty.')
+            return redirect('szkp:client_list')
+        except RestrictedError:
+            error = 'Nie można usunąć klienta, który ma przypisane sprawy.'
+    return render(request, 'szkp/client_confirm_delete.html', {
+        'client': client,
+        'error': error,
+    })

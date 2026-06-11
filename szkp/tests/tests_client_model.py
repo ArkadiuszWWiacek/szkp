@@ -1,5 +1,7 @@
+from django.db.models import RestrictedError
 from django.test import TestCase, tag
-from szkp.models.Client import Client, ClientType
+
+from szkp.models import Case, CaseType, Client, ClientType
 
 @tag('unit')
 class ClientModelTest(TestCase):
@@ -46,8 +48,29 @@ class ClientModelTest(TestCase):
         
     def test_client_type_firma_clean(self):
         client = Client(type=ClientType.FIRMA, nip="1234567890123", pesel="12345678901")
-        
+
         client.clean()
-        
+
         self.assertEqual(client.nip, "1234567890123")
         self.assertEqual(client.pesel, None)
+
+    def test_usuniecie_klienta_bez_spraw_jest_mozliwe(self):
+        klient = Client.objects.create(
+            type=ClientType.OSOBA_FIZYCZNA,
+            first_name='Do', last_name='Usuniecia', pesel='89010112345',
+        )
+        pk = klient.pk
+        klient.delete()
+        self.assertFalse(Client.objects.filter(pk=pk).exists())
+
+    def test_usuniecie_klienta_ze_sprawami_rzuca_restricted_error(self):
+        klient = Client.objects.create(
+            type=ClientType.OSOBA_FIZYCZNA,
+            first_name='Powiazany', last_name='ZeSprawa', pesel='89010112345',
+        )
+        Case.objects.create(
+            client=klient, case_number='TST-RESTRICT-001',
+            title='Sprawa blokująca', case_type=CaseType.CYWILNA,
+        )
+        with self.assertRaises(RestrictedError):
+            klient.delete()
