@@ -41,7 +41,7 @@
                 {% for client in page_obj %}
                 <tr>
                     <td>
-                        <div class="fw-medium" style="font-size:13.5px;">
+                        <div class="fw-medium fs-135">
                             {% if client.type == 'osobafizyczna' %}
                                 {{ client.first_name }} {{ client.last_name }}
                             {% else %}
@@ -53,16 +53,16 @@
                         <span class="label-caps">{{ client.get_type_display }}</span>
                     </td>
                     <td>
-                        <span class="font-mono" style="font-size:12.5px;">
+                        <span class="font-mono fs-125">
                             {% if client.pesel %}{{ client.pesel }}{% elif client.nip %}{{ client.nip }}{% else %}—{% endif %}
                         </span>
                     </td>
-                    <td style="font-size:13px;">
+                    <td class="fs-13">
                         {% if client.email %}<div>{{ client.email }}</div>{% endif %}
                         {% if client.phone %}<div class="text-faint">{{ client.phone }}</div>{% endif %}
                     </td>
                     <td>
-                        <span class="font-mono text-faint" style="font-size:11.5px;">{{ client.created_at|date:"d.m.Y" }}</span>
+                        <span class="font-mono text-faint fs-115">{{ client.created_at|date:"d.m.Y" }}</span>
                     </td>
                     <td>
                         <a href="{% url 'szkp:client_edit' client.pk %}" class="btn-szkp btn-szkp--outline btn-szkp--sm">Edytuj</a>

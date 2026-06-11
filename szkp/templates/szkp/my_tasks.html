@@ -41,21 +41,20 @@
                 <div class="szkp-task__title">{{ task.title }}</div>
                 <div class="szkp-task__meta">
                     <span class="badge-prio badge-prio--{{ task.priority }}">{{ task.get_priority_display }}</span>
-                    <span class="badge-status badge-status--{{ task.status }}" style="font-size:11px;padding:2px 7px;">{{ task.get_status_display }}</span>
+                    <span class="badge-status badge-status--{{ task.status }} badge-status--sm">{{ task.get_status_display }}</span>
                     {% if task.case %}
-                    <a href="{% url 'szkp:case_detail' task.case.pk %}" class="sig" style="text-decoration:none;">
+                    <a href="{% url 'szkp:case_detail' task.case.pk %}" class="sig">
                         <span class="sig-bar sig-bar--{{ task.case.case_type }}"></span>{{ task.case.case_number }}
                     </a>
                     {% endif %}
                     {% if task.due_date %}
-                    <span class="szkp-task__meta-item font-mono {% if task.due_date.date == today %}text-oxblood{% endif %}"
-                          style="font-size:11px;">
+                    <span class="szkp-task__meta-item font-mono fs-11 {% if task.due_date.date == today %}text-oxblood{% endif %}">
                         termin: {% if task.due_date.date == today %}dziś{% else %}{{ task.due_date|date:"d.m.Y" }}{% endif %}
                     </span>
                     {% endif %}
                     {% if task.assigned_lawyer %}
-                    <span class="szkp-task__meta-item" style="font-size:12px;">
-                        <span class="lawyer-avatar" style="width:20px;height:20px;font-size:9px;">{{ task.assigned_lawyer.first_name.0 }}{{ task.assigned_lawyer.last_name.0 }}</span>
+                    <span class="szkp-task__meta-item fs-12">
+                        <span class="lawyer-avatar lawyer-avatar--sm">{{ task.assigned_lawyer.first_name.0 }}{{ task.assigned_lawyer.last_name.0 }}</span>
                         {{ task.assigned_lawyer.first_name }} {{ task.assigned_lawyer.last_name }}
                     </span>
                     {% endif %}
@@ -65,15 +64,15 @@
         {% if task.task_set.exists %}
         <div class="szkp-subtask">
             {% for sub in task.task_set.all %}
-            <div class="szkp-task{% if sub.status == 'zakończone' %} szkp-task--done{% endif %}" style="border-bottom:1px solid var(--szkp-border);">
+            <div class="szkp-task{% if sub.status == 'zakończone' %} szkp-task--done{% endif %}">
                 <div class="szkp-task__icon{% if sub.status == 'zakończone' %} szkp-task__icon--done{% endif %}">
                     {% if sub.status == 'zakończone' %}✓{% endif %}
                 </div>
                 <div class="szkp-task__body">
-                    <div class="szkp-task__title" style="font-size:13px;">{{ sub.title }}</div>
+                    <div class="szkp-task__title fs-13">{{ sub.title }}</div>
                     {% if sub.due_date %}
                     <div class="szkp-task__meta">
-                        <span class="szkp-task__meta-item font-mono" style="font-size:11px;">{{ sub.due_date|date:"d.m.Y" }}</span>
+                        <span class="szkp-task__meta-item font-mono fs-11">{{ sub.due_date|date:"d.m.Y" }}</span>
                     </div>
                     {% endif %}
                 </div>

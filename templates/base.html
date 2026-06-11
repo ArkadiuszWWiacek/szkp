@@ -90,10 +90,10 @@
                                     <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                                         <li>
                                             <span class="dropdown-item-text">
-                                                <div class="fw-semibold text-dark" style="font-size:13px;">
+                                                <div class="fw-semibold text-dark fs-13">
                                                     {{ user.get_full_name|default:user.username }}
                                                 </div>
-                                                <div class="text-muted" style="font-size:12px;">
+                                                <div class="text-muted fs-12">
                                                     {{ user.email }}
                                                 </div>
                                             </span>
@@ -104,7 +104,7 @@
                                         <li>
                                             <form method="post" action="{% url 'logout' %}">
                                                 {% csrf_token %}
-                                                <button type="submit" class="dropdown-item" style="font-size:13px;">
+                                                <button type="submit" class="dropdown-item fs-13">
                                                     Wyloguj się
                                                 </button>
                                             </form>
@@ -122,9 +122,7 @@
             <div class="container-fluid px-4 szkp-messages">
                 {% for message in messages %}
                     <div class="alert alert-{{ message.tags }} alert-dismissible fade show"
-                         role="alert"
-                         style="font-size:13.5px;
-                                border-radius: 2px">
+                         role="alert">
                         {{ message }}
                         <button type="button"
                                 class="btn-close btn-close-sm"

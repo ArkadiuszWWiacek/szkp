@@ -2,7 +2,7 @@
 {% block title %}{% if client %}Edytuj klienta{% else %}Nowy klient{% endif %} — SZKP{% endblock %}
 
 {% block content %}
-<div class="szkp-page" style="max-width:720px;">
+<div class="szkp-page szkp-page--narrow">
 
     <div class="szkp-breadcrumb mb-2">
         <a href="{% url 'szkp:client_list' %}">Klienci</a>
@@ -15,7 +15,7 @@
     </div>
 
     <div class="szkp-card">
-        <div class="szkp-card__body" style="padding:var(--sp-8);">
+        <div class="szkp-card__body szkp-card__body--lg">
             <form method="post" novalidate>
                 {% csrf_token %}
 

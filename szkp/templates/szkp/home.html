@@ -2,12 +2,12 @@
 {% block title %}System Zarządzania Kancelarią Prawną{% endblock %}
 
 {% block content %}
-<div class="szkp-page" style="text-align:center;padding-top:var(--sp-16);">
+<div class="szkp-page szkp-page--centered">
     <div class="label-brass mb-3">SZKP</div>
-    <h1 class="font-display mb-3" style="font-size:42px;font-weight:600;color:var(--szkp-ink);">
+    <h1 class="font-display mb-3 home-hero__title">
         System Zarządzania<br>Kancelarią Prawną
     </h1>
-    <p style="font-size:15px;color:var(--szkp-text-muted);margin-bottom:var(--sp-8);">
+    <p class="home-hero__desc">
         Django 5 · Bootstrap 5 · Projekt akademicki UTH
     </p>
     {% if user.is_authenticated %}

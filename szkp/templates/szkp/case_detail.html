@@ -18,8 +18,7 @@
                 <div class="szkp-card__body">
                     <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
                         <div class="sig-plate">
-                            <div class="sig-plate__bar bg-{{ case.case_type }}"
-                                 style="background:var(--type-{{ case.case_type }});"></div>
+                            <div class="sig-plate__bar sig-plate__bar--{{ case.case_type }}"></div>
                             <div class="sig-plate__body">
                                 <div class="sig-plate__label">Sygnatura akt</div>
                                 <div class="sig-plate__number">{{ case.case_number }}</div>
@@ -30,9 +29,9 @@
                         <span class="badge-prio badge-prio--{{ case.case_priority }}">{{ case.get_case_priority_display }}</span>
                     </div>
 
-                    <h1 class="font-display mb-2" style="font-size:22px;font-weight:600;color:var(--szkp-ink);">{{ case.title }}</h1>
+                    <h1 class="font-display mb-2 case-detail__title">{{ case.title }}</h1>
 
-                    <div class="d-flex flex-wrap gap-4" style="font-size:13.5px;color:var(--szkp-text-muted);">
+                    <div class="d-flex flex-wrap gap-4 fs-135 text-muted-szkp">
                         <div>
                             <div class="label-caps mb-1">Klient</div>
                             <div class="text-ink fw-medium">
@@ -66,7 +65,7 @@
                     </div>
 
                     {% if case.description %}
-                    <div class="mt-3" style="font-size:13.5px;color:var(--szkp-text-muted);line-height:1.6;">
+                    <div class="mt-3 fs-135 text-muted-szkp lh-relaxed">
                         {{ case.description|linebreaksbr }}
                     </div>
                     {% endif %}
@@ -90,7 +89,7 @@
                             <option value="{{ val }}"{% if case.status == val %} selected{% endif %}>{{ label }}</option>
                             {% endfor %}
                         </select>
-                        <button type="submit" class="btn-szkp btn-szkp--primary w-100" style="justify-content:center;">
+                        <button type="submit" class="btn-szkp btn-szkp--primary w-100">
                             Zapisz status
                         </button>
                     </form>
@@ -101,12 +100,12 @@
                     <form method="post" onsubmit="return confirm('Czy na pewno zamknąć sprawę?')">
                         {% csrf_token %}
                         <input type="hidden" name="action" value="close_case">
-                        <button type="submit" class="btn-szkp btn-szkp--danger w-100" style="justify-content:center;">
+                        <button type="submit" class="btn-szkp btn-szkp--danger w-100">
                             Zamknij sprawę
                         </button>
                     </form>
                     {% else %}
-                    <div class="text-faint text-center" style="font-size:12.5px;padding:var(--sp-2) 0;">
+                    <div class="text-faint text-center fs-125 py-2">
                         Sprawa {{ case.get_status_display|lower }}
                         {% if case.closed_at %} · {{ case.closed_at|date:"d.m.Y" }}{% endif %}
                     </div>
@@ -160,7 +159,7 @@
         </div>
         {% endfor %}
         {% else %}
-        <div class="szkp-empty" style="padding:var(--sp-8);">
+        <div class="szkp-empty szkp-empty--compact">
             <div class="szkp-empty__title">Brak terminów</div>
             <div class="szkp-empty__desc">Nie dodano jeszcze żadnych terminów sądowych.</div>
             <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Dodaj termin</a>
@@ -178,15 +177,15 @@
         {% for doc in documents %}
         <div class="doc-item">
             <div class="doc-item__title">{{ doc.title }}</div>
-            <span style="font-size:12px;color:var(--szkp-text-faint);">{{ doc.get_document_type_display }}</span>
+            <span class="text-faint fs-12">{{ doc.get_document_type_display }}</span>
             {% if doc.is_internal %}
-            <span class="label-caps" style="color:var(--szkp-brass-dark);">wewn.</span>
+            <span class="label-caps label-brass">wewn.</span>
             {% endif %}
             <div class="doc-item__date">{{ doc.created_at|date:"d.m.Y" }}</div>
         </div>
         {% endfor %}
         {% else %}
-        <div class="szkp-empty" style="padding:var(--sp-8);">
+        <div class="szkp-empty szkp-empty--compact">
             <div class="szkp-empty__title">Brak dokumentów</div>
             <div class="szkp-empty__desc">Nie dodano jeszcze żadnych dokumentów.</div>
             <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Dodaj dokument</a>
@@ -210,15 +209,15 @@
                 <div class="szkp-task__title">{{ task.title }}</div>
                 <div class="szkp-task__meta">
                     <span class="badge-prio badge-prio--{{ task.priority }}">{{ task.get_priority_display }}</span>
-                    <span class="badge-status badge-status--{{ task.status }}" style="font-size:11px;padding:2px 7px;">{{ task.get_status_display }}</span>
+                    <span class="badge-status badge-status--{{ task.status }} badge-status--sm">{{ task.get_status_display }}</span>
                     {% if task.assigned_lawyer %}
                     <span class="szkp-task__meta-item">
-                        <span class="lawyer-avatar" style="width:20px;height:20px;font-size:9px;">{{ task.assigned_lawyer.first_name.0 }}{{ task.assigned_lawyer.last_name.0 }}</span>
+                        <span class="lawyer-avatar lawyer-avatar--sm">{{ task.assigned_lawyer.first_name.0 }}{{ task.assigned_lawyer.last_name.0 }}</span>
                         {{ task.assigned_lawyer.first_name }} {{ task.assigned_lawyer.last_name }}
                     </span>
                     {% endif %}
                     {% if task.due_date %}
-                    <span class="szkp-task__meta-item font-mono" style="font-size:11px;">{{ task.due_date|date:"d.m.Y" }}</span>
+                    <span class="szkp-task__meta-item font-mono fs-11">{{ task.due_date|date:"d.m.Y" }}</span>
                     {% endif %}
                 </div>
             </div>
@@ -226,12 +225,12 @@
         {% if task.task_set.exists %}
         <div class="szkp-subtask">
             {% for sub in task.task_set.all %}
-            <div class="szkp-task{% if sub.status == 'zakończone' %} szkp-task--done{% endif %}" style="border-bottom:1px solid var(--szkp-border);">
+            <div class="szkp-task{% if sub.status == 'zakończone' %} szkp-task--done{% endif %}">
                 <div class="szkp-task__icon{% if sub.status == 'zakończone' %} szkp-task__icon--done{% endif %}">
                     {% if sub.status == 'zakończone' %}✓{% endif %}
                 </div>
                 <div class="szkp-task__body">
-                    <div class="szkp-task__title" style="font-size:13px;">{{ sub.title }}</div>
+                    <div class="szkp-task__title fs-13">{{ sub.title }}</div>
                 </div>
             </div>
             {% endfor %}
@@ -239,7 +238,7 @@
         {% endif %}
         {% endfor %}
         {% else %}
-        <div class="szkp-empty" style="padding:var(--sp-8);">
+        <div class="szkp-empty szkp-empty--compact">
             <div class="szkp-empty__title">Brak zadań</div>
             <div class="szkp-empty__desc">Nie dodano jeszcze żadnych zadań do tej sprawy.</div>
             <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Dodaj zadanie</a>
@@ -257,7 +256,7 @@
         {% for inv in invoices %}
         <div class="invoice-item">
             <div class="invoice-item__number">{{ inv.invoice_number }}</div>
-            <div class="font-mono text-faint" style="font-size:11px;">
+            <div class="font-mono text-faint fs-11">
                 {{ inv.issue_date|date:"d.m.Y" }}
                 {% if inv.due_date %} · termin: {{ inv.due_date|date:"d.m.Y" }}{% endif %}
             </div>
@@ -267,7 +266,7 @@
         </div>
         {% endfor %}
         {% else %}
-        <div class="szkp-empty" style="padding:var(--sp-8);">
+        <div class="szkp-empty szkp-empty--compact">
             <div class="szkp-empty__title">Brak faktur</div>
             <div class="szkp-empty__desc">Nie wystawiono jeszcze żadnych faktur dla tej sprawy.</div>
             <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Wystaw fakturę</a>
@@ -291,12 +290,12 @@
             </div>
             <div class="flex-grow-1"></div>
             {% if cl.lawyer.email %}
-            <a href="mailto:{{ cl.lawyer.email }}" class="text-faint" style="font-size:12.5px;">{{ cl.lawyer.email }}</a>
+            <a href="mailto:{{ cl.lawyer.email }}" class="text-faint fs-125">{{ cl.lawyer.email }}</a>
             {% endif %}
         </div>
         {% endfor %}
         {% else %}
-        <div class="szkp-empty" style="padding:var(--sp-8);">
+        <div class="szkp-empty szkp-empty--compact">
             <div class="szkp-empty__title">Brak przypisanych prawników</div>
             <div class="szkp-empty__desc">Przypisz prawników do tej sprawy.</div>
             <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Przypisz prawnika</a>

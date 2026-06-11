@@ -9,7 +9,7 @@
             <div class="label-brass mb-1">Pulpit</div>
             <h1 class="szkp-page-title">Dzień dobry{% if user.first_name %}, {{ user.first_name }}{% endif %}</h1>
         </div>
-        <div class="font-mono text-faint" style="font-size:12px;text-align:right;line-height:1.9;">
+        <div class="font-mono text-faint dashboard-date">
             <div>{{ today|date:"l, j E Y" }}</div>
         </div>
     </div>
@@ -20,25 +20,25 @@
             <h2 class="szkp-card__title">Sprawy wg statusu</h2>
             <a href="{% url 'szkp:case_list' %}" class="btn-szkp btn-szkp--outline btn-szkp--sm">Wszystkie sprawy</a>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));border-top:none;">
-            <div class="szkp-stat" style="border-right:1px solid var(--szkp-border);">
+        <div class="szkp-stat-grid">
+            <div class="szkp-stat szkp-stat--sep">
                 <div class="szkp-stat__number">{{ counts.nowa|default:0 }}</div>
                 <div class="szkp-stat__label">Nowe</div>
             </div>
-            <div class="szkp-stat" style="border-right:1px solid var(--szkp-border);">
+            <div class="szkp-stat szkp-stat--sep">
                 <div class="szkp-stat__number">{{ counts.w_toku|default:0 }}</div>
                 <div class="szkp-stat__label">W toku</div>
             </div>
-            <div class="szkp-stat" style="border-right:1px solid var(--szkp-border);">
+            <div class="szkp-stat szkp-stat--sep">
                 <div class="szkp-stat__number">{{ counts.zawieszona|default:0 }}</div>
                 <div class="szkp-stat__label">Zawieszone</div>
             </div>
-            <div class="szkp-stat" style="border-right:1px solid var(--szkp-border);">
+            <div class="szkp-stat szkp-stat--sep">
                 <div class="szkp-stat__number">{{ counts.zakończona|default:0 }}</div>
                 <div class="szkp-stat__label">Zakończone</div>
             </div>
             <div class="szkp-stat">
-                <div class="szkp-stat__number" style="color:var(--szkp-text-muted);">{{ counts.archiwalna|default:0 }}</div>
+                <div class="szkp-stat__number text-muted-szkp">{{ counts.archiwalna|default:0 }}</div>
                 <div class="szkp-stat__label">Archiwalne</div>
             </div>
         </div>
@@ -70,14 +70,14 @@
                 </div>
                 {% endfor %}
                 {% else %}
-                <div class="szkp-empty" style="padding:var(--sp-12) var(--sp-8);">
+                <div class="szkp-empty szkp-empty--md">
                     <div class="szkp-empty__title">Brak zadań na dziś</div>
                     <div class="szkp-empty__desc">Świetnie — albo dodaj pierwsze</div>
                     <a href="{% url 'szkp:my_tasks' %}" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Nowe zadanie</a>
                 </div>
                 {% endif %}
                 {% if upcoming_tasks %}
-                <div style="margin: 0 calc(-1 * var(--sp-8)); padding: var(--sp-4) var(--sp-8); border-top: 1px solid var(--szkp-border); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--szkp-text-muted);">
+                <div class="szkp-card__subheader">
                     Nadchodzące — 7 dni
                 </div>
                 {% for task in upcoming_tasks %}
@@ -87,7 +87,7 @@
                         <div class="szkp-task__title">{{ task.title }}</div>
                         <div class="szkp-task__meta">
                             <span class="badge-prio badge-prio--{{ task.priority }}">{{ task.get_priority_display }}</span>
-                            <span class="font-mono text-faint" style="font-size:11px;">{{ task.due_date|date:"d.m" }}</span>
+                            <span class="font-mono text-faint fs-11">{{ task.due_date|date:"d.m" }}</span>
                             {% if task.case %}
                             <span class="sig"><span class="sig-bar sig-bar--{{ task.case.case_type }}"></span>{{ task.case.case_number }}</span>
                             {% endif %}
@@ -117,7 +117,7 @@
                 </div>
                 {% endfor %}
                 {% else %}
-                <div class="szkp-empty" style="padding:var(--sp-12) var(--sp-8);">
+                <div class="szkp-empty szkp-empty--md">
                     <div class="szkp-empty__title">Brak nadchodzących terminów</div>
                     <div class="szkp-empty__desc">Najbliższe 14 dni wolne od rozpraw</div>
                 </div>
@@ -145,7 +145,7 @@
                 </div>
                 {% endfor %}
                 {% else %}
-                <div class="szkp-empty" style="padding:var(--sp-8);">
+                <div class="szkp-empty szkp-empty--compact">
                     <div class="szkp-empty__desc">Brak przeterminowanych faktur — wszystko zapłacone.</div>
                 </div>
                 {% endif %}
