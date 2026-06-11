@@ -1,6 +1,6 @@
 from django.db import models
 from django.core.validators import RegexValidator
-from django.forms import ValidationError
+from django.core.exceptions import ValidationError
 
 ## Model Client
 class ClientType(models.TextChoices):
@@ -13,7 +13,7 @@ class Client(models.Model):
     company_name = models.CharField(max_length=200, blank=True, null=True)
     type = models.CharField(max_length=20, choices=ClientType.choices, null=False)
     pesel = models.CharField(max_length=11, blank=True, null=True, validators=[RegexValidator(r'^\d{11}$')])
-    nip = models.CharField(max_length=13, blank=True, null=True, validators=[RegexValidator(r'^\d{13}$')])
+    nip = models.CharField(max_length=10, blank=True, null=True, validators=[RegexValidator(r'^\d{10}$')])
     phone = models.CharField(max_length=20, blank=True, null=True)
     email = models.EmailField(max_length=255, blank=True, null=True)
     address_street = models.CharField(max_length=200, blank=True, null=True)
