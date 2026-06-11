@@ -60,6 +60,19 @@
                     {% endif %}
                 </div>
             </div>
+            <div class="szkp-task__actions">
+                <form method="post" action="{% url 'szkp:task_change_status' task.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <select name="status" class="szkp-select szkp-select--sm" onchange="this.form.submit()" aria-label="Zmień status zadania">
+                        {% for val, label in status_choices %}
+                        <option value="{{ val }}"{% if task.status == val %} selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+                <a href="{% url 'szkp:task_edit' task.pk %}" class="btn-szkp btn-szkp--outline btn-szkp--sm">Edytuj</a>
+                <a href="{% url 'szkp:task_delete' task.pk %}" class="btn-szkp btn-szkp--danger btn-szkp--sm">Usuń</a>
+            </div>
         </div>
         {% if task.task_set.exists %}
         <div class="szkp-subtask">
@@ -75,6 +88,19 @@
                         <span class="szkp-task__meta-item font-mono fs-11">{{ sub.due_date|date:"d.m.Y" }}</span>
                     </div>
                     {% endif %}
+                </div>
+                <div class="szkp-task__actions">
+                    <form method="post" action="{% url 'szkp:task_change_status' sub.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <select name="status" class="szkp-select szkp-select--sm" onchange="this.form.submit()" aria-label="Zmień status podzadania">
+                            {% for val, label in status_choices %}
+                            <option value="{{ val }}"{% if sub.status == val %} selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                    <a href="{% url 'szkp:task_edit' sub.pk %}" class="btn-szkp btn-szkp--outline btn-szkp--sm">Edytuj</a>
+                    <a href="{% url 'szkp:task_delete' sub.pk %}" class="btn-szkp btn-szkp--danger btn-szkp--sm">Usuń</a>
                 </div>
             </div>
             {% endfor %}

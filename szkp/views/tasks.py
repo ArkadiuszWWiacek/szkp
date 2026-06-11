@@ -4,6 +4,7 @@ from django.db.models import Case as DbCase, IntegerField, Value, When
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from szkp.forms import TaskForm
 from szkp.models import Lawyer, Task, TaskPriority, TaskStatus
@@ -52,13 +53,15 @@ def my_tasks(request):
     return render(request, 'szkp/my_tasks.html', context)
 
 
-def _task_context(task, form_data, errors):
+def _task_context(task, form_data, errors, parent_pk=None):
     return {
         'task': task,
         'form_data': form_data,
         'errors': errors,
         'priority_choices': TaskPriority.choices,
         'status_choices': TaskStatus.choices,
+        'can_add_subtask': task is not None and task.parent_task_id is None,
+        'parent_pk': parent_pk,
     }
 
 
@@ -78,17 +81,27 @@ def task_form(request, pk=None):
             obj.priority    = cd.get('priority') or TaskPriority.NORMALNA
             obj.due_date    = cd.get('due_date')
             if pk:
-                obj.status = cd.get('status') or TaskStatus.NOWE
+                new_status = cd.get('status') or TaskStatus.NOWE
+                if new_status == TaskStatus.ZAKOŃCZONE and obj.has_unfinished_subtasks:
+                    errors = {'status': ['Nie można zakończyć zadania — najpierw zakończ wszystkie podzadania.']}
+                    return render(request, 'szkp/task_form.html', _task_context(task, request.POST, errors))
+                obj.status = new_status
+            else:
+                parent_pk = request.POST.get('parent_task')
+                if parent_pk:
+                    obj.parent_task_id = int(parent_pk)
             obj.save()
             messages.success(request, 'Zadanie zostało zapisane.')
             return redirect(redirect_url)
 
+        parent_pk = request.POST.get('parent_task')
         return render(
             request,
             'szkp/task_form.html',
-            _task_context(task, request.POST, form.errors),
+            _task_context(task, request.POST, form.errors, parent_pk=parent_pk),
         )
 
+    parent_pk = request.GET.get('parent')
     if task:
         form_data = {
             'title':       task.title,
@@ -106,5 +119,31 @@ def task_form(request, pk=None):
     return render(
         request,
         'szkp/task_form.html',
-        _task_context(task, form_data, {}),
+        _task_context(task, form_data, {}, parent_pk=parent_pk),
     )
+
+
+@login_required
+def task_delete(request, pk):
+    task = get_object_or_404(Task, pk=pk)
+    if request.method == 'POST':
+        task.delete()
+        messages.success(request, 'Zadanie zostało usunięte.')
+        return redirect(reverse('szkp:my_tasks'))
+    return render(request, 'szkp/task_confirm_delete.html', {'task': task})
+
+
+@login_required
+@require_POST
+def task_change_status(request, pk):
+    task = get_object_or_404(Task, pk=pk)
+    new_status = request.POST.get('status', '')
+    next_url = request.POST.get('next') or reverse('szkp:my_tasks')
+    if new_status in dict(TaskStatus.choices):
+        if new_status == TaskStatus.ZAKOŃCZONE and task.has_unfinished_subtasks:
+            messages.error(request, 'Nie można zakończyć zadania — najpierw zakończ wszystkie podzadania.')
+            return redirect(next_url)
+        task.status = new_status
+        task.save()
+        messages.success(request, f'Status zadania zmieniony na: {task.get_status_display()}')
+    return redirect(next_url)

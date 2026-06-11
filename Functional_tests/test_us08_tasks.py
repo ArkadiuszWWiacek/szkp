@@ -224,3 +224,168 @@ class US08TasksTest(SzkpSeleniumTestCase):
         WebDriverWait(self.selenium, 5).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, '.szkp-task--overdue'))
         )
+
+    # --- szybka zmiana statusu z listy ---
+
+    def test_dropdown_statusu_widoczny_na_liscie(self):
+        self._nowe_zadanie(title='Zadanie z dropdownem')
+        self.selenium.get(self._url_zadania())
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'select[name="status"]'))
+        )
+
+    def test_zmiana_statusu_przez_dropdown_na_liscie(self):
+        zadanie = self._nowe_zadanie(title='Do zmiany statusu', status=TaskStatus.NOWE)
+        self.selenium.get(self._url_zadania())
+        select_el = WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located(
+                (By.CSS_SELECTOR, 'select[aria-label="Zmień status zadania"]')
+            )
+        )
+        Select(select_el).select_by_value('w_toku')
+        WebDriverWait(self.selenium, 5).until(
+            EC.url_contains('/szkp/zadania/')
+        )
+        zadanie.refresh_from_db()
+        self.assertEqual(zadanie.status, TaskStatus.W_TOKU)
+
+    def test_status_archiwalne_niedostepny_w_dropdown(self):
+        self._nowe_zadanie(title='Zadanie bez archiwum')
+        self.selenium.get(self._url_zadania())
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'select[name="status"]'))
+        )
+        page = self.selenium.page_source
+        self.assertNotIn('Archiwalne', page)
+        self.assertNotIn('archiwalne', page)
+
+    # --- usuwanie zadania ---
+
+    def test_przycisk_usun_widoczny_przy_zadaniu(self):
+        self._nowe_zadanie(title='Zadanie do usunięcia')
+        self.selenium.get(self._url_zadania())
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'a[href*="/usun/"]'))
+        )
+
+    def test_przycisk_usun_widoczny_przy_podzadaniu(self):
+        parent = self._nowe_zadanie(title='Zadanie nadrzędne')
+        Task.objects.create(
+            title='Podzadanie do usunięcia',
+            assigned_lawyer=self.lawyer,
+            created_by=self.lawyer,
+            parent_task=parent,
+        )
+        self.selenium.get(self._url_zadania())
+        delete_links = WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'a[href*="/usun/"]'))
+        )
+        self.assertGreaterEqual(len(delete_links), 2)
+
+    def test_klik_usun_prowadzi_do_potwierdzenia(self):
+        zadanie = self._nowe_zadanie(title='Zadanie do potwierdzenia')
+        self.selenium.get(self._url_zadania())
+        link = WebDriverWait(self.selenium, 5).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, 'a[href*="/usun/"]'))
+        )
+        link.click()
+        WebDriverWait(self.selenium, 5).until(
+            EC.url_contains('/usun/')
+        )
+        self.assertIn('Zadanie do potwierdzenia', self.selenium.page_source)
+
+    def test_potwierdzenie_usuwa_zadanie(self):
+        zadanie = self._nowe_zadanie(title='Zadanie do skasowania')
+        self.selenium.get(self.live_server_url + f'/szkp/zadania/{zadanie.pk}/usun/')
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'button.btn-szkp--danger'))
+        )
+        self.selenium.find_element(By.CSS_SELECTOR, 'button.btn-szkp--danger').click()
+        WebDriverWait(self.selenium, 5).until(
+            EC.url_contains('/szkp/zadania/')
+        )
+        self.assertNotIn('Zadanie do skasowania', self.selenium.page_source)
+
+    def test_ostrzezenie_o_kaskadzie_gdy_ma_podzadania(self):
+        parent = self._nowe_zadanie(title='Nadrzędne z podzadaniami')
+        Task.objects.create(
+            title='Podzadanie',
+            assigned_lawyer=self.lawyer,
+            created_by=self.lawyer,
+            parent_task=parent,
+        )
+        self.selenium.get(self.live_server_url + f'/szkp/zadania/{parent.pk}/usun/')
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, '.szkp-page'))
+        )
+        self.assertIn('podzadań', self.selenium.page_source)
+
+    # --- edycja podzadania ---
+
+    def test_przycisk_edytuj_widoczny_przy_podzadaniu(self):
+        parent = self._nowe_zadanie(title='Nadrzędne')
+        sub = Task.objects.create(
+            title='Podzadanie edytowalne',
+            assigned_lawyer=self.lawyer,
+            created_by=self.lawyer,
+            parent_task=parent,
+        )
+        self.selenium.get(self._url_zadania())
+        edit_links = WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_all_elements_located((By.CSS_SELECTOR, f'a[href*="/zadania/{sub.pk}/edytuj/"]'))
+        )
+        self.assertTrue(len(edit_links) > 0)
+
+    def test_edycja_podzadania_otwiera_formularz(self):
+        parent = self._nowe_zadanie(title='Nadrzędne')
+        sub = Task.objects.create(
+            title='Podzadanie do edycji',
+            assigned_lawyer=self.lawyer,
+            created_by=self.lawyer,
+            parent_task=parent,
+        )
+        self.selenium.get(self.live_server_url + f'/szkp/zadania/{sub.pk}/edytuj/')
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.NAME, 'title'))
+        )
+        self.assertIn('Podzadanie do edycji', self.selenium.find_element(By.NAME, 'title').get_attribute('value'))
+
+    # --- dodawanie podzadania z formularza edycji ---
+
+    def test_formularz_edycji_nadrzednego_zawiera_link_dodaj_podzadanie(self):
+        zadanie = self._nowe_zadanie(title='Zadanie nadrzędne')
+        self.selenium.get(self.live_server_url + f'/szkp/zadania/{zadanie.pk}/edytuj/')
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, f'a[href*="?parent={zadanie.pk}"]'))
+        )
+
+    def test_formularz_edycji_podzadania_bez_linku_dodaj_podzadanie(self):
+        parent = self._nowe_zadanie(title='Nadrzędne')
+        sub = Task.objects.create(
+            title='Podzadanie',
+            assigned_lawyer=self.lawyer,
+            created_by=self.lawyer,
+            parent_task=parent,
+        )
+        self.selenium.get(self.live_server_url + f'/szkp/zadania/{sub.pk}/edytuj/')
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.NAME, 'title'))
+        )
+        self.assertNotIn(f'?parent={sub.pk}', self.selenium.page_source)
+
+    def test_dodaj_podzadanie_przez_link_z_formularza(self):
+        parent = self._nowe_zadanie(title='Zadanie z podzadaniem')
+        self.selenium.get(self.live_server_url + f'/szkp/zadania/{parent.pk}/edytuj/')
+        link = WebDriverWait(self.selenium, 5).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, f'a[href*="?parent={parent.pk}"]'))
+        )
+        link.click()
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.NAME, 'title'))
+        )
+        self.selenium.find_element(By.NAME, 'title').send_keys('Nowe podzadanie')
+        self.selenium.find_element(By.CSS_SELECTOR, 'button.btn-szkp--primary').click()
+        WebDriverWait(self.selenium, 5).until(
+            EC.url_contains('/szkp/zadania/')
+        )
+        self.assertIn('Nowe podzadanie', self.selenium.page_source)

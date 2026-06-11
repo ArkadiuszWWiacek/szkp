@@ -14,7 +14,6 @@ class TaskStatus(models.TextChoices):
     W_TOKU = 'w_toku', 'W toku'
     ZAWIESZONE = 'zawieszone', 'Zawieszone'
     ZAKOŃCZONE = 'zakończone', 'Zakończone'
-    ARCHIWALNE = 'archiwalne', 'Archiwalne'
 
 class Task(models.Model):
     case = models.ForeignKey('Case', on_delete=models.CASCADE, blank=True, null=True, db_column='caseid')
@@ -29,6 +28,10 @@ class Task(models.Model):
     completed_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def has_unfinished_subtasks(self):
+        return self.task_set.exclude(status=TaskStatus.ZAKOŃCZONE).exists()
 
     def save(self, *args, **kwargs):
         if self.status == TaskStatus.ZAKOŃCZONE and self.completed_at is None:

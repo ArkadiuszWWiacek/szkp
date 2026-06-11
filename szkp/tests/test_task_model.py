@@ -74,3 +74,38 @@ class TaskStatusBehaviorTest(StaffLawyerTestCase):
         task.save()
         task.refresh_from_db()
         self.assertIsNotNone(task.completed_at)
+
+
+@tag('unit')
+class TaskHasUnfinishedSubtasksTest(StaffLawyerTestCase):
+    """Task.has_unfinished_subtasks: wykrywa niezakończone podzadania."""
+
+    def _make_task(self, **kwargs):
+        return Task.objects.create(
+            title='Zadanie', assigned_lawyer=self.lawyer, created_by=self.lawyer, **kwargs
+        )
+
+    def test_bez_podzadan_zwraca_false(self):
+        parent = self._make_task()
+        self.assertFalse(parent.has_unfinished_subtasks)
+
+    def test_z_podzadaniem_nowe_zwraca_true(self):
+        parent = self._make_task()
+        self._make_task(parent_task=parent, status=TaskStatus.NOWE)
+        self.assertTrue(parent.has_unfinished_subtasks)
+
+    def test_z_podzadaniem_w_toku_zwraca_true(self):
+        parent = self._make_task()
+        self._make_task(parent_task=parent, status=TaskStatus.W_TOKU)
+        self.assertTrue(parent.has_unfinished_subtasks)
+
+    def test_z_podzadaniem_zakonczone_zwraca_false(self):
+        parent = self._make_task()
+        self._make_task(parent_task=parent, status=TaskStatus.ZAKOŃCZONE)
+        self.assertFalse(parent.has_unfinished_subtasks)
+
+    def test_mieszane_podzadania_zwraca_true(self):
+        parent = self._make_task()
+        self._make_task(parent_task=parent, status=TaskStatus.ZAKOŃCZONE)
+        self._make_task(parent_task=parent, status=TaskStatus.NOWE)
+        self.assertTrue(parent.has_unfinished_subtasks)

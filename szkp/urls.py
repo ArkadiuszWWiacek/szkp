@@ -24,7 +24,9 @@ urlpatterns = [
          views.invoice_form, name='invoice_new'),
     path('sprawy/<int:case_pk>/faktury/<int:pk>/edytuj/',
          views.invoice_form, name='invoice_edit'),
-    path('zadania/',                    views.my_tasks,   name='my_tasks'),
-    path('zadania/nowe/',               views.task_form,  name='task_new'),
-    path('zadania/<int:pk>/edytuj/',    views.task_form,  name='task_edit'),
+    path('zadania/',                      views.my_tasks,           name='my_tasks'),
+    path('zadania/nowe/',                 views.task_form,          name='task_new'),
+    path('zadania/<int:pk>/edytuj/',      views.task_form,          name='task_edit'),
+    path('zadania/<int:pk>/usun/',         views.task_delete,        name='task_delete'),
+    path('zadania/<int:pk>/status/',      views.task_change_status, name='task_change_status'),
 ]

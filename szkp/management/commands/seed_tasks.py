@@ -72,7 +72,7 @@ class Command(BaseCommand):
             status = choice(statuses)
             completed_at = None
 
-            if status in [TaskStatus.ZAKOŃCZONE, TaskStatus.ARCHIWALNE]:
+            if status == TaskStatus.ZAKOŃCZONE:
                 completed_at = now - timedelta(days=randint(1, 20))
                 if due_date and completed_at < due_date and random() > 0.5:
                     completed_at = due_date + timedelta(hours=randint(1, 72))
@@ -116,7 +116,7 @@ class Command(BaseCommand):
                     status = choice(statuses)
                     completed_at = None
 
-                    if status in [TaskStatus.ZAKOŃCZONE, TaskStatus.ARCHIWALNE]:
+                    if status == TaskStatus.ZAKOŃCZONE:
                         completed_at = now - timedelta(days=randint(1, 15))
 
                     subtask = Task(

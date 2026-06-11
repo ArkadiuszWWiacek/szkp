@@ -1059,6 +1059,18 @@ a.sig { text-decoration: none; }
   gap: 4px;
 }
 
+.szkp-task__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-shrink: 0;
+}
+
+.szkp-select--sm {
+  padding: 5px 24px 5px 8px;
+  font-size: 12px;
+}
+
 .szkp-subtask {
   margin-left: var(--sp-8);
   border-left: 2px solid var(--szkp-border);

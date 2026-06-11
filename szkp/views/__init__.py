@@ -4,7 +4,7 @@ from .cases import case_list, case_detail, case_form
 from .clients import client_list, client_form, client_delete
 from .court_hearings import court_hearing_form
 from .invoice import invoice_form, invoice_list, invoice_mark_paid
-from .tasks import my_tasks, task_form
+from .tasks import my_tasks, task_form, task_delete, task_change_status
 
 __all__ = [
     'home',
@@ -13,5 +13,5 @@ __all__ = [
     'client_list', 'client_form', 'client_delete',
     'court_hearing_form',
     'invoice_form', 'invoice_list', 'invoice_mark_paid',
-    'my_tasks', 'task_form',
+    'my_tasks', 'task_form', 'task_delete', 'task_change_status',
 ]

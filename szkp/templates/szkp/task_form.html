@@ -18,6 +18,9 @@
         <div class="szkp-card__body szkp-card__body--lg">
             <form method="post" novalidate>
                 {% csrf_token %}
+                {% if parent_pk %}
+                <input type="hidden" name="parent_task" value="{{ parent_pk }}">
+                {% endif %}
 
                 <div class="mb-3">
                     <label for="id_title" class="szkp-label">Tytuł</label>
@@ -72,6 +75,17 @@
             </form>
         </div>
     </div>
+
+    {% if can_add_subtask %}
+    <div class="szkp-card mt-3">
+        <div class="szkp-card__body szkp-card__body--lg">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="fs-13 text-muted-szkp">Podzadania</span>
+                <a href="{% url 'szkp:task_new' %}?parent={{ task.pk }}" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Dodaj podzadanie</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
 </div>
 {% endblock content %}
