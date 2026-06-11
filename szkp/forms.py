@@ -1,7 +1,12 @@
+from decimal import Decimal
+
 from django import forms
 from django.utils import timezone
 
-from szkp.models import CasePriority, CaseStatus, CaseType, Client, ClientType, HearingStatus, HearingType
+from szkp.models import (
+    CasePriority, CaseStatus, CaseType, Client, ClientType,
+    HearingStatus, HearingType, Invoice, InvoiceStatus,
+)
 
 
 class ClientForm(forms.Form):
@@ -59,6 +64,32 @@ class CourtHearingForm(forms.Form):
             if scheduled_at and scheduled_at <= timezone.now():
                 self.add_error('scheduled_at', 'Data terminu musi być w przyszłości.')
         return cleaned_data
+
+
+class InvoiceForm(forms.Form):
+    invoice_number = forms.CharField(max_length=50)
+    issue_date     = forms.DateField(input_formats=['%Y-%m-%d'])
+    due_date       = forms.DateField(input_formats=['%Y-%m-%d'])
+    net_amount     = forms.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal('0'))
+    vat_rate       = forms.DecimalField(
+        max_digits=5, decimal_places=4, min_value=Decimal('0'),
+        initial=Decimal('0.23'), required=False,
+    )
+    currency       = forms.CharField(max_length=3, required=False)
+    status         = forms.ChoiceField(choices=InvoiceStatus.choices, required=False)
+
+    def __init__(self, *args, instance_pk=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.instance_pk = instance_pk
+
+    def clean_invoice_number(self):
+        number = self.cleaned_data.get('invoice_number')
+        qs = Invoice.objects.filter(invoice_number=number)
+        if self.instance_pk:
+            qs = qs.exclude(pk=self.instance_pk)
+        if qs.exists():
+            raise forms.ValidationError('Faktura o tym numerze już istnieje.')
+        return number
 
 
 class CaseForm(forms.Form):

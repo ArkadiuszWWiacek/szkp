@@ -166,7 +166,7 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
         WebDriverWait(self.selenium, 5).until(
             EC.url_contains('tab=faktury')
         )
-        self.assertIn('1230.00', self.selenium.page_source)
+        self.assertIn('1230,00', self.selenium.page_source)
 
     # --- walidacja formularza (RED — brak widoku) ---
 

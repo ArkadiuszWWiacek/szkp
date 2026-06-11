@@ -18,5 +18,9 @@ urlpatterns = [
          views.court_hearing_form, name='court_hearing_new'),
     path('sprawy/<int:case_pk>/terminy/<int:pk>/edytuj/',
          views.court_hearing_form, name='court_hearing_edit'),
+    path('sprawy/<int:case_pk>/faktury/nowa/',
+         views.invoice_form, name='invoice_new'),
+    path('sprawy/<int:case_pk>/faktury/<int:pk>/edytuj/',
+         views.invoice_form, name='invoice_edit'),
     path('zadania/',                views.my_tasks,     name='my_tasks'),
 ]

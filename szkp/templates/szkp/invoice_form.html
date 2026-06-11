@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}{% if invoice %}Edytuj fakturę{% else %}Nowa faktura{% endif %} — SZKP{% endblock %}
+
+{% block content %}
+<div class="szkp-page szkp-page--narrow">
+
+    <div class="szkp-breadcrumb mb-2">
+        <a href="{% url 'szkp:case_list' %}">Sprawy</a>
+        <span class="szkp-breadcrumb__sep">›</span>
+        <a href="{% url 'szkp:case_detail' case.pk %}?tab=faktury">{{ case.case_number }}</a>
+        <span class="szkp-breadcrumb__sep">›</span>
+        <span>{% if invoice %}Edytuj fakturę{% else %}Nowa faktura{% endif %}</span>
+    </div>
+
+    <div class="szkp-page-header">
+        <h1 class="szkp-page-title">{% if invoice %}Edytuj fakturę{% else %}Wystaw fakturę{% endif %}</h1>
+    </div>
+
+    <div class="szkp-card">
+        <div class="szkp-card__body szkp-card__body--lg">
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-6">
+                        <label for="id_invoice_number" class="szkp-label">Numer faktury</label>
+                        <input type="text" id="id_invoice_number" name="invoice_number"
+                               class="szkp-input{% if errors.invoice_number %} is-invalid{% endif %}"
+                               value="{{ form_data.invoice_number|default:'' }}">
+                        {% if errors.invoice_number %}
+                        <span class="szkp-error">{{ errors.invoice_number.0 }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-sm-3">
+                        <label for="id_status" class="szkp-label">Status</label>
+                        <select id="id_status" name="status" class="szkp-select-full">
+                            {% for val, label in status_choices %}
+                            <option value="{{ val }}"
+                                {% if form_data.status == val %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-sm-3">
+                        <label for="id_currency" class="szkp-label">Waluta</label>
+                        <input type="text" id="id_currency" name="currency"
+                               class="szkp-input"
+                               value="{{ form_data.currency|default:'PLN' }}" maxlength="3">
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-6">
+                        <label for="id_issue_date" class="szkp-label">Data wystawienia</label>
+                        <input type="date" id="id_issue_date" name="issue_date"
+                               class="szkp-input{% if errors.issue_date %} is-invalid{% endif %}"
+                               value="{{ form_data.issue_date|default:'' }}">
+                        {% if errors.issue_date %}
+                        <span class="szkp-error">{{ errors.issue_date.0 }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-sm-6">
+                        <label for="id_due_date" class="szkp-label">Termin płatności</label>
+                        <input type="date" id="id_due_date" name="due_date"
+                               class="szkp-input{% if errors.due_date %} is-invalid{% endif %}"
+                               value="{{ form_data.due_date|default:'' }}">
+                        {% if errors.due_date %}
+                        <span class="szkp-error">{{ errors.due_date.0 }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-5">
+                        <label for="id_net_amount" class="szkp-label">Kwota netto</label>
+                        <input type="number" id="id_net_amount" name="net_amount"
+                               class="szkp-input{% if errors.net_amount %} is-invalid{% endif %}"
+                               value="{{ form_data.net_amount|default:'' }}"
+                               step="0.01" min="0">
+                        {% if errors.net_amount %}
+                        <span class="szkp-error">{{ errors.net_amount.0 }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-sm-4">
+                        <label for="id_vat_rate" class="szkp-label">Stawka VAT</label>
+                        <input type="number" id="id_vat_rate" name="vat_rate"
+                               class="szkp-input"
+                               value="{{ form_data.vat_rate|default:'0.23' }}"
+                               step="0.0001" min="0">
+                    </div>
+                </div>
+
+                <hr class="divider mb-4">
+
+                <div class="d-flex justify-content-end gap-3">
+                    <a href="{% url 'szkp:case_detail' case.pk %}?tab=faktury"
+                       class="btn-szkp btn-szkp--outline">Anuluj</a>
+                    <button type="submit" class="btn-szkp btn-szkp--primary">
+                        {% if invoice %}Zapisz zmiany{% else %}Wystaw fakturę{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

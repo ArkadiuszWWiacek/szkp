@@ -254,7 +254,7 @@
     <div class="szkp-card">
         <div class="szkp-card__header">
             <h2 class="szkp-card__title">Faktury</h2>
-            <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Wystaw fakturę</a>
+            <a href="{% url 'szkp:invoice_new' case.pk %}" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Wystaw fakturę</a>
         </div>
         {% if invoices %}
         {% for inv in invoices %}
@@ -273,7 +273,7 @@
         <div class="szkp-empty szkp-empty--compact">
             <div class="szkp-empty__title">Brak faktur</div>
             <div class="szkp-empty__desc">Nie wystawiono jeszcze żadnych faktur dla tej sprawy.</div>
-            <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Wystaw fakturę</a>
+            <a href="{% url 'szkp:invoice_new' case.pk %}" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Wystaw fakturę</a>
         </div>
         {% endif %}
     </div>
