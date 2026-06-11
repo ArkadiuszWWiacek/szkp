@@ -34,12 +34,12 @@ class Command(BaseCommand):
             ("seed_clients", {}),
             ("seed_lawyers", {}),
             ("seed_users", {}),
-            ("seed_cases", {"count": 100}),
+            ("seed_cases", {"count": 15}),
             ("seed_case_lawyers", {}),
-            ("seed_court_hearings", {"count": 200}),
-            ("seed_documents", {"count": 100}),
-            ("seed_invoices", {"count": 100}),
-            ("seed_tasks", {"count": 100, "with_subtasks": True}),
+            ("seed_court_hearings", {"count": 30}),
+            ("seed_documents", {"count": 20}),
+            ("seed_invoices", {"count": 20}),
+            ("seed_tasks", {"count": 30, "with_subtasks": True}),
         ]
 
         for name, kwargs in steps:

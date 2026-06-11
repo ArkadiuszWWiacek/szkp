@@ -67,8 +67,15 @@ Po załadowaniu danych utwórz konta użytkowników dla prawników:
 python manage.py seed_users
 ```
 
-Domyślne hasło dla wszystkich kont: **`szkp1234`**  
-Lista loginów jest wypisywana w terminalu podczas uruchomienia komendy.
+### Konta demo
+
+| Login | Hasło | Specjalizacja |
+|---|---|---|
+| `anna.kowalska` | `szkp1234` | prawo cywilne |
+| `piotr.nowak` | `szkp1234` | prawo karne |
+| `marta.wisniewska` | `szkp1234` | prawo gospodarcze |
+| `tomasz.wojcik` | `szkp1234` | prawo rodzinne |
+| `katarzyna.kaminska` | `szkp1234` | prawo pracy |
 
 ### Komendy seed — szczegóły
 

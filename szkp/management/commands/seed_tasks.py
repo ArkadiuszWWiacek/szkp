@@ -4,7 +4,6 @@ from random import choice, randint, random
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
-from faker import Faker
 
 from szkp.models import (
     Case,
@@ -13,6 +12,8 @@ from szkp.models import (
     TaskPriority,
     TaskStatus,
 )
+
+from ._demo_texts import SUBTASK_TITLES, TASK_DESCRIPTIONS, TASK_TITLES
 
 
 class Command(BaseCommand):
@@ -38,7 +39,6 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
-        fake = Faker("pl_PL")
         count = options["count"]
         clear = options["clear"]
         with_subtasks = options["with_subtasks"]
@@ -82,8 +82,8 @@ class Command(BaseCommand):
                 assigned_lawyer=assigned_lawyer,
                 created_by=created_by,
                 parent_task=None,
-                title=fake.sentence(nb_words=5)[:300],
-                description=fake.paragraph(nb_sentences=3) if random() > 0.25 else "",
+                title=choice(TASK_TITLES),
+                description=choice(TASK_DESCRIPTIONS) if random() > 0.25 else "",
                 priority=choice(priorities),
                 status=status,
                 due_date=due_date,
@@ -124,8 +124,8 @@ class Command(BaseCommand):
                         assigned_lawyer=assigned_lawyer,
                         created_by=created_by,
                         parent_task=parent,
-                        title=f"Podzadanie: {fake.sentence(nb_words=4)[:260]}",
-                        description=fake.paragraph(nb_sentences=2) if random() > 0.4 else "",
+                        title=choice(SUBTASK_TITLES),
+                        description=choice(TASK_DESCRIPTIONS) if random() > 0.4 else "",
                         priority=choice(priorities),
                         status=status,
                         due_date=due_date,

@@ -1,9 +1,3 @@
-import os
-import django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Python_Web.settings')
-django.setup()
-
-
 from datetime import timedelta
 from random import choice, randint, random
 
@@ -11,9 +5,11 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 from faker import Faker
-from szkp.models import Client, Case, CaseType, CaseStatus, CasePriority
 
-fake = Faker('pl_PL')
+from szkp.models import Case, CasePriority, CaseStatus, CaseType, Client
+
+from ._demo_texts import CASE_DESCRIPTIONS, CASE_TITLES
+
 
 class Command(BaseCommand):
     help = "Tworzy testowe rekordy Case"
@@ -78,8 +74,8 @@ class Command(BaseCommand):
                 client=client,
                 case_number=case_number,
                 court_case_number=court_case_number,
-                title=fake.sentence(nb_words=5)[:300],
-                description=fake.paragraph(nb_sentences=4),
+                title=choice(CASE_TITLES),
+                description=choice(CASE_DESCRIPTIONS),
                 case_type=choice(case_types),
                 status=status,
                 case_priority=choice(priorities),
