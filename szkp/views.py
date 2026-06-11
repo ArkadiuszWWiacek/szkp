@@ -49,6 +49,17 @@ def dashboard(request):
         .select_related('case')[:6]
     )
 
+    upcoming_tasks = (
+        Task.objects
+        .filter(
+            due_date__date__gt=today,
+            due_date__date__lte=today + timezone.timedelta(days=7),
+            status__in=['nowe', 'w_toku'],
+        )
+        .order_by('due_date', 'priority')
+        .select_related('case')[:8]
+    )
+
     context = {
         'today': today,
         'counts': status_counts,
@@ -56,6 +67,7 @@ def dashboard(request):
         'upcoming_hearings': upcoming_hearings,
         'overdue_invoices': overdue_invoices,
         'today_tasks': today_tasks,
+        'upcoming_tasks': upcoming_tasks,
     }
     return render(request, 'szkp/dashboard.html', context)
 

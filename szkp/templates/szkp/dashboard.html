@@ -49,7 +49,7 @@
         <div class="col-lg-6">
             <div class="szkp-card h-100">
                 <div class="szkp-card__header">
-                    <h2 class="szkp-card__title">Moje zadania na dziś</h2>
+                    <h2 class="szkp-card__title">Moje zadania</h2>
                     <a href="{% url 'szkp:my_tasks' %}?period=today" class="btn-szkp btn-szkp--outline btn-szkp--sm">Wszystkie</a>
                 </div>
                 {% if today_tasks %}
@@ -75,6 +75,26 @@
                     <div class="szkp-empty__desc">Świetnie — albo dodaj pierwsze</div>
                     <a href="{% url 'szkp:my_tasks' %}" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Nowe zadanie</a>
                 </div>
+                {% endif %}
+                {% if upcoming_tasks %}
+                <div style="margin: 0 calc(-1 * var(--sp-8)); padding: var(--sp-4) var(--sp-8); border-top: 1px solid var(--szkp-border); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--szkp-text-muted);">
+                    Nadchodzące — 7 dni
+                </div>
+                {% for task in upcoming_tasks %}
+                <div class="szkp-task">
+                    <div class="szkp-task__icon"></div>
+                    <div class="szkp-task__body">
+                        <div class="szkp-task__title">{{ task.title }}</div>
+                        <div class="szkp-task__meta">
+                            <span class="badge-prio badge-prio--{{ task.priority }}">{{ task.get_priority_display }}</span>
+                            <span class="font-mono text-faint" style="font-size:11px;">{{ task.due_date|date:"d.m" }}</span>
+                            {% if task.case %}
+                            <span class="sig"><span class="sig-bar sig-bar--{{ task.case.case_type }}"></span>{{ task.case.case_number }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
                 {% endif %}
             </div>
         </div>
