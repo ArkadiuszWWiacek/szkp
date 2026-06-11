@@ -2,7 +2,7 @@ Docs/
 db.sqlite3
 __pycache__
 *.pyc
-.coverage
+.coverage*
 dobre_praktyki_uwierzytelniania.md
 CLAUDE.md
 *.zip
