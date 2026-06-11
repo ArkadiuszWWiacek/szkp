@@ -26,7 +26,7 @@ class US05CasesTest(SzkpSeleniumTestCase):
             type=ClientType.OSOBA_FIZYCZNA,
             first_name='Anna', last_name='Klientka', pesel='89010112345',
         )
-        self._zaloguj(username='testprawnik', password='testpass123')
+        self._zaloguj_przez_orm(self.user)
 
     # --- lista i wyszukiwanie (GREEN) ---
 

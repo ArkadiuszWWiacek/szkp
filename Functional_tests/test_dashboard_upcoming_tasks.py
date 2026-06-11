@@ -1,20 +1,14 @@
-import datetime
-
 from django.contrib.auth.models import User
 from django.test import tag
-from django.utils import timezone
 
 from .base import SzkpSeleniumTestCase
 from szkp.models import Lawyer, Task
+from szkp.tests.utils import make_due
 
 
 @tag('functional')
 class DashboardUpcomingTasksTest(SzkpSeleniumTestCase):
     """Dashboard: podsekcja 'Nadchodzące 7 dni' w karcie Moje zadania."""
-
-    def _make_due(self, days_offset):
-        d = datetime.date.today() + datetime.timedelta(days=days_offset)
-        return timezone.make_aware(datetime.datetime.combine(d, datetime.time(9, 0)))
 
     def setUp(self):
         self.selenium.get(self.live_server_url)
@@ -33,30 +27,30 @@ class DashboardUpcomingTasksTest(SzkpSeleniumTestCase):
         self.task_today = Task.objects.create(
             title='Zadanie dzisiejsze testowe',
             assigned_lawyer=self.lawyer, created_by=self.lawyer,
-            due_date=self._make_due(0), status='nowe',
+            due_date=make_due(0), status='nowe',
         )
         self.task_tomorrow = Task.objects.create(
             title='Zadanie jutrzejsze testowe',
             assigned_lawyer=self.lawyer, created_by=self.lawyer,
-            due_date=self._make_due(1), status='nowe',
+            due_date=make_due(1), status='nowe',
         )
         self.task_day7 = Task.objects.create(
             title='Zadanie siodmego dnia testowe',
             assigned_lawyer=self.lawyer, created_by=self.lawyer,
-            due_date=self._make_due(7), status='w_toku',
+            due_date=make_due(7), status='w_toku',
         )
         self.task_day8 = Task.objects.create(
             title='Zadanie osmego dnia testowe',
             assigned_lawyer=self.lawyer, created_by=self.lawyer,
-            due_date=self._make_due(8), status='nowe',
+            due_date=make_due(8), status='nowe',
         )
         self.task_done = Task.objects.create(
             title='Zadanie zakonczone testowe',
             assigned_lawyer=self.lawyer, created_by=self.lawyer,
-            due_date=self._make_due(2), status='zakończone',
+            due_date=make_due(2), status='zakończone',
         )
 
-        self._zaloguj(username='test_prawnik', password='testpass123')
+        self._zaloguj_przez_orm(self.user)
         self.selenium.get(self.live_server_url + '/szkp/pulpit/')
 
     def test_sekcja_nadchodzace_wyswietla_sie(self):

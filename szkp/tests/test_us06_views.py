@@ -1,37 +1,25 @@
 from datetime import datetime, timedelta, timezone
 
-from django.contrib.auth.models import User
-from django.test import TestCase, tag
+from django.test import tag
 from django.urls import reverse
 
 from szkp.models import (
-    Case, CaseType, Client, ClientType, CourtHearing, HearingStatus,
-    HearingType, Lawyer,
+    Case, CaseType, CourtHearing, HearingStatus, HearingType,
 )
+from szkp.tests.base import StaffLawyerTestCase
 
 
 @tag('integration')
-class CourtHearingCreateViewTest(TestCase):
+class CourtHearingCreateViewTest(StaffLawyerTestCase):
     """court_hearing_form (nowy termin): walidacja POST, tworzenie, domyślne wartości."""
 
     @classmethod
     def setUpTestData(cls):
-        cls.user = User.objects.create_user('prawnik', password='pass', is_staff=True)
-        cls.lawyer = Lawyer.objects.create(
-            user=cls.user, first_name='Jan', last_name='Prawnik',
-            bar_number='PL001',
-        )
-        cls.klient = Client.objects.create(
-            type=ClientType.OSOBA_FIZYCZNA,
-            first_name='Anna', last_name='Klientka', pesel='89010112345',
-        )
+        super().setUpTestData()
         cls.sprawa = Case.objects.create(
             client=cls.klient, case_number='TST-US06-001',
             title='Sprawa do testów terminów', case_type=CaseType.CYWILNA,
         )
-
-    def setUp(self):
-        self.client.force_login(self.user)
 
     def _url_new(self):
         return reverse('szkp:court_hearing_new', kwargs={'case_pk': self.sprawa.pk})
@@ -88,20 +76,12 @@ class CourtHearingCreateViewTest(TestCase):
 
 
 @tag('integration')
-class CourtHearingEditViewTest(TestCase):
+class CourtHearingEditViewTest(StaffLawyerTestCase):
     """court_hearing_form (edycja terminu): aktualizacja statusu, brak walidacji daty."""
 
     @classmethod
     def setUpTestData(cls):
-        cls.user = User.objects.create_user('prawnik', password='pass', is_staff=True)
-        cls.lawyer = Lawyer.objects.create(
-            user=cls.user, first_name='Jan', last_name='Prawnik',
-            bar_number='PL001',
-        )
-        cls.klient = Client.objects.create(
-            type=ClientType.OSOBA_FIZYCZNA,
-            first_name='Anna', last_name='Klientka', pesel='89010112346',
-        )
+        super().setUpTestData()
         cls.sprawa = Case.objects.create(
             client=cls.klient, case_number='TST-US06-EDIT-001',
             title='Sprawa do edycji terminów', case_type=CaseType.CYWILNA,
@@ -113,9 +93,6 @@ class CourtHearingEditViewTest(TestCase):
             scheduled_at=datetime.now(tz=timezone.utc) + timedelta(days=5),
             status=HearingStatus.PLANOWANY,
         )
-
-    def setUp(self):
-        self.client.force_login(self.user)
 
     def _url_edit(self):
         return reverse(

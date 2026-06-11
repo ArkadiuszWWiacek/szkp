@@ -65,7 +65,7 @@ class US03CaseAccessTest(SzkpSeleniumTestCase):
 
     def test_prawnik_widzi_tylko_swoje_sprawy_na_liscie(self):
         """Zalogowany prawnik widzi na liście tylko sprawy, do których jest przypisany."""
-        self._zaloguj(username='andrzej_adamski', password='testpass123')
+        self._zaloguj_przez_orm(self.user_a)
         self.selenium.get(self.live_server_url + '/szkp/sprawy/')
         src = self.selenium.page_source
         self.assertIn(self.case_a.case_number, src)
@@ -73,13 +73,13 @@ class US03CaseAccessTest(SzkpSeleniumTestCase):
 
     def test_bezposredni_dostep_do_cudzej_sprawy_jest_blokowany(self):
         """Bezpośrednie wejście pod URL cudzej sprawy nie ujawnia jej treści."""
-        self._zaloguj(username='andrzej_adamski', password='testpass123')
+        self._zaloguj_przez_orm(self.user_a)
         self.selenium.get(self.live_server_url + f'/szkp/sprawy/{self.case_b.pk}/')
         self.assertNotIn(self.case_b.title, self.selenium.page_source)
 
     def test_administrator_widzi_wszystkie_sprawy_na_liscie(self):
         """Administrator (is_staff) widzi wszystkie sprawy bez ograniczeń."""
-        self._zaloguj(username='admin_test', password='adminpass123')
+        self._zaloguj_przez_orm(self.admin)
         self.selenium.get(self.live_server_url + '/szkp/sprawy/')
         src = self.selenium.page_source
         self.assertIn(self.case_a.case_number, src)
@@ -87,7 +87,7 @@ class US03CaseAccessTest(SzkpSeleniumTestCase):
 
     def test_administrator_ma_dostep_do_szczegolu_kazdej_sprawy(self):
         """Administrator może wejść bezpośrednio na stronę dowolnej sprawy."""
-        self._zaloguj(username='admin_test', password='adminpass123')
+        self._zaloguj_przez_orm(self.admin)
         detail_url = self.live_server_url + f'/szkp/sprawy/{self.case_b.pk}/'
         self.selenium.get(detail_url)
         self.assertEqual(self.selenium.current_url, detail_url)

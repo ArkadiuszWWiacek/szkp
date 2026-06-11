@@ -35,7 +35,7 @@ class US06CourtHearingsTest(SzkpSeleniumTestCase):
             client=self.klient, case_number='TST-US06-001',
             title='Sprawa do testów terminów', case_type=CaseType.CYWILNA,
         )
-        self._zaloguj(username='testprawnik', password='testpass123')
+        self._zaloguj_przez_orm(self.user)
 
     def _url_terminy(self):
         return self.live_server_url + f'/szkp/sprawy/{self.sprawa.pk}/?tab=terminy'

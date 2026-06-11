@@ -18,7 +18,7 @@ class US04ClientsTest(SzkpSeleniumTestCase):
         self.user = User.objects.create_user(
             username='testpracownik', password='testpass123',
         )
-        self._zaloguj(username='testpracownik', password='testpass123')
+        self._zaloguj_przez_orm(self.user)
 
     # ------------------------------------------------------------------ lista
 

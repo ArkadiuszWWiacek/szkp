@@ -37,6 +37,14 @@ class SzkpSeleniumTestCase(LiveServerTestCase):
         self.selenium.find_element("id", "id_password").send_keys(password)
         self.selenium.find_element("css selector", "button[type='submit']").click()
 
+    def _zaloguj_przez_orm(self, user):
+        """Wstrzykuje sesję Django do przeglądarki bez przechodzenia przez formularz logowania."""
+        self.client.force_login(user)
+        self.selenium.add_cookie({
+            'name': 'sessionid',
+            'value': self.client.cookies['sessionid'].value,
+        })
+
     def _wyloguj(self):
         self.selenium.find_element("css selector", ".szkp-user-badge").click()
         WebDriverWait(self.selenium, 5).until(

@@ -49,18 +49,18 @@ class US02RoleAccessTest(SzkpSeleniumTestCase):
 
     def test_zalogowany_uzytkownik_ma_dostep_do_widokow(self):
         """Zalogowany użytkownik (bez specjalnej roli) ma dostęp do chronionych widoków."""
-        self._zaloguj(username="prawnik_test", password="testpass123")
+        self._zaloguj_przez_orm(self.user)
         self.selenium.get(self.live_server_url + "/szkp/pulpit/")
         self.assertEqual(self.selenium.current_url, self.live_server_url + "/szkp/pulpit/")
 
     def test_panel_admina_niedostepny_dla_zwyklego_uzytkownika(self):
         """Użytkownik bez is_staff próbujący wejść do /admin/ trafia na stronę logowania admina."""
-        self._zaloguj(username="prawnik_test", password="testpass123")
+        self._zaloguj_przez_orm(self.user)
         self.selenium.get(self.live_server_url + "/admin/")
         self.assertIn("/admin/login/", self.selenium.current_url)
 
     def test_panel_admina_dostepny_dla_superuzytkownika(self):
         """Superuser ma bezpośredni dostęp do panelu /admin/."""
-        self._zaloguj(username="admin_test", password="adminpass123")
+        self._zaloguj_przez_orm(self.admin)
         self.selenium.get(self.live_server_url + "/admin/")
         self.assertEqual(self.selenium.current_url, self.live_server_url + "/admin/")

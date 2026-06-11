@@ -5,8 +5,8 @@ from django.urls import reverse
 from szkp.models import (
     Case, CaseLawyer, CaseLawyerRole, CaseStatus, CaseType,
     Client, ClientType,
-    Lawyer,
 )
+from szkp.tests.base import StaffLawyerTestCase
 
 
 @tag('integration')
@@ -76,23 +76,8 @@ class CaseListSearchTest(TestCase):
 
 
 @tag('integration')
-class CaseCreateViewTest(TestCase):
+class CaseCreateViewTest(StaffLawyerTestCase):
     """case_form (nowa sprawa): walidacja POST, tworzenie, auto-przypisanie prawnika."""
-
-    @classmethod
-    def setUpTestData(cls):
-        cls.user = User.objects.create_user('prawnik', password='pass', is_staff=True)
-        cls.lawyer = Lawyer.objects.create(
-            user=cls.user, first_name='Jan', last_name='Prawnik',
-            bar_number='PL001',
-        )
-        cls.klient = Client.objects.create(
-            type=ClientType.OSOBA_FIZYCZNA,
-            first_name='Anna', last_name='Klientka', pesel='89010112345',
-        )
-
-    def setUp(self):
-        self.client.force_login(self.user)
 
     def _post_new(self, data):
         return self.client.post(reverse('szkp:case_new'), data)
@@ -151,19 +136,11 @@ class CaseCreateViewTest(TestCase):
 
 
 @tag('integration')
-class CaseEditViewTest(TestCase):
+class CaseEditViewTest(StaffLawyerTestCase):
     """case_form (edycja): aktualizacja danych, zmiana statusu ustawia closed_at."""
 
-    @classmethod
-    def setUpTestData(cls):
-        cls.user = User.objects.create_user('pracownik', password='pass', is_staff=True)
-        cls.klient = Client.objects.create(
-            type=ClientType.OSOBA_FIZYCZNA,
-            first_name='Jan', last_name='Test', pesel='89010112345',
-        )
-
     def setUp(self):
-        self.client.force_login(self.user)
+        super().setUp()
         self.sprawa = Case.objects.create(
             client=self.klient, case_number='TST-EDIT-001',
             title='Stary tytuł', case_type=CaseType.CYWILNA,
