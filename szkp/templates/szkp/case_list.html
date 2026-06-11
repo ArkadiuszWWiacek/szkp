@@ -9,7 +9,7 @@
             <div class="label-brass mb-1">Lista spraw</div>
             <h1 class="szkp-page-title">Sprawy</h1>
         </div>
-        <a href="#" class="btn-szkp btn-szkp--primary">+ Nowa sprawa</a>
+        <a href="{% url 'szkp:case_new' %}" class="btn-szkp btn-szkp--primary">+ Nowa sprawa</a>
     </div>
 
     <!-- Toolbar: wyszukiwanie + filtry -->
@@ -169,7 +169,7 @@
             {% if q or status or case_type %}
             <a href="{% url 'szkp:case_list' %}" class="btn-szkp btn-szkp--outline">Wyczyść filtry</a>
             {% else %}
-            <a href="#" class="btn-szkp btn-szkp--primary">+ Nowa sprawa</a>
+            <a href="{% url 'szkp:case_new' %}" class="btn-szkp btn-szkp--primary">+ Nowa sprawa</a>
             {% endif %}
         </div>
     </div>

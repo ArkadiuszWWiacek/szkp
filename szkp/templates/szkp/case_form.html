@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}{% if case %}Edytuj sprawę{% else %}Nowa sprawa{% endif %} — SZKP{% endblock %}
+
+{% block content %}
+<div class="szkp-page szkp-page--narrow">
+
+    <div class="szkp-breadcrumb mb-2">
+        <a href="{% url 'szkp:case_list' %}">Sprawy</a>
+        <span class="szkp-breadcrumb__sep">›</span>
+        <span>{% if case %}{{ case.case_number }}{% else %}Nowa sprawa{% endif %}</span>
+    </div>
+
+    <div class="szkp-page-header">
+        <h1 class="szkp-page-title">{% if case %}Edytuj sprawę{% else %}Nowa sprawa{% endif %}</h1>
+    </div>
+
+    <div class="szkp-card">
+        <div class="szkp-card__body szkp-card__body--lg">
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-6">
+                        <label for="id_case_number" class="szkp-label">Numer sprawy</label>
+                        <input type="text" id="id_case_number" name="case_number"
+                               class="szkp-input font-mono{% if errors.case_number %} is-invalid{% endif %}"
+                               value="{{ form_data.case_number|default:'' }}">
+                        {% if errors.case_number %}
+                        <span class="szkp-error">{{ errors.case_number.0 }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-sm-6">
+                        <label for="id_court_case_number" class="szkp-label">Sygnatura sądowa</label>
+                        <input type="text" id="id_court_case_number" name="court_case_number"
+                               class="szkp-input font-mono"
+                               value="{{ form_data.court_case_number|default:'' }}">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_title" class="szkp-label">Tytuł sprawy</label>
+                    <input type="text" id="id_title" name="title"
+                           class="szkp-input{% if errors.title %} is-invalid{% endif %}"
+                           value="{{ form_data.title|default:'' }}">
+                    {% if errors.title %}
+                    <span class="szkp-error">{{ errors.title.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_client" class="szkp-label">Klient</label>
+                    <select id="id_client" name="client"
+                            class="szkp-select-full{% if errors.client %} is-invalid{% endif %}">
+                        <option value="">---------</option>
+                        {% for c in clients %}
+                        <option value="{{ c.pk }}"
+                            {% if form_data.client == c.pk|stringformat:"i" %}selected{% endif %}>
+                            {% if c.is_individual %}{{ c.first_name }} {{ c.last_name }}{% else %}{{ c.company_name }}{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if errors.client %}
+                    <span class="szkp-error">{{ errors.client.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-4">
+                        <label for="id_case_type" class="szkp-label">Typ sprawy</label>
+                        <select id="id_case_type" name="case_type"
+                                class="szkp-select-full{% if errors.case_type %} is-invalid{% endif %}">
+                            {% for val, label in type_choices %}
+                            <option value="{{ val }}"
+                                {% if form_data.case_type == val %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% if errors.case_type %}
+                        <span class="szkp-error">{{ errors.case_type.0 }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-sm-4">
+                        <label for="id_status" class="szkp-label">Status</label>
+                        <select id="id_status" name="status" class="szkp-select-full">
+                            <option value="">---------</option>
+                            {% for val, label in status_choices %}
+                            <option value="{{ val }}"
+                                {% if form_data.status == val %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-sm-4">
+                        <label for="id_case_priority" class="szkp-label">Priorytet</label>
+                        <select id="id_case_priority" name="case_priority" class="szkp-select-full">
+                            <option value="">---------</option>
+                            {% for val, label in priority_choices %}
+                            <option value="{{ val }}"
+                                {% if form_data.case_priority == val %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_description" class="szkp-label">Opis</label>
+                    <textarea id="id_description" name="description"
+                              class="szkp-input" rows="4">{{ form_data.description|default:'' }}</textarea>
+                </div>
+
+                <hr class="divider mb-4">
+
+                <div class="d-flex justify-content-end gap-3">
+                    <a href="{% url 'szkp:case_list' %}" class="btn-szkp btn-szkp--outline">Anuluj</a>
+                    <button type="submit" class="btn-szkp btn-szkp--primary">
+                        {% if case %}Zapisz zmiany{% else %}Dodaj sprawę{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

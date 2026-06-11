@@ -87,7 +87,7 @@ class US05CasesTest(SzkpSeleniumTestCase):
         self.selenium.find_element(By.NAME, 'title').send_keys('Sprawa testowa')
         Select(self.selenium.find_element(By.NAME, 'client')).select_by_index(1)
         Select(self.selenium.find_element(By.NAME, 'case_type')).select_by_value('cywilna')
-        self.selenium.find_element(By.CSS_SELECTOR, 'button[type="submit"]').click()
+        self.selenium.find_element(By.CSS_SELECTOR, 'button.btn-szkp--primary').click()
         WebDriverWait(self.selenium, 5).until(
             EC.url_contains('/szkp/sprawy/')
         )
@@ -101,7 +101,7 @@ class US05CasesTest(SzkpSeleniumTestCase):
         self.selenium.find_element(By.NAME, 'title').send_keys('Sprawa bez numeru')
         Select(self.selenium.find_element(By.NAME, 'client')).select_by_index(1)
         Select(self.selenium.find_element(By.NAME, 'case_type')).select_by_value('cywilna')
-        self.selenium.find_element(By.CSS_SELECTOR, 'button[type="submit"]').click()
+        self.selenium.find_element(By.CSS_SELECTOR, 'button.btn-szkp--primary').click()
         self.assertIn('/szkp/sprawy/nowy/', self.selenium.current_url)
 
     def test_nowa_sprawa_przypisuje_prowadzacego(self):
@@ -113,7 +113,7 @@ class US05CasesTest(SzkpSeleniumTestCase):
         self.selenium.find_element(By.NAME, 'title').send_keys('Sprawa z przypisaniem')
         Select(self.selenium.find_element(By.NAME, 'client')).select_by_index(1)
         Select(self.selenium.find_element(By.NAME, 'case_type')).select_by_value('cywilna')
-        self.selenium.find_element(By.CSS_SELECTOR, 'button[type="submit"]').click()
+        self.selenium.find_element(By.CSS_SELECTOR, 'button.btn-szkp--primary').click()
         WebDriverWait(self.selenium, 5).until(
             EC.url_contains('/szkp/sprawy/')
         )
@@ -138,7 +138,7 @@ class US05CasesTest(SzkpSeleniumTestCase):
         pole_tytulu = self.selenium.find_element(By.NAME, 'title')
         pole_tytulu.clear()
         pole_tytulu.send_keys('Nowy tytuł')
-        self.selenium.find_element(By.CSS_SELECTOR, 'button[type="submit"]').click()
+        self.selenium.find_element(By.CSS_SELECTOR, 'button.btn-szkp--primary').click()
         WebDriverWait(self.selenium, 5).until(
             EC.url_contains('/szkp/sprawy/')
         )

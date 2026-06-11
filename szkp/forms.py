@@ -1,6 +1,6 @@
 from django import forms
 
-from szkp.models import ClientType
+from szkp.models import CasePriority, CaseStatus, CaseType, Client, ClientType
 
 
 class ClientForm(forms.Form):
@@ -33,3 +33,18 @@ class ClientForm(forms.Form):
             if not cleaned_data.get('nip', '').strip():
                 self.add_error('nip', 'NIP jest wymagany.')
         return cleaned_data
+
+
+class CaseForm(forms.Form):
+    case_number      = forms.CharField(max_length=50)
+    title            = forms.CharField(max_length=300)
+    client           = forms.ModelChoiceField(queryset=Client.objects.all())
+    case_type        = forms.ChoiceField(choices=CaseType.choices)
+    status           = forms.ChoiceField(
+        choices=[('', '---------')] + list(CaseStatus.choices), required=False,
+    )
+    case_priority    = forms.ChoiceField(
+        choices=[('', '---------')] + list(CasePriority.choices), required=False,
+    )
+    court_case_number = forms.CharField(max_length=100, required=False)
+    description      = forms.CharField(required=False)
