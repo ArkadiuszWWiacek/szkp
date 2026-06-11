@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}System Zarządzania Kancelarią Prawną{% endblock %}
+{% block title %}System Zarządzania Kancelarią Prawną{% endblock title %}
 
 {% block content %}
 <div class="szkp-page szkp-page--centered">
@@ -16,4 +16,4 @@
     <a href="{% url 'login' %}" class="btn-szkp btn-szkp--primary">Zaloguj się →</a>
     {% endif %}
 </div>
-{% endblock %}
+{% endblock content %}
