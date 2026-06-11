@@ -6,3 +6,7 @@ __pycache__
 dobre_praktyki_uwierzytelniania.md
 CLAUDE.md
 *.zip
+.env
+.venv/
+staticfiles/
+htmlcov/

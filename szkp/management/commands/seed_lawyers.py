@@ -14,7 +14,7 @@ class Command(BaseCommand):
     help = 'Seed 50 rekordów Lawyer'
 
     def handle(self, *args, **options):
-        for i in range(50):
+        for i in range(5):
             lawyer = Lawyer(
                 first_name=fake.first_name(),
                 last_name=fake.last_name(),

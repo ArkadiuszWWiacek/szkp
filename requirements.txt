@@ -1,0 +1,6 @@
+coverage==7.13.1
+Django==5.1.2
+Faker==40.11.0
+psycopg==3.3.2
+python-dotenv==1.2.1
+selenium==4.38.0
