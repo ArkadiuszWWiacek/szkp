@@ -1,6 +1,7 @@
-from django.test import TestCase
+from django.test import TestCase, tag
 from szkp.models.Client import Client, ClientType
 
+@tag('unit')
 class ClientModelTest(TestCase):
     def test_client_without_pesel_raises_validation_error(self):
         client = Client(type=ClientType.OSOBA_FIZYCZNA)

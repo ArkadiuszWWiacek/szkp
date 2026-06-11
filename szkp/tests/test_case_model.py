@@ -1,7 +1,8 @@
-from django.test import TestCase
+from django.test import TestCase, tag
 from szkp.models import Case, Client
 
 
+@tag('unit')
 class CaseModelTest(TestCase):
     def test_case_str(self):
         client = Client.objects.create(pesel="12345678901", email="test@example.com")

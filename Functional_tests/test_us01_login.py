@@ -1,11 +1,10 @@
 from django.contrib.auth.models import User
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
+from django.test import tag
 
 from .base import SzkpSeleniumTestCase
 
 
+@tag('functional')
 class US01LoginLogoutTest(SzkpSeleniumTestCase):
     """US-01: Logowanie i wylogowanie."""
 
@@ -18,18 +17,6 @@ class US01LoginLogoutTest(SzkpSeleniumTestCase):
             first_name="Jan",
             last_name="Kowalski",
         )
-
-    def _zaloguj(self, username="testuser", password="testpass123"):
-        self.selenium.get(self.live_server_url + "/accounts/login/")
-        self.selenium.find_element("id", "id_username").send_keys(username)
-        self.selenium.find_element("id", "id_password").send_keys(password)
-        self.selenium.find_element("css selector", "button[type='submit']").click()
-
-    def _wyloguj(self):
-        self.selenium.find_element("css selector", ".szkp-user-badge").click()
-        WebDriverWait(self.selenium, 5).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "button.dropdown-item"))
-        ).click()
 
     def test_formularz_zawiera_token_csrf(self):
         """Formularz logowania zawiera ukryte pole csrfmiddlewaretoken."""

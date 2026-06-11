@@ -1,6 +1,9 @@
+from django.test import tag
+
 from .base import SzkpSeleniumTestCase
 
 
+@tag('functional')
 class NewVisitorTest(SzkpSeleniumTestCase):
 
     def test_can_open_home_page(self):
