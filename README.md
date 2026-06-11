@@ -103,7 +103,7 @@ python manage.py test Functional_tests
 
 # Z pokryciem kodu
 coverage run --branch manage.py test
-coverage report
+coverage run manage.py test && coverage report && coverage html
 ```
 
 ## Struktura projektu

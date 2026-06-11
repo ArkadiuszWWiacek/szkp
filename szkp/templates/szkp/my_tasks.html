@@ -9,7 +9,7 @@
             <div class="label-brass mb-1">Zadania</div>
             <h1 class="szkp-page-title">Moje zadania</h1>
         </div>
-        <a href="#" class="btn-szkp btn-szkp--primary">+ Nowe zadanie</a>
+        <a href="{% url 'szkp:task_new' %}" class="btn-szkp btn-szkp--primary">+ Nowe zadanie</a>
     </div>
 
     <!-- Filtry -->
@@ -33,7 +33,7 @@
     {% if tasks %}
     <div class="szkp-card">
         {% for task in tasks %}
-        <div class="szkp-task{% if task.status == 'zakończone' %} szkp-task--done{% endif %}">
+        <div class="szkp-task{% if task.status == 'zakończone' %} szkp-task--done{% endif %}{% if task.due_date and task.due_date.date < today %} szkp-task--overdue{% endif %}">
             <div class="szkp-task__icon{% if task.status == 'zakończone' %} szkp-task__icon--done{% endif %}">
                 {% if task.status == 'zakończone' %}✓{% endif %}
             </div>
@@ -96,7 +96,7 @@
             <div class="szkp-empty__title">Brak zadań</div>
             <div class="szkp-empty__desc">Nie masz jeszcze żadnych zadań. Dodaj pierwsze.</div>
             {% endif %}
-            <a href="#" class="btn-szkp btn-szkp--primary">+ Nowe zadanie</a>
+            <a href="{% url 'szkp:task_new' %}" class="btn-szkp btn-szkp--primary">+ Nowe zadanie</a>
         </div>
     </div>
     {% endif %}

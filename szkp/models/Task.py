@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from .Lawyer import Lawyer
 
 ## Model Task
@@ -28,6 +29,11 @@ class Task(models.Model):
     completed_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if self.status == TaskStatus.ZAKOŃCZONE and self.completed_at is None:
+            self.completed_at = timezone.now()
+        super().save(*args, **kwargs)
 
     class Meta:
         db_table = 'TASKS'

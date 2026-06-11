@@ -6,6 +6,7 @@ from django.utils import timezone
 from szkp.models import (
     CasePriority, CaseStatus, CaseType, Client, ClientType,
     HearingStatus, HearingType, Invoice, InvoiceStatus,
+    TaskPriority, TaskStatus,
 )
 
 
@@ -90,6 +91,17 @@ class InvoiceForm(forms.Form):
         if qs.exists():
             raise forms.ValidationError('Faktura o tym numerze już istnieje.')
         return number
+
+
+class TaskForm(forms.Form):
+    title       = forms.CharField(max_length=300)
+    description = forms.CharField(required=False)
+    priority    = forms.ChoiceField(choices=TaskPriority.choices, required=False)
+    status      = forms.ChoiceField(choices=TaskStatus.choices, required=False)
+    due_date    = forms.DateTimeField(
+        required=False,
+        input_formats=['%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M'],
+    )
 
 
 class CaseForm(forms.Form):

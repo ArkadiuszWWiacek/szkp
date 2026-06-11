@@ -1004,6 +1004,13 @@ a.sig { text-decoration: none; }
 
 .szkp-task--done { opacity: 0.55; }
 
+.szkp-task--overdue {
+  border-left: 2px solid var(--szkp-oxblood);
+  padding-left: calc(var(--sp-4) - 2px);
+}
+
+.szkp-task--overdue .szkp-task__title { color: var(--szkp-oxblood); }
+
 .szkp-task__icon {
   width: 16px;
   height: 16px;

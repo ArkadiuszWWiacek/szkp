@@ -50,11 +50,11 @@ class US08TasksTest(SzkpSeleniumTestCase):
         return timezone.now()
 
     def _nowe_zadanie(self, title='Zadanie testowe', **kwargs):
+        kwargs.setdefault('due_date', self._za_7_dni())
         return Task.objects.create(
             title=title,
             assigned_lawyer=self.lawyer,
             created_by=self.lawyer,
-            due_date=self._za_7_dni(),
             **kwargs,
         )
 

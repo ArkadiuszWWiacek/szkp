@@ -1,9 +1,12 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Case as DbCase, IntegerField, Value, When
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 
-from szkp.models import Task, TaskPriority, TaskStatus
+from szkp.forms import TaskForm
+from szkp.models import Lawyer, Task, TaskPriority, TaskStatus
 
 
 @login_required
@@ -11,6 +14,8 @@ def my_tasks(request):
     today = timezone.localdate()
     status_filter = request.GET.get('status', '')
     period_filter = request.GET.get('period', '')
+
+    lawyer = get_object_or_404(Lawyer, user=request.user)
 
     priority_rank = DbCase(
         When(priority=TaskPriority.PILNA,    then=Value(0)),
@@ -22,7 +27,7 @@ def my_tasks(request):
     )
 
     qs = (Task.objects
-          .filter(parent_task__isnull=True)
+          .filter(assigned_lawyer=lawyer, parent_task__isnull=True)
           .select_related('case', 'assigned_lawyer')
           .prefetch_related('task_set__assigned_lawyer'))
 
@@ -45,3 +50,61 @@ def my_tasks(request):
         'today': today,
     }
     return render(request, 'szkp/my_tasks.html', context)
+
+
+def _task_context(task, form_data, errors):
+    return {
+        'task': task,
+        'form_data': form_data,
+        'errors': errors,
+        'priority_choices': TaskPriority.choices,
+        'status_choices': TaskStatus.choices,
+    }
+
+
+@login_required
+def task_form(request, pk=None):
+    task = get_object_or_404(Task, pk=pk) if pk else None
+    lawyer = get_object_or_404(Lawyer, user=request.user)
+    redirect_url = reverse('szkp:my_tasks')
+
+    if request.method == 'POST':
+        form = TaskForm(request.POST)
+        if form.is_valid():
+            cd = form.cleaned_data
+            obj = task or Task(assigned_lawyer=lawyer, created_by=lawyer)
+            obj.title       = cd['title']
+            obj.description = cd.get('description', '')
+            obj.priority    = cd.get('priority') or TaskPriority.NORMALNA
+            obj.due_date    = cd.get('due_date')
+            if pk:
+                obj.status = cd.get('status') or TaskStatus.NOWE
+            obj.save()
+            messages.success(request, 'Zadanie zostało zapisane.')
+            return redirect(redirect_url)
+
+        return render(
+            request,
+            'szkp/task_form.html',
+            _task_context(task, request.POST, form.errors),
+        )
+
+    if task:
+        form_data = {
+            'title':       task.title,
+            'description': task.description,
+            'priority':    task.priority,
+            'status':      task.status,
+            'due_date':    task.due_date.strftime('%Y-%m-%dT%H:%M') if task.due_date else '',
+        }
+    else:
+        form_data = {
+            'priority': TaskPriority.NORMALNA,
+            'status':   TaskStatus.NOWE,
+        }
+
+    return render(
+        request,
+        'szkp/task_form.html',
+        _task_context(task, form_data, {}),
+    )
