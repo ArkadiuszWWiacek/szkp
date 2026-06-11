@@ -534,7 +534,6 @@ a.sig { text-decoration: none; }
 .szkp-card__body--lg { padding: var(--sp-8); }
 
 .szkp-card__subheader {
-  margin: 0 calc(-1 * var(--sp-8));
   padding: var(--sp-4) var(--sp-8);
   border-top: 1px solid var(--szkp-border);
   font-size: 11px;
