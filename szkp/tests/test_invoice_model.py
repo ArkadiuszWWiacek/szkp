@@ -1,7 +1,9 @@
+from datetime import datetime, timezone as dt_timezone
 from decimal import Decimal
 
 from django.db import IntegrityError
 from django.test import TestCase, tag
+from django.utils import timezone
 
 from szkp.models.Invoice import Invoice, InvoiceStatus
 
@@ -67,3 +69,34 @@ class InvoiceDefaultsTest(TestCase):
                 issue_date='2024-01-01',
                 due_date='2024-01-31',
             )
+
+
+@tag('unit')
+class InvoicePaidAtTest(TestCase):
+    """Auto-ustawianie paid_at przy zmianie statusu na opłacona."""
+
+    def _make(self, **kwargs):
+        return Invoice.objects.create(
+            invoice_number=kwargs.pop('invoice_number', 'FV/PAIDAT/001'),
+            net_amount=Decimal('100.00'),
+            issue_date='2024-01-01',
+            due_date='2024-01-31',
+            **kwargs,
+        )
+
+    def test_paid_at_ustawiany_przy_statusie_oplacona(self):
+        inv = self._make(status=InvoiceStatus.OPŁACONA)
+        self.assertIsNotNone(inv.paid_at)
+
+    def test_paid_at_nie_nadpisywany_jesli_juz_ustawiony(self):
+        original = datetime(2024, 3, 1, 12, 0, tzinfo=dt_timezone.utc)
+        inv = self._make(status=InvoiceStatus.OPŁACONA, paid_at=original)
+        self.assertEqual(inv.paid_at, original)
+
+    def test_paid_at_nie_ustawiany_przy_statusie_wystawiona(self):
+        inv = self._make(status=InvoiceStatus.WYSTAWIONA)
+        self.assertIsNone(inv.paid_at)
+
+    def test_paid_at_nie_ustawiany_przy_statusie_przeterminowana(self):
+        inv = self._make(status=InvoiceStatus.PRZETERMINOWANA)
+        self.assertIsNone(inv.paid_at)

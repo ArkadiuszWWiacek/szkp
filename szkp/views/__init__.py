@@ -3,7 +3,7 @@ from .dashboard import dashboard
 from .cases import case_list, case_detail, case_form
 from .clients import client_list, client_form, client_delete
 from .court_hearings import court_hearing_form
-from .invoice import invoice_form
+from .invoice import invoice_form, invoice_list, invoice_mark_paid
 from .tasks import my_tasks, task_form
 
 __all__ = [
@@ -12,6 +12,6 @@ __all__ = [
     'case_list', 'case_detail', 'case_form',
     'client_list', 'client_form', 'client_delete',
     'court_hearing_form',
-    'invoice_form',
+    'invoice_form', 'invoice_list', 'invoice_mark_paid',
     'my_tasks', 'task_form',
 ]

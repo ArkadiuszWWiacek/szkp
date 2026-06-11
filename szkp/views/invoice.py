@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_POST
 
 from szkp.forms import InvoiceForm
 from szkp.models import Case, CaseLawyer, Invoice, InvoiceStatus
@@ -75,3 +76,37 @@ def invoice_form(request, case_pk, pk=None):
         'szkp/invoice_form.html',
         _form_context(case, invoice, form_data, {}),
     )
+
+
+@login_required
+def invoice_list(request):
+    status = request.GET.get('status')
+    qs = Invoice.objects.select_related('case').order_by('-issue_date')
+    if not request.user.is_staff:
+        assigned = CaseLawyer.objects.filter(
+            lawyer__user=request.user
+        ).values_list('case_id', flat=True)
+        qs = qs.filter(case__in=assigned)
+    if status in dict(InvoiceStatus.choices):
+        qs = qs.filter(status=status)
+    return render(request, 'szkp/invoice_list.html', {
+        'invoices': qs,
+        'status_choices': InvoiceStatus.choices,
+        'current_status': status or '',
+    })
+
+
+@login_required
+@require_POST
+def invoice_mark_paid(request, pk):
+    invoice = get_object_or_404(Invoice, pk=pk)
+    if not request.user.is_staff:
+        if not invoice.case or not CaseLawyer.objects.filter(
+            case=invoice.case, lawyer__user=request.user
+        ).exists():
+            raise PermissionDenied
+    invoice.status = InvoiceStatus.OPŁACONA
+    invoice.save()
+    messages.success(request, 'Status faktury zmieniony na: Opłacona')
+    next_url = request.POST.get('next') or reverse('szkp:invoice_list')
+    return redirect(next_url)

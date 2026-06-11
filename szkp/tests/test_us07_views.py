@@ -163,3 +163,8 @@ class InvoiceEditViewTest(StaffLawyerTestCase):
             r,
             reverse('szkp:case_detail', kwargs={'pk': self.sprawa.pk}) + '?tab=faktury',
         )
+
+    def test_post_status_oplacona_ustawia_paid_at(self):
+        self.client.post(self._url_edit(), self._valid_edit_data(status='opłacona'))
+        self.faktura.refresh_from_db()
+        self.assertIsNotNone(self.faktura.paid_at)

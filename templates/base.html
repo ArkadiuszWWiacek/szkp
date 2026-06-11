@@ -60,9 +60,6 @@
                                    href="{% url 'szkp:client_list' %}">Klienci</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="#">Terminy</a>
-                            </li>
-                            <li class="nav-item">
                                 <a class="nav-link
                                           {% if request.resolver_match.url_name == 'my_tasks' %}
                                               active
@@ -70,7 +67,11 @@
                                    href="{% url 'szkp:my_tasks' %}">Zadania</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="#">Faktury</a>
+                                <a class="nav-link
+                                          {% if request.resolver_match.url_name == 'invoice_list' %}
+                                              active
+                                          {% endif %}"
+                                   href="{% url 'szkp:invoice_list' %}">Faktury</a>
                             </li>
                         </ul>
 

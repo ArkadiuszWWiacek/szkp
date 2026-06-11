@@ -1,5 +1,8 @@
-from django.db import models
 from decimal import Decimal
+
+from django.db import models
+from django.utils import timezone
+
 from .Case import Case
 
 ## Model Invoice
@@ -24,6 +27,8 @@ class Invoice(models.Model):
 
     def save(self, *args, **kwargs):
         self.gross_amount = self.net_amount * (1 + self.vat_rate)
+        if self.status == InvoiceStatus.OPŁACONA and not self.paid_at:
+            self.paid_at = timezone.now()
         super().save(*args, **kwargs)
 
     class Meta:

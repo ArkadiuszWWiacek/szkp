@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Faktury — SZKP{% endblock title %}
+
+{% block content %}
+<div class="szkp-page">
+
+    <div class="szkp-page-header">
+        <div>
+            <div class="label-brass mb-1">Lista faktur</div>
+            <h1 class="szkp-page-title">Faktury</h1>
+        </div>
+    </div>
+
+    <!-- Filtr statusu -->
+    <div class="d-flex gap-2 mb-3 flex-wrap">
+        <a href="{% url 'szkp:invoice_list' %}"
+           class="btn-szkp {% if not current_status %}btn-szkp--primary{% else %}btn-szkp--outline{% endif %}">
+            Wszystkie
+        </a>
+        {% for val, label in status_choices %}
+        <a href="{% url 'szkp:invoice_list' %}?status={{ val }}"
+           class="btn-szkp {% if current_status == val %}btn-szkp--primary{% else %}btn-szkp--outline{% endif %}">
+            {{ label }}
+        </a>
+        {% endfor %}
+    </div>
+
+    {% if invoices %}
+    <div class="szkp-table-wrap">
+        <table class="szkp-table">
+            <thead>
+                <tr>
+                    <th>Numer faktury</th>
+                    <th>Sprawa</th>
+                    <th>Wystawiona</th>
+                    <th>Termin</th>
+                    <th>Kwota brutto</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inv in invoices %}
+                <tr onclick="window.location='{% url 'szkp:case_detail' inv.case.pk %}?tab=faktury'" style="cursor:pointer">
+                    <td class="font-mono">{{ inv.invoice_number }}</td>
+                    <td>
+                        <a href="{% url 'szkp:case_detail' inv.case.pk %}?tab=faktury"
+                           class="link-muted" onclick="event.stopPropagation()">
+                            {{ inv.case.case_number }}
+                        </a>
+                    </td>
+                    <td>{{ inv.issue_date|date:"d.m.Y" }}</td>
+                    <td>{{ inv.due_date|date:"d.m.Y" }}</td>
+                    <td class="font-mono">{{ inv.gross_amount|floatformat:2 }} {{ inv.currency }}</td>
+                    <td>
+                        <span class="badge-status badge-status--{{ inv.status }}">{{ inv.get_status_display }}</span>
+                        {% if inv.paid_at %}
+                        <div class="fs-11 text-faint font-mono mt-1">{{ inv.paid_at|date:"d.m.Y" }}</div>
+                        {% endif %}
+                    </td>
+                    <td onclick="event.stopPropagation()">
+                        {% if inv.status != 'opłacona' %}
+                        <form method="post" action="{% url 'szkp:invoice_mark_paid' inv.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <button type="submit" class="btn-szkp btn-szkp--outline btn-szkp--sm"
+                                    data-invoice-action="mark-paid">
+                                Opłacona
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% else %}
+    <div class="szkp-card">
+        <div class="szkp-empty">
+            <div class="szkp-empty__title">Brak faktur{% if current_status %} o statusie „{{ current_status }}"{% endif %}</div>
+            {% if current_status %}
+            <a href="{% url 'szkp:invoice_list' %}" class="btn-szkp btn-szkp--outline">Pokaż wszystkie</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock content %}

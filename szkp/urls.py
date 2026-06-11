@@ -18,6 +18,8 @@ urlpatterns = [
          views.court_hearing_form, name='court_hearing_new'),
     path('sprawy/<int:case_pk>/terminy/<int:pk>/edytuj/',
          views.court_hearing_form, name='court_hearing_edit'),
+    path('faktury/', views.invoice_list, name='invoice_list'),
+    path('faktury/<int:pk>/oplacona/', views.invoice_mark_paid, name='invoice_mark_paid'),
     path('sprawy/<int:case_pk>/faktury/nowa/',
          views.invoice_form, name='invoice_new'),
     path('sprawy/<int:case_pk>/faktury/<int:pk>/edytuj/',
