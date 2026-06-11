@@ -1,6 +1,7 @@
 from django import forms
+from django.utils import timezone
 
-from szkp.models import CasePriority, CaseStatus, CaseType, Client, ClientType
+from szkp.models import CasePriority, CaseStatus, CaseType, Client, ClientType, HearingStatus, HearingType
 
 
 class ClientForm(forms.Form):
@@ -32,6 +33,31 @@ class ClientForm(forms.Form):
                 self.add_error('company_name', 'Nazwa firmy jest wymagana.')
             if not cleaned_data.get('nip', '').strip():
                 self.add_error('nip', 'NIP jest wymagany.')
+        return cleaned_data
+
+
+class CourtHearingForm(forms.Form):
+    court_name              = forms.CharField(max_length=200)
+    hearing_type            = forms.ChoiceField(choices=HearingType.choices)
+    scheduled_at            = forms.DateTimeField(
+        input_formats=['%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M'],
+    )
+    status                  = forms.ChoiceField(choices=HearingStatus.choices, required=False)
+    reminder_minutes_before = forms.IntegerField(initial=1440, min_value=1)
+    courtroom               = forms.CharField(required=False, max_length=50)
+    judge_name              = forms.CharField(required=False, max_length=100)
+    notes                   = forms.CharField(required=False)
+
+    def __init__(self, *args, is_new=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.is_new = is_new
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if self.is_new:
+            scheduled_at = cleaned_data.get('scheduled_at')
+            if scheduled_at and scheduled_at <= timezone.now():
+                self.add_error('scheduled_at', 'Data terminu musi być w przyszłości.')
         return cleaned_data
 
 

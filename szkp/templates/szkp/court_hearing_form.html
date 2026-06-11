@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}{% if hearing %}Edytuj termin{% else %}Nowy termin{% endif %} — SZKP{% endblock %}
+
+{% block content %}
+<div class="szkp-page szkp-page--narrow">
+
+    <div class="szkp-breadcrumb mb-2">
+        <a href="{% url 'szkp:case_list' %}">Sprawy</a>
+        <span class="szkp-breadcrumb__sep">›</span>
+        <a href="{% url 'szkp:case_detail' case.pk %}?tab=terminy">{{ case.case_number }}</a>
+        <span class="szkp-breadcrumb__sep">›</span>
+        <span>{% if hearing %}Edytuj termin{% else %}Nowy termin{% endif %}</span>
+    </div>
+
+    <div class="szkp-page-header">
+        <h1 class="szkp-page-title">{% if hearing %}Edytuj termin{% else %}Nowy termin sądowy{% endif %}</h1>
+    </div>
+
+    <div class="szkp-card">
+        <div class="szkp-card__body szkp-card__body--lg">
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-8">
+                        <label for="id_court_name" class="szkp-label">Nazwa sądu</label>
+                        <input type="text" id="id_court_name" name="court_name"
+                               class="szkp-input{% if errors.court_name %} is-invalid{% endif %}"
+                               value="{{ form_data.court_name|default:'' }}">
+                        {% if errors.court_name %}
+                        <span class="szkp-error">{{ errors.court_name.0 }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-sm-4">
+                        <label for="id_courtroom" class="szkp-label">Sala</label>
+                        <input type="text" id="id_courtroom" name="courtroom"
+                               class="szkp-input"
+                               value="{{ form_data.courtroom|default:'' }}">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_judge_name" class="szkp-label">Sędzia</label>
+                    <input type="text" id="id_judge_name" name="judge_name"
+                           class="szkp-input"
+                           value="{{ form_data.judge_name|default:'' }}">
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-4">
+                        <label for="id_hearing_type" class="szkp-label">Rodzaj</label>
+                        <select id="id_hearing_type" name="hearing_type"
+                                class="szkp-select-full{% if errors.hearing_type %} is-invalid{% endif %}">
+                            {% for val, label in hearing_type_choices %}
+                            <option value="{{ val }}"
+                                {% if form_data.hearing_type == val %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% if errors.hearing_type %}
+                        <span class="szkp-error">{{ errors.hearing_type.0 }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-sm-4">
+                        <label for="id_scheduled_at" class="szkp-label">Data i godzina</label>
+                        <input type="datetime-local" id="id_scheduled_at" name="scheduled_at"
+                               class="szkp-input{% if errors.scheduled_at %} is-invalid{% endif %}"
+                               value="{{ form_data.scheduled_at|default:'' }}">
+                        {% if errors.scheduled_at %}
+                        <span class="szkp-error">{{ errors.scheduled_at.0 }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-sm-4">
+                        <label for="id_status" class="szkp-label">Status</label>
+                        <select id="id_status" name="status" class="szkp-select-full">
+                            {% for val, label in status_choices %}
+                            <option value="{{ val }}"
+                                {% if form_data.status == val %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_reminder_minutes_before" class="szkp-label">Przypomnienie (minut przed)</label>
+                    <input type="number" id="id_reminder_minutes_before" name="reminder_minutes_before"
+                           class="szkp-input{% if errors.reminder_minutes_before %} is-invalid{% endif %}"
+                           value="{{ form_data.reminder_minutes_before|default:1440 }}" min="1">
+                    {% if errors.reminder_minutes_before %}
+                    <span class="szkp-error">{{ errors.reminder_minutes_before.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_notes" class="szkp-label">Notatki</label>
+                    <textarea id="id_notes" name="notes"
+                              class="szkp-input" rows="3">{{ form_data.notes|default:'' }}</textarea>
+                </div>
+
+                <hr class="divider mb-4">
+
+                <div class="d-flex justify-content-end gap-3">
+                    <a href="{% url 'szkp:case_detail' case.pk %}?tab=terminy"
+                       class="btn-szkp btn-szkp--outline">Anuluj</a>
+                    <button type="submit" class="btn-szkp btn-szkp--primary">
+                        {% if hearing %}Zapisz zmiany{% else %}Dodaj termin{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

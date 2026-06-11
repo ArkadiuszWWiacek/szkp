@@ -144,7 +144,8 @@
     <div class="szkp-card">
         <div class="szkp-card__header">
             <h2 class="szkp-card__title">Terminy sądowe</h2>
-            <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Dodaj termin</a>
+            <a href="{% url 'szkp:court_hearing_new' case.pk %}"
+               class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Dodaj termin</a>
         </div>
         {% if hearings %}
         {% for h in hearings %}
@@ -156,13 +157,16 @@
                 {% if h.judge_name %} · sędzia: {{ h.judge_name }}{% endif %}
             </div>
             <span class="badge-status badge-status--{{ h.status }}">{{ h.get_status_display }}</span>
+            <a href="{% url 'szkp:court_hearing_edit' case.pk h.pk %}"
+               class="btn-szkp btn-szkp--outline btn-szkp--sm ms-2">Edytuj</a>
         </div>
         {% endfor %}
         {% else %}
         <div class="szkp-empty szkp-empty--compact">
             <div class="szkp-empty__title">Brak terminów</div>
             <div class="szkp-empty__desc">Nie dodano jeszcze żadnych terminów sądowych.</div>
-            <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Dodaj termin</a>
+            <a href="{% url 'szkp:court_hearing_new' case.pk %}"
+               class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Dodaj termin</a>
         </div>
         {% endif %}
     </div>

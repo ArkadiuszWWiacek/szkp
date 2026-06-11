@@ -14,5 +14,9 @@ urlpatterns = [
     path('klienci/nowy/',           views.client_form,  name='client_new'),
     path('klienci/<int:pk>/edytuj/',views.client_form,   name='client_edit'),
     path('klienci/<int:pk>/usun/', views.client_delete, name='client_delete'),
+    path('sprawy/<int:case_pk>/terminy/nowy/',
+         views.court_hearing_form, name='court_hearing_new'),
+    path('sprawy/<int:case_pk>/terminy/<int:pk>/edytuj/',
+         views.court_hearing_form, name='court_hearing_edit'),
     path('zadania/',                views.my_tasks,     name='my_tasks'),
 ]

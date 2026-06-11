@@ -88,7 +88,12 @@ class US06CourtHearingsTest(SzkpSeleniumTestCase):
         self.selenium.find_element(By.NAME, 'court_name').send_keys('Sąd Rejonowy w Gdańsku')
         Select(self.selenium.find_element(By.NAME, 'hearing_type')).select_by_value('rozprawa')
         przeszla_data = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M')
-        self.selenium.find_element(By.NAME, 'scheduled_at').send_keys(przeszla_data)
+        # Firefox headless ignores send_keys() with past dates on datetime-local inputs;
+        # setting the value via JS bypasses the browser-level restriction.
+        self.selenium.execute_script(
+            "document.querySelector('[name=\"scheduled_at\"]').value = arguments[0]",
+            przeszla_data,
+        )
         self.selenium.find_element(By.CSS_SELECTOR, 'button.btn-szkp--primary').click()
         self.assertIn(
             f'/szkp/sprawy/{self.sprawa.pk}/terminy/nowy/',
