@@ -1,0 +1,147 @@
+from datetime import datetime, timedelta, timezone
+
+from django.contrib.auth.models import User
+from django.test import tag
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import Select, WebDriverWait
+
+from szkp.models import (
+    Case, CaseType, Client, ClientType, CourtHearing, HearingStatus,
+    HearingType, Lawyer,
+)
+
+from Functional_tests.base import SzkpSeleniumTestCase
+
+
+@tag('functional')
+class US06CourtHearingsTest(SzkpSeleniumTestCase):
+
+    def setUp(self):
+        self.selenium.get(self.live_server_url)
+        self.selenium.delete_all_cookies()
+        self.user = User.objects.create_user(
+            username='testprawnik', password='testpass123', is_staff=True,
+        )
+        self.lawyer = Lawyer.objects.create(
+            user=self.user, first_name='Jan', last_name='Prawnik',
+            bar_number='PL001',
+        )
+        self.klient = Client.objects.create(
+            type=ClientType.OSOBA_FIZYCZNA,
+            first_name='Anna', last_name='Klientka', pesel='89010112345',
+        )
+        self.sprawa = Case.objects.create(
+            client=self.klient, case_number='TST-US06-001',
+            title='Sprawa do testów terminów', case_type=CaseType.CYWILNA,
+        )
+        self._zaloguj(username='testprawnik', password='testpass123')
+
+    def _url_terminy(self):
+        return self.live_server_url + f'/szkp/sprawy/{self.sprawa.pk}/?tab=terminy'
+
+    # --- widoczność terminów na stronie sprawy (GREEN) ---
+
+    def test_zakladka_terminy_wyswietla_sie(self):
+        self.selenium.get(self._url_terminy())
+        self.assertIn('Terminy sądowe', self.selenium.page_source)
+
+    def test_brak_terminow_wyswietla_pusty_stan(self):
+        self.selenium.get(self._url_terminy())
+        self.assertIn('Brak terminów', self.selenium.page_source)
+
+    def test_termin_widoczny_na_stronie_sprawy(self):
+        CourtHearing.objects.create(
+            case=self.sprawa,
+            court_name='Sąd Rejonowy w Krakowie',
+            hearing_type=HearingType.ROZPRAWA,
+            scheduled_at=datetime.now(tz=timezone.utc) + timedelta(days=7),
+        )
+        self.selenium.get(self._url_terminy())
+        self.assertIn('Sąd Rejonowy w Krakowie', self.selenium.page_source)
+
+    # --- dodawanie terminu przez formularz (RED — brak widoku) ---
+
+    def test_dodaj_termin_z_data_w_przyszlosci(self):
+        self.selenium.get(self._url_terminy())
+        self.selenium.find_element(By.CSS_SELECTOR, 'a[href*="terminy/nowy"]').click()
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.NAME, 'court_name'))
+        )
+        self.selenium.find_element(By.NAME, 'court_name').send_keys('Sąd Okręgowy w Warszawie')
+        Select(self.selenium.find_element(By.NAME, 'hearing_type')).select_by_value('rozprawa')
+        przyszla_data = (datetime.now() + timedelta(days=14)).strftime('%Y-%m-%dT%H:%M')
+        self.selenium.find_element(By.NAME, 'scheduled_at').send_keys(przyszla_data)
+        self.selenium.find_element(By.CSS_SELECTOR, 'button.btn-szkp--primary').click()
+        WebDriverWait(self.selenium, 5).until(
+            EC.url_contains('tab=terminy')
+        )
+        self.assertIn('Sąd Okręgowy w Warszawie', self.selenium.page_source)
+
+    def test_walidacja_data_w_przeszlosci_blokuje(self):
+        self.selenium.get(
+            self.live_server_url + f'/szkp/sprawy/{self.sprawa.pk}/terminy/nowy/'
+        )
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.NAME, 'court_name'))
+        )
+        self.selenium.find_element(By.NAME, 'court_name').send_keys('Sąd Rejonowy w Gdańsku')
+        Select(self.selenium.find_element(By.NAME, 'hearing_type')).select_by_value('rozprawa')
+        przeszla_data = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M')
+        self.selenium.find_element(By.NAME, 'scheduled_at').send_keys(przeszla_data)
+        self.selenium.find_element(By.CSS_SELECTOR, 'button.btn-szkp--primary').click()
+        self.assertIn(
+            f'/szkp/sprawy/{self.sprawa.pk}/terminy/nowy/',
+            self.selenium.current_url,
+        )
+
+    def test_nowy_termin_ma_domyslny_status_planowany(self):
+        self.selenium.get(
+            self.live_server_url + f'/szkp/sprawy/{self.sprawa.pk}/terminy/nowy/'
+        )
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.NAME, 'court_name'))
+        )
+        self.selenium.find_element(By.NAME, 'court_name').send_keys('Sąd Apelacyjny w Łodzi')
+        Select(self.selenium.find_element(By.NAME, 'hearing_type')).select_by_value('posiedzenie')
+        przyszla_data = (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%dT%H:%M')
+        self.selenium.find_element(By.NAME, 'scheduled_at').send_keys(przyszla_data)
+        self.selenium.find_element(By.CSS_SELECTOR, 'button.btn-szkp--primary').click()
+        WebDriverWait(self.selenium, 5).until(
+            EC.url_contains('tab=terminy')
+        )
+        self.assertIn('Planowany', self.selenium.page_source)
+
+    def test_nowy_termin_ma_domyslne_przypomnienie_1440(self):
+        self.selenium.get(
+            self.live_server_url + f'/szkp/sprawy/{self.sprawa.pk}/terminy/nowy/'
+        )
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.NAME, 'reminder_minutes_before'))
+        )
+        pole = self.selenium.find_element(By.NAME, 'reminder_minutes_before')
+        self.assertEqual(pole.get_attribute('value'), '1440')
+
+    # --- zmiana statusu terminu (RED — brak widoku edycji) ---
+
+    def test_zmiana_statusu_terminu_na_odbyty(self):
+        termin = CourtHearing.objects.create(
+            case=self.sprawa,
+            court_name='Sąd Rejonowy w Poznaniu',
+            hearing_type=HearingType.ROZPRAWA,
+            scheduled_at=datetime.now(tz=timezone.utc) + timedelta(days=3),
+            status=HearingStatus.PLANOWANY,
+        )
+        self.selenium.get(
+            self.live_server_url
+            + f'/szkp/sprawy/{self.sprawa.pk}/terminy/{termin.pk}/edytuj/'
+        )
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.NAME, 'status'))
+        )
+        Select(self.selenium.find_element(By.NAME, 'status')).select_by_value('odbyty')
+        self.selenium.find_element(By.CSS_SELECTOR, 'button.btn-szkp--primary').click()
+        WebDriverWait(self.selenium, 5).until(
+            EC.url_contains('tab=terminy')
+        )
+        self.assertIn('Odbyty', self.selenium.page_source)
