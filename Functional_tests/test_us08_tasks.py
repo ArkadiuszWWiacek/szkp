@@ -373,6 +373,33 @@ class US08TasksTest(SzkpSeleniumTestCase):
         )
         self.assertNotIn(f'?parent={sub.pk}', self.selenium.page_source)
 
+    # --- dodawanie zadania z poziomu zakładki Zadania w szczegółach sprawy ---
+
+    def _url_zadania_sprawy(self):
+        return self.live_server_url + f'/szkp/sprawy/{self.sprawa.pk}/?tab=zadania'
+
+    def test_przycisk_dodaj_zadanie_na_stronie_sprawy_prowadzi_do_formularza(self):
+        self.selenium.get(self._url_zadania_sprawy())
+        self.selenium.find_element(By.CSS_SELECTOR, f'a[href*="/sprawy/{self.sprawa.pk}/zadania/nowe"]').click()
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.NAME, 'title'))
+        )
+
+    def test_dodaj_zadanie_ze_sprawy_powiazuje_je_ze_sprawa(self):
+        self.selenium.get(self._url_zadania_sprawy())
+        self.selenium.find_element(By.CSS_SELECTOR, f'a[href*="/sprawy/{self.sprawa.pk}/zadania/nowe"]').click()
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.NAME, 'title'))
+        )
+        self.selenium.find_element(By.NAME, 'title').send_keys('Zadanie ze sprawy')
+        self.selenium.find_element(By.CSS_SELECTOR, 'button.btn-szkp--primary').click()
+        WebDriverWait(self.selenium, 5).until(
+            EC.url_contains('tab=zadania')
+        )
+        zadanie = Task.objects.filter(title='Zadanie ze sprawy').first()
+        self.assertIsNotNone(zadanie)
+        self.assertEqual(zadanie.case, self.sprawa)
+
     def test_dodaj_podzadanie_przez_link_z_formularza(self):
         parent = self._nowe_zadanie(title='Zadanie z podzadaniem')
         self.selenium.get(self.live_server_url + f'/szkp/zadania/{parent.pk}/edytuj/')

@@ -201,7 +201,7 @@
     <div class="szkp-card">
         <div class="szkp-card__header">
             <h2 class="szkp-card__title">Zadania</h2>
-            <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Dodaj zadanie</a>
+            <a href="{% url 'szkp:case_task_new' case.pk %}" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Dodaj zadanie</a>
         </div>
         {% if tasks %}
         {% for task in tasks %}
@@ -245,7 +245,7 @@
         <div class="szkp-empty szkp-empty--compact">
             <div class="szkp-empty__title">Brak zadań</div>
             <div class="szkp-empty__desc">Nie dodano jeszcze żadnych zadań do tej sprawy.</div>
-            <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Dodaj zadanie</a>
+            <a href="{% url 'szkp:case_task_new' case.pk %}" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Dodaj zadanie</a>
         </div>
         {% endif %}
     </div>

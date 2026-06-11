@@ -4,11 +4,21 @@
 {% block content %}
 <div class="szkp-page szkp-page--narrow">
 
+    {% if case %}
+    <div class="szkp-breadcrumb mb-2">
+        <a href="{% url 'szkp:case_list' %}">Sprawy</a>
+        <span class="szkp-breadcrumb__sep">›</span>
+        <a href="{% url 'szkp:case_detail' case.pk %}?tab=zadania">{{ case.case_number }}</a>
+        <span class="szkp-breadcrumb__sep">›</span>
+        <span>Nowe zadanie</span>
+    </div>
+    {% else %}
     <div class="szkp-breadcrumb mb-2">
         <a href="{% url 'szkp:my_tasks' %}">Moje zadania</a>
         <span class="szkp-breadcrumb__sep">›</span>
         <span>{% if task %}Edytuj zadanie{% else %}Nowe zadanie{% endif %}</span>
     </div>
+    {% endif %}
 
     <div class="szkp-page-header">
         <h1 class="szkp-page-title">{% if task %}Edytuj zadanie{% else %}Nowe zadanie{% endif %}</h1>
@@ -67,7 +77,11 @@
                 <hr class="divider mb-4">
 
                 <div class="d-flex justify-content-end gap-3">
+                    {% if case %}
+                    <a href="{% url 'szkp:case_detail' case.pk %}?tab=zadania" class="btn-szkp btn-szkp--outline">Anuluj</a>
+                    {% else %}
                     <a href="{% url 'szkp:my_tasks' %}" class="btn-szkp btn-szkp--outline">Anuluj</a>
+                    {% endif %}
                     <button type="submit" class="btn-szkp btn-szkp--primary">
                         {% if task %}Zapisz zmiany{% else %}Dodaj zadanie{% endif %}
                     </button>

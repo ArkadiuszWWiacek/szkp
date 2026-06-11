@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.db.models import Case as DbCase, IntegerField, Value, When
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -7,7 +8,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from szkp.forms import TaskForm
-from szkp.models import Lawyer, Task, TaskPriority, TaskStatus
+from szkp.models import Case, CaseLawyer, Lawyer, Task, TaskPriority, TaskStatus
 
 
 @login_required
@@ -53,7 +54,7 @@ def my_tasks(request):
     return render(request, 'szkp/my_tasks.html', context)
 
 
-def _task_context(task, form_data, errors, parent_pk=None):
+def _task_context(task, form_data, errors, parent_pk=None, case=None):
     return {
         'task': task,
         'form_data': form_data,
@@ -62,14 +63,26 @@ def _task_context(task, form_data, errors, parent_pk=None):
         'status_choices': TaskStatus.choices,
         'can_add_subtask': task is not None and task.parent_task_id is None,
         'parent_pk': parent_pk,
+        'case': case,
     }
 
 
 @login_required
-def task_form(request, pk=None):
+def task_form(request, pk=None, case_pk=None):
     task = get_object_or_404(Task, pk=pk) if pk else None
     lawyer = get_object_or_404(Lawyer, user=request.user)
-    redirect_url = reverse('szkp:my_tasks')
+
+    case = None
+    if case_pk:
+        case = get_object_or_404(Case, pk=case_pk)
+        if not request.user.is_staff:
+            if not CaseLawyer.objects.filter(case=case, lawyer=lawyer).exists():
+                raise PermissionDenied
+
+    redirect_url = (
+        reverse('szkp:case_detail', kwargs={'pk': case_pk}) + '?tab=zadania'
+        if case_pk else reverse('szkp:my_tasks')
+    )
 
     if request.method == 'POST':
         form = TaskForm(request.POST)
@@ -84,12 +97,14 @@ def task_form(request, pk=None):
                 new_status = cd.get('status') or TaskStatus.NOWE
                 if new_status == TaskStatus.ZAKOŃCZONE and obj.has_unfinished_subtasks:
                     errors = {'status': ['Nie można zakończyć zadania — najpierw zakończ wszystkie podzadania.']}
-                    return render(request, 'szkp/task_form.html', _task_context(task, request.POST, errors))
+                    return render(request, 'szkp/task_form.html', _task_context(task, request.POST, errors, case=case))
                 obj.status = new_status
             else:
                 parent_pk = request.POST.get('parent_task')
                 if parent_pk:
                     obj.parent_task_id = int(parent_pk)
+                if case:
+                    obj.case = case
             obj.save()
             messages.success(request, 'Zadanie zostało zapisane.')
             return redirect(redirect_url)
@@ -98,7 +113,7 @@ def task_form(request, pk=None):
         return render(
             request,
             'szkp/task_form.html',
-            _task_context(task, request.POST, form.errors, parent_pk=parent_pk),
+            _task_context(task, request.POST, form.errors, parent_pk=parent_pk, case=case),
         )
 
     parent_pk = request.GET.get('parent')
@@ -119,7 +134,7 @@ def task_form(request, pk=None):
     return render(
         request,
         'szkp/task_form.html',
-        _task_context(task, form_data, {}, parent_pk=parent_pk),
+        _task_context(task, form_data, {}, parent_pk=parent_pk, case=case),
     )
 
 

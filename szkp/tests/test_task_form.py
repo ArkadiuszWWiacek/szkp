@@ -1,7 +1,7 @@
 from django.test import tag
 from django.urls import reverse
 
-from szkp.models import Task, TaskPriority, TaskStatus
+from szkp.models import Case, CaseLawyer, CaseLawyerRole, CaseType, Task, TaskPriority, TaskStatus
 from szkp.tests.base import StaffLawyerTestCase
 
 
@@ -74,3 +74,46 @@ class TaskFormCanAddSubtaskTest(StaffLawyerTestCase):
     def test_tworzenie_nowego_bez_parent_param_parent_pk_none(self):
         response = self.client.get(reverse('szkp:task_new'))
         self.assertIsNone(response.context['parent_pk'])
+
+
+@tag('integration')
+class TaskFormCaseTaskTest(StaffLawyerTestCase):
+    """task_form: tworzenie zadania powiązanego ze sprawą przez case_task_new."""
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.sprawa = Case.objects.create(
+            client=cls.klient, case_number='TST-TASK-CASE-001',
+            title='Sprawa do testów zadań', case_type=CaseType.CYWILNA,
+        )
+        CaseLawyer.objects.create(
+            case=cls.sprawa, lawyer=cls.lawyer, role=CaseLawyerRole.PROWADZACY,
+        )
+
+    def _url_new(self):
+        return reverse('szkp:case_task_new', kwargs={'case_pk': self.sprawa.pk})
+
+    def test_get_zwraca_200_i_case_w_kontekscie(self):
+        response = self.client.get(self._url_new())
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['case'], self.sprawa)
+
+    def test_post_ustawia_case_na_zadaniu(self):
+        self.client.post(self._url_new(), {
+            'title': 'Zadanie sprawy',
+            'priority': TaskPriority.NORMALNA,
+        })
+        task = Task.objects.filter(title='Zadanie sprawy').first()
+        self.assertIsNotNone(task)
+        self.assertEqual(task.case, self.sprawa)
+
+    def test_post_przekierowuje_na_szczegoly_sprawy(self):
+        response = self.client.post(self._url_new(), {
+            'title': 'Zadanie przekierowania',
+            'priority': TaskPriority.NORMALNA,
+        })
+        self.assertRedirects(
+            response,
+            reverse('szkp:case_detail', kwargs={'pk': self.sprawa.pk}) + '?tab=zadania',
+        )
