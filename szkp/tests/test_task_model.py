@@ -1,40 +1,33 @@
-from django.test import tag
+from unittest.mock import patch
+
+from django.db import models as django_models
+from django.test import SimpleTestCase, tag
 
 from szkp.models import Task, TaskPriority, TaskStatus
 from szkp.tests.base import StaffLawyerTestCase
 
 
 @tag('unit')
-class TaskDefaultsTest(StaffLawyerTestCase):
-    """Task model: wartości domyślne pól."""
-
-    def _make_task(self, **kwargs):
-        return Task.objects.create(
-            title='Test', assigned_lawyer=self.lawyer, created_by=self.lawyer, **kwargs
-        )
+class TaskDefaultsTest(SimpleTestCase):
+    """Task model: wartości domyślne pól — bez zapisu do DB."""
 
     def test_domyslny_status_to_nowe(self):
-        task = self._make_task()
-        self.assertEqual(task.status, TaskStatus.NOWE)
+        self.assertEqual(Task().status, TaskStatus.NOWE)
 
     def test_domyslny_priorytet_to_normalna(self):
-        task = self._make_task()
-        self.assertEqual(task.priority, TaskPriority.NORMALNA)
+        self.assertEqual(Task().priority, TaskPriority.NORMALNA)
 
     def test_completed_at_domyslnie_none(self):
-        task = self._make_task()
-        self.assertIsNone(task.completed_at)
+        self.assertIsNone(Task().completed_at)
 
     def test_zadanie_moze_istniec_bez_sprawy(self):
-        task = self._make_task(case=None)
-        self.assertIsNone(task.case)
+        self.assertIsNone(Task(case=None).case)
 
     def test_parent_task_opcjonalne(self):
-        task = self._make_task(parent_task=None)
-        self.assertIsNone(task.parent_task)
+        self.assertIsNone(Task(parent_task=None).parent_task)
 
 
-@tag('unit')
+@tag('integration')
 class TaskSubtaskTest(StaffLawyerTestCase):
     """Task model: podzadania i relacja parent_task."""
 
@@ -61,22 +54,18 @@ class TaskSubtaskTest(StaffLawyerTestCase):
 
 
 @tag('unit')
-class TaskStatusBehaviorTest(StaffLawyerTestCase):
-    """Task model: zachowanie statusu (RED — brak custom save)."""
+class TaskStatusBehaviorTest(SimpleTestCase):
+    """Task model: logika save() — ustawianie completed_at."""
 
     def test_zmiana_statusu_na_zakonczone_ustawia_completed_at(self):
-        task = Task.objects.create(
-            title='Do zakończenia',
-            assigned_lawyer=self.lawyer,
-            created_by=self.lawyer,
-        )
+        task = Task(title='Do zakończenia')
         task.status = TaskStatus.ZAKOŃCZONE
-        task.save()
-        task.refresh_from_db()
+        with patch.object(django_models.Model, 'save'):
+            task.save()
         self.assertIsNotNone(task.completed_at)
 
 
-@tag('unit')
+@tag('integration')
 class TaskHasUnfinishedSubtasksTest(StaffLawyerTestCase):
     """Task.has_unfinished_subtasks: wykrywa niezakończone podzadania."""
 

@@ -5,19 +5,20 @@ from szkp.models import Task, TaskStatus
 from szkp.tests.base import StaffLawyerTestCase
 
 
-@tag('unit')
+@tag('integration')
 class TaskChangeStatusViewTest(StaffLawyerTestCase):
     """View task_change_status: zmiana statusu zadania przez POST."""
 
-    def setUp(self):
-        super().setUp()
-        self.task = Task.objects.create(
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.task = Task.objects.create(
             title='Zadanie testowe',
-            assigned_lawyer=self.lawyer,
-            created_by=self.lawyer,
+            assigned_lawyer=cls.lawyer,
+            created_by=cls.lawyer,
             status=TaskStatus.NOWE,
         )
-        self.url = reverse('szkp:task_change_status', args=[self.task.pk])
+        cls.url = reverse('szkp:task_change_status', args=[cls.task.pk])
 
     def test_zmiana_statusu_na_w_toku(self):
         self.client.post(self.url, {'status': TaskStatus.W_TOKU})

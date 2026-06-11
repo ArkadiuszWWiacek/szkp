@@ -1,36 +1,37 @@
 from django.db.models import RestrictedError
-from django.test import TestCase, tag
+from django.test import SimpleTestCase, TestCase, tag
 
 from szkp.models import Case, CaseType, Client, ClientType
 
+
 @tag('unit')
-class ClientModelTest(TestCase):
+class ClientCleanTest(SimpleTestCase):
     def test_client_without_pesel_raises_validation_error(self):
         client = Client(type=ClientType.OSOBA_FIZYCZNA)
-        
+
         with self.assertRaises(Exception) as context:
             client.clean()
-            
+
         self.assertIn('PESEL wymagany dla osoby fizycznej', str(context.exception))
-    
+
     def test_client_without_nip_raises_validation_error(self):
         client = Client(type=ClientType.FIRMA)
-        
+
         with self.assertRaises(Exception) as context:
             client.clean()
-            
+
         self.assertIn('NIP wymagany dla firmy', str(context.exception))
-        
+
     def test_client_incorrect_pesel_validation(self):
-        client = Client(type=ClientType.OSOBA_FIZYCZNA, pesel="1234567890")  # Invalid PESEL
-        
+        client = Client(type=ClientType.OSOBA_FIZYCZNA, pesel='1234567890')
+
         with self.assertRaises(Exception) as context:
             client.full_clean()
-            
+
         self.assertIn('pesel', str(context.exception))
 
     def test_client_incorrect_nip_validation(self):
-        client = Client(type=ClientType.FIRMA, nip="123456789012")  # Invalid NIP
+        client = Client(type=ClientType.FIRMA, nip='123456789012')
 
         with self.assertRaises(Exception) as context:
             client.full_clean()
@@ -38,22 +39,30 @@ class ClientModelTest(TestCase):
         self.assertIn('nip', str(context.exception))
 
     def test_client_type_osobafizyczna_clean(self):
-        client = Client(type=ClientType.OSOBA_FIZYCZNA, pesel="12345678901", nip="1234567890123", company_name="Test Company")
-        
+        client = Client(
+            type=ClientType.OSOBA_FIZYCZNA,
+            pesel='12345678901',
+            nip='1234567890123',
+            company_name='Test Company',
+        )
+
         client.clean()
-        
-        self.assertEqual(client.pesel, "12345678901")
-        self.assertEqual(client.nip, None)
-        self.assertEqual(client.company_name, None)
-        
+
+        self.assertEqual(client.pesel, '12345678901')
+        self.assertIsNone(client.nip)
+        self.assertIsNone(client.company_name)
+
     def test_client_type_firma_clean(self):
-        client = Client(type=ClientType.FIRMA, nip="1234567890123", pesel="12345678901")
+        client = Client(type=ClientType.FIRMA, nip='1234567890123', pesel='12345678901')
 
         client.clean()
 
-        self.assertEqual(client.nip, "1234567890123")
-        self.assertEqual(client.pesel, None)
+        self.assertEqual(client.nip, '1234567890123')
+        self.assertIsNone(client.pesel)
 
+
+@tag('integration')
+class ClientPersistenceTest(TestCase):
     def test_usuniecie_klienta_bez_spraw_jest_mozliwe(self):
         klient = Client.objects.create(
             type=ClientType.OSOBA_FIZYCZNA,

@@ -1,8 +1,8 @@
-from django.test import TestCase, tag
+from django.test import SimpleTestCase, tag
 from szkp.views import home
 
 @tag('integration')
-class HomeViewTest(TestCase):
+class HomeViewTest(SimpleTestCase):
     def test_home_view_status_code(self):
         response = self.client.get('/szkp/')
         self.assertEqual(response.status_code, 200)

@@ -5,18 +5,19 @@ from szkp.models import Task, TaskStatus
 from szkp.tests.base import StaffLawyerTestCase
 
 
-@tag('unit')
+@tag('integration')
 class TaskDeleteViewTest(StaffLawyerTestCase):
     """View task_delete: usuwanie zadania z potwierdzeniem."""
 
-    def setUp(self):
-        super().setUp()
-        self.task = Task.objects.create(
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.task = Task.objects.create(
             title='Zadanie do usunięcia',
-            assigned_lawyer=self.lawyer,
-            created_by=self.lawyer,
+            assigned_lawyer=cls.lawyer,
+            created_by=cls.lawyer,
         )
-        self.url = reverse('szkp:task_delete', args=[self.task.pk])
+        cls.url = reverse('szkp:task_delete', args=[cls.task.pk])
 
     def test_get_renderuje_strone_potwierdzenia(self):
         response = self.client.get(self.url)

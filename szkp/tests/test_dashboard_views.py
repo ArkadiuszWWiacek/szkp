@@ -9,11 +9,12 @@ from szkp.tests.utils import make_due
 class DashboardUpcomingTasksViewTest(TestCase):
     """Dashboard: queryset upcoming_tasks w kontekście widoku."""
 
-    def setUp(self):
-        self.lawyer = Lawyer.objects.create(
+    @classmethod
+    def setUpTestData(cls):
+        cls.lawyer = Lawyer.objects.create(
             first_name='Test', last_name='Prawnik', bar_number='TST/DV/001'
         )
-        self.user = User.objects.create_user(username='test_prawnik', password='x')
+        cls.user = User.objects.create_user(username='test_prawnik', password='x')
 
     def _get_dashboard(self):
         self.client.force_login(self.user)

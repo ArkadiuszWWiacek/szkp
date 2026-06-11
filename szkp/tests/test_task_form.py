@@ -5,7 +5,7 @@ from szkp.models import Task, TaskPriority, TaskStatus
 from szkp.tests.base import StaffLawyerTestCase
 
 
-@tag('unit')
+@tag('integration')
 class TaskFormParentTaskTest(StaffLawyerTestCase):
     """task_form: tworzenie podzadania z parent_task."""
 
@@ -34,7 +34,7 @@ class TaskFormParentTaskTest(StaffLawyerTestCase):
         self.assertIsNone(task.parent_task)
 
 
-@tag('unit')
+@tag('integration')
 class TaskFormCanAddSubtaskTest(StaffLawyerTestCase):
     """task_form: can_add_subtask i parent_pk w kontekście."""
 

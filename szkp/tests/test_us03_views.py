@@ -10,41 +10,43 @@ from szkp.models import (
 
 
 class _US03SetUpMixin:
-    def setUp(self):
-        self.lawyer_a = Lawyer.objects.create(
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.lawyer_a = Lawyer.objects.create(
             first_name='Andrzej', last_name='Adamski', bar_number='TST/A/001'
         )
-        self.user_a = User.objects.create_user(username='andrzej_adamski', password='x')
-        self.lawyer_a.user = self.user_a
-        self.lawyer_a.save()
+        cls.user_a = User.objects.create_user(username='andrzej_adamski', password='x')
+        cls.lawyer_a.user = cls.user_a
+        cls.lawyer_a.save()
 
-        self.lawyer_b = Lawyer.objects.create(
+        cls.lawyer_b = Lawyer.objects.create(
             first_name='Barbara', last_name='Bogacka', bar_number='TST/B/001'
         )
-        self.user_b = User.objects.create_user(username='barbara_bogacka', password='x')
-        self.lawyer_b.user = self.user_b
-        self.lawyer_b.save()
+        cls.user_b = User.objects.create_user(username='barbara_bogacka', password='x')
+        cls.lawyer_b.user = cls.user_b
+        cls.lawyer_b.save()
 
-        self.admin = User.objects.create_user(
+        cls.admin = User.objects.create_user(
             username='admin_test', password='x', is_staff=True, is_superuser=True
         )
 
         klient = Client.objects.create(
             type=ClientType.OSOBA_FIZYCZNA, pesel='12345678901'
         )
-        self.case_a = Case.objects.create(
+        cls.case_a = Case.objects.create(
             client=klient, case_number='TST-A-001',
             title='Sprawa Adwokata A', case_type=CaseType.CYWILNA,
         )
         CaseLawyer.objects.create(
-            case=self.case_a, lawyer=self.lawyer_a, role=CaseLawyerRole.PROWADZACY
+            case=cls.case_a, lawyer=cls.lawyer_a, role=CaseLawyerRole.PROWADZACY
         )
-        self.case_b = Case.objects.create(
+        cls.case_b = Case.objects.create(
             client=klient, case_number='TST-B-001',
             title='Sprawa Adwokata B', case_type=CaseType.CYWILNA,
         )
         CaseLawyer.objects.create(
-            case=self.case_b, lawyer=self.lawyer_b, role=CaseLawyerRole.PROWADZACY
+            case=cls.case_b, lawyer=cls.lawyer_b, role=CaseLawyerRole.PROWADZACY
         )
 
 
