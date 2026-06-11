@@ -1284,6 +1284,20 @@ a.sig { text-decoration: none; }
   white-space: nowrap;
 }
 
+a.szkp-task,
+a.hearing-item,
+a.invoice-item {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+a.hearing-item:hover,
+a.invoice-item:hover {
+  background: var(--szkp-paper);
+  transition: background 0.1s;
+}
+
 /* ============================================================
    LAWYER ITEM
    ============================================================ */

@@ -91,7 +91,7 @@
                     </div>
                     {% if today_tasks %}
                         {% for task in today_tasks %}
-                            <div class="szkp-task">
+                            {% if task.case %}<a href="{% url 'szkp:case_detail' task.case.pk %}" class="szkp-task">{% else %}<div class="szkp-task">{% endif %}
                                 <div class="szkp-task__icon
                                             {% if task.status == 'zakończone' %}
                                                 szkp-task__icon--done
@@ -111,7 +111,7 @@
                                         {% endif %}
                                     </div>
                                 </div>
-                            </div>
+                            {% if task.case %}</a>{% else %}</div>{% endif %}
                         {% endfor %}
                     {% else %}
                         <div class="szkp-empty szkp-empty--md">
@@ -130,7 +130,7 @@
                             Nadchodzące — 7 dni
                         </div>
                         {% for task in upcoming_tasks %}
-                            <div class="szkp-task">
+                            {% if task.case %}<a href="{% url 'szkp:case_detail' task.case.pk %}" class="szkp-task">{% else %}<div class="szkp-task">{% endif %}
                                 <div class="szkp-task__icon">
                                 </div>
                                 <div class="szkp-task__body">
@@ -145,7 +145,7 @@
                                         {% endif %}
                                     </div>
                                 </div>
-                            </div>
+                            {% if task.case %}</a>{% else %}</div>{% endif %}
                         {% endfor %}
                     {% endif %}
                 </div>
@@ -161,20 +161,18 @@
                     </div>
                     {% if upcoming_hearings %}
                         {% for hearing in upcoming_hearings %}
-                            <div class="hearing-item">
+                            <a href="{% url 'szkp:case_detail' hearing.case.pk %}" class="hearing-item">
                                 <div class="hearing-item__date">
                                     {{ hearing.scheduled_at|date:"d.m" }}
                                 </div>
                                 <div class="hearing-item__type">
                                     {{ hearing.get_hearing_type_display }}
                                 </div>
-                                {% if hearing.case %}
-                                    <span class="sig"><span class="sig-bar sig-bar--{{ hearing.case.case_type }}"></span>{{ hearing.case.case_number }}</span>
-                                {% endif %}
+                                <span class="sig"><span class="sig-bar sig-bar--{{ hearing.case.case_type }}"></span>{{ hearing.case.case_number }}</span>
                                 <div class="hearing-item__court">
                                     {{ hearing.court_name }}
                                 </div>
-                            </div>
+                            </a>
                         {% endfor %}
                     {% else %}
                         <div class="szkp-empty szkp-empty--md">
@@ -199,7 +197,7 @@
                     </div>
                     {% if overdue_invoices %}
                         {% for inv in overdue_invoices %}
-                            <div class="invoice-item">
+                            {% if inv.case %}<a href="{% url 'szkp:case_detail' inv.case.pk %}" class="invoice-item">{% else %}<div class="invoice-item">{% endif %}
                                 <div class="invoice-item__number">
                                     {{ inv.invoice_number }}
                                 </div>
@@ -215,7 +213,7 @@
                                     +{{ inv.due_date|timesince:today|cut:" days" }} dni
                                 </div>
                                 <span class="badge-status badge-status--przeterminowana ms-3">Przeterminowana</span>
-                            </div>
+                            {% if inv.case %}</a>{% else %}</div>{% endif %}
                         {% endfor %}
                     {% else %}
                         <div class="szkp-empty szkp-empty--compact">
