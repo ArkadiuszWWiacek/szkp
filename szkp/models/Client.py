@@ -26,8 +26,12 @@ class Client(models.Model):
     class Meta:
         db_table = 'CLIENTS'
 
+    @property
+    def is_individual(self):
+        return self.type == ClientType.OSOBA_FIZYCZNA
+
     def clean(self):
-        if self.type == 'osobafizyczna':
+        if self.type == ClientType.OSOBA_FIZYCZNA:
             if not self.pesel:
                 raise ValidationError('PESEL wymagany dla osoby fizycznej.')
             self.nip = None
@@ -36,4 +40,6 @@ class Client(models.Model):
             if not self.nip:
                 raise ValidationError('NIP wymagany dla firmy.')
             self.pesel = None
+            self.first_name = None
+            self.last_name = None
 

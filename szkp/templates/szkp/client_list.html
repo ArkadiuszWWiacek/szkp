@@ -42,7 +42,7 @@
                 <tr>
                     <td>
                         <div class="fw-medium fs-135">
-                            {% if client.type == 'osobafizyczna' %}
+                            {% if client.is_individual %}
                                 {{ client.first_name }} {{ client.last_name }}
                             {% else %}
                                 {{ client.company_name }}

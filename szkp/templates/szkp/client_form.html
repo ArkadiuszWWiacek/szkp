@@ -156,7 +156,7 @@
 
                 <div class="d-flex justify-content-end gap-3">
                     <a href="{% url 'szkp:client_list' %}" class="btn-szkp btn-szkp--outline">Anuluj</a>
-                    <button type="submit" class="btn-szkp btn-szkp--primary">Save changes</button>
+                    <button type="submit" class="btn-szkp btn-szkp--primary">{% if client %}Zapisz zmiany{% else %}Dodaj klienta{% endif %}</button>
                 </div>
             </form>
         </div>
