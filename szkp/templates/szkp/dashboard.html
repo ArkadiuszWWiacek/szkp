@@ -31,8 +31,6 @@
                 <h2 class="szkp-card__title">
                     Sprawy wg statusu
                 </h2>
-                <a href="{% url 'szkp:case_list' %}"
-                   class="btn-szkp btn-szkp--outline btn-szkp--sm">Wszystkie sprawy</a>
             </div>
             <div class="szkp-stat-grid">
                 <div class="szkp-stat szkp-stat--sep">
@@ -91,27 +89,35 @@
                     </div>
                     {% if today_tasks %}
                         {% for task in today_tasks %}
-                            {% if task.case %}<a href="{% url 'szkp:case_detail' task.case.pk %}" class="szkp-task">{% else %}<div class="szkp-task">{% endif %}
-                                <div class="szkp-task__icon
-                                            {% if task.status == 'zakończone' %}
-                                                szkp-task__icon--done
-                                            {% endif %}">
-                                    {% if task.status == 'zakończone' %}
-                                        ✓
+                            {% if task.case %}
+                                <a href="{% url 'szkp:case_detail' task.case.pk %}" class="szkp-task">
+                                {% else %}
+                                    <div class="szkp-task">
                                     {% endif %}
-                                </div>
-                                <div class="szkp-task__body">
-                                    <div class="szkp-task__title">
-                                        {{ task.title }}
-                                    </div>
-                                    <div class="szkp-task__meta">
-                                        <span class="badge-prio badge-prio--{{ task.priority }}">{{ task.get_priority_display }}</span>
-                                        {% if task.case %}
-                                            <span class="sig"><span class="sig-bar sig-bar--{{ task.case.case_type }}"></span>{{ task.case.case_number }}</span>
+                                    <div class="szkp-task__icon
+                                                {% if task.status == 'zakończone' %}
+                                                    szkp-task__icon--done
+                                                {% endif %}">
+                                        {% if task.status == 'zakończone' %}
+                                            ✓
                                         {% endif %}
                                     </div>
+                                    <div class="szkp-task__body">
+                                        <div class="szkp-task__title">
+                                            {{ task.title }}
+                                        </div>
+                                        <div class="szkp-task__meta">
+                                            <span class="badge-prio badge-prio--{{ task.priority }}">{{ task.get_priority_display }}</span>
+                                            {% if task.case %}
+                                                <span class="sig"><span class="sig-bar sig-bar--{{ task.case.case_type }}"></span>{{ task.case.case_number }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% if task.case %}
+                                    </a>
+                                {% else %}
                                 </div>
-                            {% if task.case %}</a>{% else %}</div>{% endif %}
+                            {% endif %}
                         {% endfor %}
                     {% else %}
                         <div class="szkp-empty szkp-empty--md">
@@ -130,22 +136,30 @@
                             Nadchodzące — 7 dni
                         </div>
                         {% for task in upcoming_tasks %}
-                            {% if task.case %}<a href="{% url 'szkp:case_detail' task.case.pk %}" class="szkp-task">{% else %}<div class="szkp-task">{% endif %}
-                                <div class="szkp-task__icon">
-                                </div>
-                                <div class="szkp-task__body">
-                                    <div class="szkp-task__title">
-                                        {{ task.title }}
+                            {% if task.case %}
+                                <a href="{% url 'szkp:case_detail' task.case.pk %}" class="szkp-task">
+                                {% else %}
+                                    <div class="szkp-task">
+                                    {% endif %}
+                                    <div class="szkp-task__icon">
                                     </div>
-                                    <div class="szkp-task__meta">
-                                        <span class="badge-prio badge-prio--{{ task.priority }}">{{ task.get_priority_display }}</span>
-                                        <span class="font-mono text-faint fs-11">{{ task.due_date|date:"d.m" }}</span>
-                                        {% if task.case %}
-                                            <span class="sig"><span class="sig-bar sig-bar--{{ task.case.case_type }}"></span>{{ task.case.case_number }}</span>
-                                        {% endif %}
+                                    <div class="szkp-task__body">
+                                        <div class="szkp-task__title">
+                                            {{ task.title }}
+                                        </div>
+                                        <div class="szkp-task__meta">
+                                            <span class="badge-prio badge-prio--{{ task.priority }}">{{ task.get_priority_display }}</span>
+                                            <span class="font-mono text-faint fs-11">{{ task.due_date|date:"d.m" }}</span>
+                                            {% if task.case %}
+                                                <span class="sig"><span class="sig-bar sig-bar--{{ task.case.case_type }}"></span>{{ task.case.case_number }}</span>
+                                            {% endif %}
+                                        </div>
                                     </div>
+                                    {% if task.case %}
+                                    </a>
+                                {% else %}
                                 </div>
-                            {% if task.case %}</a>{% else %}</div>{% endif %}
+                            {% endif %}
                         {% endfor %}
                     {% endif %}
                 </div>
@@ -161,7 +175,8 @@
                     </div>
                     {% if upcoming_hearings %}
                         {% for hearing in upcoming_hearings %}
-                            <a href="{% url 'szkp:case_detail' hearing.case.pk %}" class="hearing-item">
+                            <a href="{% url 'szkp:case_detail' hearing.case.pk %}"
+                               class="hearing-item">
                                 <div class="hearing-item__date">
                                     {{ hearing.scheduled_at|date:"d.m" }}
                                 </div>
@@ -197,23 +212,31 @@
                     </div>
                     {% if overdue_invoices %}
                         {% for inv in overdue_invoices %}
-                            {% if inv.case %}<a href="{% url 'szkp:case_detail' inv.case.pk %}" class="invoice-item">{% else %}<div class="invoice-item">{% endif %}
-                                <div class="invoice-item__number">
-                                    {{ inv.invoice_number }}
+                            {% if inv.case %}
+                                <a href="{% url 'szkp:case_detail' inv.case.pk %}" class="invoice-item">
+                                {% else %}
+                                    <div class="invoice-item">
+                                    {% endif %}
+                                    <div class="invoice-item__number">
+                                        {{ inv.invoice_number }}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                    </div>
+                                    {% if inv.case %}
+                                        <span class="sig me-3"><span class="sig-bar sig-bar--{{ inv.case.case_type }}"></span>{{ inv.case.case_number }}</span>
+                                    {% endif %}
+                                    <div class="invoice-item__amount">
+                                        {{ inv.gross_amount|floatformat:2 }} {{ inv.currency }}
+                                    </div>
+                                    <div class="invoice-item__days ms-3">
+                                        +{{ inv.due_date|timesince:today|cut:" days" }} dni
+                                    </div>
+                                    <span class="badge-status badge-status--przeterminowana ms-3">Przeterminowana</span>
+                                    {% if inv.case %}
+                                    </a>
+                                {% else %}
                                 </div>
-                                <div class="flex-grow-1">
-                                </div>
-                                {% if inv.case %}
-                                    <span class="sig me-3"><span class="sig-bar sig-bar--{{ inv.case.case_type }}"></span>{{ inv.case.case_number }}</span>
-                                {% endif %}
-                                <div class="invoice-item__amount">
-                                    {{ inv.gross_amount|floatformat:2 }} {{ inv.currency }}
-                                </div>
-                                <div class="invoice-item__days ms-3">
-                                    +{{ inv.due_date|timesince:today|cut:" days" }} dni
-                                </div>
-                                <span class="badge-status badge-status--przeterminowana ms-3">Przeterminowana</span>
-                            {% if inv.case %}</a>{% else %}</div>{% endif %}
+                            {% endif %}
                         {% endfor %}
                     {% else %}
                         <div class="szkp-empty szkp-empty--compact">

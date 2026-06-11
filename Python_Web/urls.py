@@ -26,3 +26,8 @@ urlpatterns = [
     path("accounts/", include("django.contrib.auth.urls")),
     path("szkp/", include("szkp.urls", namespace="szkp")),
 ]
+
+handler400 = "Python_Web.views.handler_400"
+handler403 = "Python_Web.views.handler_403"
+handler404 = "Python_Web.views.handler_404"
+handler500 = "Python_Web.views.handler_500"

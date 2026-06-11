@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}500 – Błąd serwera{% endblock title %}
+{% block content %}
+<div class="szkp-page szkp-page--centered">
+    <div class="error-page__code">500</div>
+    <h1 class="szkp-page-title mb-2">Błąd serwera</h1>
+    <p class="home-hero__desc">
+        Wystąpił nieoczekiwany błąd. Spróbuj ponownie później.
+    </p>
+    <a href="{% url 'home' %}" class="btn-szkp btn-szkp--primary">Wróć na stronę główną →</a>
+</div>
+{% endblock content %}
