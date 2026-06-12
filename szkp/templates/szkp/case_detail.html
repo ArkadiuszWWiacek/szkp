@@ -225,6 +225,14 @@
                     {% endif %}
                 </div>
             </div>
+            {% if task.status != 'zakończone' %}
+            <form method="post" action="{% url 'szkp:task_change_status' task.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="zakończone">
+                <input type="hidden" name="next" value="{% url 'szkp:case_detail' case.pk %}?tab=zadania">
+                <button type="submit" class="btn-szkp btn-szkp--outline btn-szkp--sm" data-task-action="mark-completed">Zakończ</button>
+            </form>
+            {% endif %}
         </div>
         {% if task.task_set.exists %}
         <div class="szkp-subtask">
@@ -236,6 +244,14 @@
                 <div class="szkp-task__body">
                     <div class="szkp-task__title fs-13">{{ sub.title }}</div>
                 </div>
+                {% if sub.status != 'zakończone' %}
+                <form method="post" action="{% url 'szkp:task_change_status' sub.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="zakończone">
+                    <input type="hidden" name="next" value="{% url 'szkp:case_detail' case.pk %}?tab=zadania">
+                    <button type="submit" class="btn-szkp btn-szkp--outline btn-szkp--sm" data-task-action="mark-completed">Zakończ</button>
+                </form>
+                {% endif %}
             </div>
             {% endfor %}
         </div>

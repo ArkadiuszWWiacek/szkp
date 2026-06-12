@@ -416,3 +416,59 @@ class US08TasksTest(SzkpSeleniumTestCase):
             EC.url_contains('/szkp/zadania/')
         )
         self.assertIn('Nowe podzadanie', self.selenium.page_source)
+
+    # --- oznaczanie zadania jako zakończone z zakładki zadań sprawy ---
+
+    def test_przycisk_zakoncz_widoczny_przy_niezakonczonej_w_sprawie(self):
+        Task.objects.create(
+            title='Zadanie do zakończenia',
+            assigned_lawyer=self.lawyer,
+            created_by=self.lawyer,
+            case=self.sprawa,
+            status=TaskStatus.NOWE,
+        )
+        self.selenium.get(self._url_zadania_sprawy())
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located(
+                (By.CSS_SELECTOR, 'button[data-task-action="mark-completed"]')
+            )
+        )
+
+    def test_przycisk_zakoncz_niewidoczny_przy_zakonczonej_w_sprawie(self):
+        Task.objects.create(
+            title='Zadanie zakończone',
+            assigned_lawyer=self.lawyer,
+            created_by=self.lawyer,
+            case=self.sprawa,
+            status=TaskStatus.ZAKOŃCZONE,
+        )
+        self.selenium.get(self._url_zadania_sprawy())
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, '.szkp-task--done'))
+        )
+        btns = self.selenium.find_elements(
+            By.CSS_SELECTOR, 'button[data-task-action="mark-completed"]'
+        )
+        self.assertEqual(len(btns), 0)
+
+    def test_klik_zakoncz_zmienia_status_i_wraca_do_zakladki_zadania(self):
+        zadanie = Task.objects.create(
+            title='Zadanie jednego kliknięcia',
+            assigned_lawyer=self.lawyer,
+            created_by=self.lawyer,
+            case=self.sprawa,
+            status=TaskStatus.NOWE,
+        )
+        self.selenium.get(self._url_zadania_sprawy())
+        btn = WebDriverWait(self.selenium, 5).until(
+            EC.element_to_be_clickable(
+                (By.CSS_SELECTOR, 'button[data-task-action="mark-completed"]')
+            )
+        )
+        btn.click()
+        WebDriverWait(self.selenium, 5).until(
+            EC.url_contains('tab=zadania')
+        )
+        zadanie.refresh_from_db()
+        self.assertEqual(zadanie.status, TaskStatus.ZAKOŃCZONE)
+        self.assertIn('tab=zadania', self.selenium.current_url)
