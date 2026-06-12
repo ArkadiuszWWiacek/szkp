@@ -1071,6 +1071,11 @@ a.sig { text-decoration: none; }
   font-size: 12px;
 }
 
+.szkp-input--sm {
+  padding: 5px 8px;
+  font-size: 12px;
+}
+
 .szkp-subtask {
   margin-left: var(--sp-8);
   border-left: 2px solid var(--szkp-border);

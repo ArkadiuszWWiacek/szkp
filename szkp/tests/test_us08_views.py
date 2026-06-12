@@ -39,7 +39,7 @@ class MyTasksViewTest(StaffLawyerTestCase):
 
     def test_kontekst_zawiera_wymagane_klucze(self):
         r = self.client.get(self._url())
-        for key in ('tasks', 'status_filter', 'period_filter', 'status_choices', 'today'):
+        for key in ('tasks', 'status_filter', 'period_filter', 'status_choices', 'today', 'case_number_filter'):
             self.assertIn(key, r.context)
 
     def test_wyswietla_tylko_zadania_top_level(self):
@@ -82,6 +82,26 @@ class MyTasksViewTest(StaffLawyerTestCase):
         self.assertLess(pks.index(t_pilna.pk), pks.index(t_niska.pk))
 
     # --- filtrowanie po zalogowanym prawniku (RED — brak filtra) ---
+
+    def test_filtr_case_number_ogranicza_wyniki(self):
+        case_a = Case.objects.create(
+            client=self.klient, case_number='FILTER-ABC-001',
+            title='Sprawa ABC', case_type=CaseType.CYWILNA,
+        )
+        case_b = Case.objects.create(
+            client=self.klient, case_number='FILTER-XYZ-002',
+            title='Sprawa XYZ', case_type=CaseType.CYWILNA,
+        )
+        t_a = self._make_task(title='Zadanie ABC', case=case_a)
+        t_b = self._make_task(title='Zadanie XYZ', case=case_b)
+        r = self.client.get(self._url() + '?case_number=ABC')
+        pks = [t.pk for t in r.context['tasks']]
+        self.assertIn(t_a.pk, pks)
+        self.assertNotIn(t_b.pk, pks)
+
+    def test_filtr_case_number_przekazany_w_kontekscie(self):
+        r = self.client.get(self._url() + '?case_number=TST')
+        self.assertEqual(r.context['case_number_filter'], 'TST')
 
     def test_widok_filtruje_po_zalogowanym_prawniku(self):
         inny_user = User.objects.create_user(username='innyprawnik', password='pass')

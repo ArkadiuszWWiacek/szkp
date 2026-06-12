@@ -1,7 +1,7 @@
 from django.test import tag
 from django.urls import reverse
 
-from szkp.models import Case, CaseType, Task, TaskStatus
+from szkp.models import Task, TaskStatus
 from szkp.tests.base import StaffLawyerTestCase
 
 
@@ -89,49 +89,3 @@ class TaskChangeStatusViewTest(StaffLawyerTestCase):
         self.assertEqual(self.task.status, TaskStatus.ZAKOŃCZONE)
 
 
-@tag('integration')
-class TaskChangeStatusFromCaseDetailTest(StaffLawyerTestCase):
-    """task_change_status wywoływane z zakładki zadań widoku szczegółów sprawy."""
-
-    @classmethod
-    def setUpTestData(cls):
-        super().setUpTestData()
-        cls.sprawa = Case.objects.create(
-            client=cls.klient,
-            case_number='TEST-CASE-STATUS-001',
-            title='Sprawa testowa',
-            case_type=CaseType.CYWILNA,
-        )
-        cls.task = Task.objects.create(
-            title='Zadanie sprawy',
-            assigned_lawyer=cls.lawyer,
-            created_by=cls.lawyer,
-            case=cls.sprawa,
-            status=TaskStatus.NOWE,
-        )
-        cls.next_url = (
-            reverse('szkp:case_detail', kwargs={'pk': cls.sprawa.pk}) + '?tab=zadania'
-        )
-        cls.url = reverse('szkp:task_change_status', args=[cls.task.pk])
-
-    def test_zmiana_na_zakonczone_i_przekierowanie_do_zakladki_sprawy(self):
-        response = self.client.post(
-            self.url, {'status': TaskStatus.ZAKOŃCZONE, 'next': self.next_url}
-        )
-        self.assertRedirects(response, self.next_url, fetch_redirect_response=False)
-        self.task.refresh_from_db()
-        self.assertEqual(self.task.status, TaskStatus.ZAKOŃCZONE)
-
-    def test_blokowanie_przy_niezakonczonym_podzadaniu_nie_zmienia_statusu(self):
-        Task.objects.create(
-            title='Podzadanie aktywne',
-            assigned_lawyer=self.lawyer,
-            created_by=self.lawyer,
-            parent_task=self.task,
-            status=TaskStatus.NOWE,
-        )
-        self.client.post(
-            self.url, {'status': TaskStatus.ZAKOŃCZONE, 'next': self.next_url}
-        )
-        self.task.refresh_from_db()
-        self.assertEqual(self.task.status, TaskStatus.NOWE)

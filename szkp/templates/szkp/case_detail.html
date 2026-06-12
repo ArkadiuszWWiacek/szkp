@@ -205,7 +205,7 @@
         </div>
         {% if tasks %}
         {% for task in tasks %}
-        <div class="szkp-task{% if task.status == 'zakończone' %} szkp-task--done{% endif %}">
+        <a href="{% url 'szkp:my_tasks' %}?case_number={{ case.case_number }}" class="szkp-task{% if task.status == 'zakończone' %} szkp-task--done{% endif %}">
             <div class="szkp-task__icon{% if task.status == 'zakończone' %} szkp-task__icon--done{% endif %}">
                 {% if task.status == 'zakończone' %}✓{% endif %}
             </div>
@@ -225,34 +225,18 @@
                     {% endif %}
                 </div>
             </div>
-            {% if task.status != 'zakończone' %}
-            <form method="post" action="{% url 'szkp:task_change_status' task.pk %}">
-                {% csrf_token %}
-                <input type="hidden" name="status" value="zakończone">
-                <input type="hidden" name="next" value="{% url 'szkp:case_detail' case.pk %}?tab=zadania">
-                <button type="submit" class="btn-szkp btn-szkp--outline btn-szkp--sm" data-task-action="mark-completed">Zakończ</button>
-            </form>
-            {% endif %}
-        </div>
+        </a>
         {% if task.task_set.exists %}
         <div class="szkp-subtask">
             {% for sub in task.task_set.all %}
-            <div class="szkp-task{% if sub.status == 'zakończone' %} szkp-task--done{% endif %}">
+            <a href="{% url 'szkp:my_tasks' %}?case_number={{ case.case_number }}" class="szkp-task{% if sub.status == 'zakończone' %} szkp-task--done{% endif %}">
                 <div class="szkp-task__icon{% if sub.status == 'zakończone' %} szkp-task__icon--done{% endif %}">
                     {% if sub.status == 'zakończone' %}✓{% endif %}
                 </div>
                 <div class="szkp-task__body">
                     <div class="szkp-task__title fs-13">{{ sub.title }}</div>
                 </div>
-                {% if sub.status != 'zakończone' %}
-                <form method="post" action="{% url 'szkp:task_change_status' sub.pk %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="status" value="zakończone">
-                    <input type="hidden" name="next" value="{% url 'szkp:case_detail' case.pk %}?tab=zadania">
-                    <button type="submit" class="btn-szkp btn-szkp--outline btn-szkp--sm" data-task-action="mark-completed">Zakończ</button>
-                </form>
-                {% endif %}
-            </div>
+            </a>
             {% endfor %}
         </div>
         {% endif %}

@@ -16,6 +16,7 @@ def my_tasks(request):
     today = timezone.localdate()
     status_filter = request.GET.get('status', '')
     period_filter = request.GET.get('period', '')
+    case_number_filter = request.GET.get('case_number', '')
 
     lawyer = get_object_or_404(Lawyer, user=request.user)
 
@@ -42,12 +43,16 @@ def my_tasks(request):
         qs = qs.filter(due_date__date__lte=today + timezone.timedelta(days=7),
                        due_date__date__gte=today)
 
+    if case_number_filter:
+        qs = qs.filter(case__case_number__icontains=case_number_filter)
+
     qs = qs.annotate(priority_rank=priority_rank).order_by('priority_rank', 'due_date')
 
     context = {
         'tasks': qs,
         'status_filter': status_filter,
         'period_filter': period_filter,
+        'case_number_filter': case_number_filter,
         'status_choices': TaskStatus.choices,
         'today': today,
     }

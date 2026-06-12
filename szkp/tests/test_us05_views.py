@@ -4,7 +4,7 @@ from django.urls import reverse
 
 from szkp.models import (
     Case, CaseLawyer, CaseLawyerRole, CaseStatus, CaseType,
-    Client, ClientType,
+    Client, ClientType, Task,
 )
 from szkp.tests.base import StaffLawyerTestCase
 
@@ -178,3 +178,30 @@ class CaseEditViewTest(StaffLawyerTestCase):
         )
         self.sprawa.refresh_from_db()
         self.assertIsNotNone(self.sprawa.closed_at)
+
+
+@tag('integration')
+class CaseDetailTasksTabLinksTest(StaffLawyerTestCase):
+    """case_detail zakładka zadania: tytuły zadań linkują do my_tasks z filtrem sygnatury."""
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.sprawa = Case.objects.create(
+            client=cls.klient, case_number='TST-TASKLINK-001',
+            title='Sprawa z zadaniami', case_type=CaseType.CYWILNA,
+        )
+        cls.task = Task.objects.create(
+            title='Zadanie klikalne',
+            assigned_lawyer=cls.lawyer,
+            created_by=cls.lawyer,
+            case=cls.sprawa,
+        )
+
+    def _url(self):
+        return reverse('szkp:case_detail', kwargs={'pk': self.sprawa.pk}) + '?tab=zadania'
+
+    def test_tytul_zadania_jest_linkiem_do_my_tasks_z_filtrem_sygnatury(self):
+        r = self.client.get(self._url())
+        expected_url = reverse('szkp:my_tasks') + f'?case_number={self.sprawa.case_number}'
+        self.assertContains(r, expected_url)

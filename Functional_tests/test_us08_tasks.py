@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.test import tag
 from django.utils import timezone
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select, WebDriverWait
 
@@ -95,6 +96,42 @@ class US08TasksTest(SzkpSeleniumTestCase):
         self.assertIn('Podzadanie pierwsze', self.selenium.page_source)
 
     # --- filtry (GREEN) ---
+
+    def test_input_filtr_sygnatury_widoczny_na_stronie(self):
+        self.selenium.get(self._url_zadania())
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located(
+                (By.CSS_SELECTOR, 'input[name="case_number"]')
+            )
+        )
+
+    def test_filtr_po_sygnaturze_ogranicza_liste(self):
+        inne_sprawa = Case.objects.create(
+            client=self.klient, case_number='TST-US08-999',
+            title='Inna sprawa', case_type=CaseType.CYWILNA,
+        )
+        Task.objects.create(
+            title='Zadanie pasującej sprawy',
+            assigned_lawyer=self.lawyer,
+            created_by=self.lawyer,
+            case=self.sprawa,
+        )
+        Task.objects.create(
+            title='Zadanie innej sprawy',
+            assigned_lawyer=self.lawyer,
+            created_by=self.lawyer,
+            case=inne_sprawa,
+        )
+        self.selenium.get(self._url_zadania())
+        input_el = WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'input[name="case_number"]'))
+        )
+        input_el.send_keys('TST-US08-001' + Keys.RETURN)
+        WebDriverWait(self.selenium, 5).until(
+            EC.url_contains('case_number=')
+        )
+        self.assertIn('Zadanie pasującej sprawy', self.selenium.page_source)
+        self.assertNotIn('Zadanie innej sprawy', self.selenium.page_source)
 
     def test_filtr_statusu_ogranicza_liste(self):
         self._nowe_zadanie(title='Zadanie nowe', status=TaskStatus.NOWE)
@@ -417,58 +454,26 @@ class US08TasksTest(SzkpSeleniumTestCase):
         )
         self.assertIn('Nowe podzadanie', self.selenium.page_source)
 
-    # --- oznaczanie zadania jako zakończone z zakładki zadań sprawy ---
+    # --- kliknięcie w zadanie → my_tasks z filtrem sygnatury ---
 
-    def test_przycisk_zakoncz_widoczny_przy_niezakonczonej_w_sprawie(self):
+    def test_wiersz_zadania_na_sprawie_linkuje_do_my_tasks_z_filtrem_sygnatury(self):
         Task.objects.create(
-            title='Zadanie do zakończenia',
+            title='Zadanie klikalne',
             assigned_lawyer=self.lawyer,
             created_by=self.lawyer,
             case=self.sprawa,
-            status=TaskStatus.NOWE,
         )
         self.selenium.get(self._url_zadania_sprawy())
-        WebDriverWait(self.selenium, 5).until(
+        link = WebDriverWait(self.selenium, 5).until(
             EC.presence_of_element_located(
-                (By.CSS_SELECTOR, 'button[data-task-action="mark-completed"]')
+                (By.CSS_SELECTOR, f'a.szkp-task[href*="case_number={self.sprawa.case_number}"]')
             )
         )
-
-    def test_przycisk_zakoncz_niewidoczny_przy_zakonczonej_w_sprawie(self):
-        Task.objects.create(
-            title='Zadanie zakończone',
-            assigned_lawyer=self.lawyer,
-            created_by=self.lawyer,
-            case=self.sprawa,
-            status=TaskStatus.ZAKOŃCZONE,
-        )
-        self.selenium.get(self._url_zadania_sprawy())
+        href = link.get_attribute('href')
+        self.selenium.get(href)
         WebDriverWait(self.selenium, 5).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, '.szkp-task--done'))
+            EC.url_contains('case_number=')
         )
-        btns = self.selenium.find_elements(
-            By.CSS_SELECTOR, 'button[data-task-action="mark-completed"]'
-        )
-        self.assertEqual(len(btns), 0)
+        self.assertIn('Moje zadania', self.selenium.page_source)
+        self.assertIn(self.sprawa.case_number, self.selenium.current_url)
 
-    def test_klik_zakoncz_zmienia_status_i_wraca_do_zakladki_zadania(self):
-        zadanie = Task.objects.create(
-            title='Zadanie jednego kliknięcia',
-            assigned_lawyer=self.lawyer,
-            created_by=self.lawyer,
-            case=self.sprawa,
-            status=TaskStatus.NOWE,
-        )
-        self.selenium.get(self._url_zadania_sprawy())
-        btn = WebDriverWait(self.selenium, 5).until(
-            EC.element_to_be_clickable(
-                (By.CSS_SELECTOR, 'button[data-task-action="mark-completed"]')
-            )
-        )
-        btn.click()
-        WebDriverWait(self.selenium, 5).until(
-            EC.url_contains('tab=zadania')
-        )
-        zadanie.refresh_from_db()
-        self.assertEqual(zadanie.status, TaskStatus.ZAKOŃCZONE)
-        self.assertIn('tab=zadania', self.selenium.current_url)

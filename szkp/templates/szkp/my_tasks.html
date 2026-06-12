@@ -20,11 +20,14 @@
             <option value="{{ val }}"{% if status_filter == val %} selected{% endif %}>{{ label }}</option>
             {% endfor %}
         </select>
-        <a href="?period=today{% if status_filter %}&status={{ status_filter }}{% endif %}"
+        <input type="text" name="case_number" value="{{ case_number_filter }}"
+               placeholder="Sygnatura sprawy" class="szkp-input szkp-input--sm"
+               aria-label="Filtr sygnatury sprawy">
+        <a href="?period=today{% if status_filter %}&status={{ status_filter }}{% endif %}{% if case_number_filter %}&case_number={{ case_number_filter }}{% endif %}"
            class="btn-szkp {% if period_filter == 'today' %}btn-szkp--primary{% else %}btn-szkp--outline{% endif %}">Dziś</a>
-        <a href="?period=week{% if status_filter %}&status={{ status_filter }}{% endif %}"
+        <a href="?period=week{% if status_filter %}&status={{ status_filter }}{% endif %}{% if case_number_filter %}&case_number={{ case_number_filter }}{% endif %}"
            class="btn-szkp {% if period_filter == 'week' %}btn-szkp--primary{% else %}btn-szkp--outline{% endif %}">Ten tydzień</a>
-        {% if status_filter or period_filter %}
+        {% if status_filter or period_filter or case_number_filter %}
         <a href="{% url 'szkp:my_tasks' %}" class="btn-szkp btn-szkp--outline text-muted-szkp">Wyczyść</a>
         {% endif %}
     </form>
@@ -115,7 +118,7 @@
             {% if period_filter == 'today' %}
             <div class="szkp-empty__title">Brak zadań na dziś</div>
             <div class="szkp-empty__desc">Świetnie — albo dodaj pierwsze zadanie na ten dzień.</div>
-            {% elif status_filter or period_filter %}
+            {% elif status_filter or period_filter or case_number_filter %}
             <div class="szkp-empty__title">Brak zadań pasujących do filtrów</div>
             <div class="szkp-empty__desc">Zmień kryteria filtrowania lub wyczyść filtry.</div>
             {% else %}
