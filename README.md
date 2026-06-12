@@ -11,7 +11,7 @@ Aplikacja webowa Django do zarządzania sprawami, klientami, prawnikami, termina
 ## Instalacja
 
 ```bash
-# 1. Sklonuj repozytorium
+# 1. Sklonuj repozytorium lub rozpakuj z .zip
 git clone <url-repozytorium>
 cd Python_Web
 
@@ -25,7 +25,7 @@ pip install -r requirements.txt
 
 # 4. Skonfiguruj zmienne środowiskowe
 cp .env.example .env
-# Edytuj .env — ustaw SECRET_KEY i opcjonalnie DATABASE_URL
+# Edytuj .env — SECRET_KEY jest wymagany, pozostałe mają wartości domyślne
 
 # 5. Zastosuj migracje
 python manage.py migrate
@@ -95,15 +95,18 @@ python manage.py seed_users
 ## Testy
 
 ```bash
-# Wszystkie testy jednostkowe i integracyjne
+# Wszystkie testy jednostkowe, integracyjne i funkcjonalne Selenium (wymaga narzędzi systemowych Firefox ESR + geckodriver)
 python manage.py test
 
-# Testy funkcjonalne Selenium (wymaga Firefox ESR + geckodriver)
-python manage.py test Functional_tests
+# Poszczególne testy
+python manage.py test --tag=unit
+python manage.py test --tag=integration
+python manage.py test --tag=functional
 
 # Z pokryciem kodu
 coverage run --branch manage.py test
-coverage run manage.py test && coverage report && coverage html
+coverage report
+coverage html
 ```
 
 ## Struktura projektu
@@ -112,16 +115,16 @@ coverage run manage.py test && coverage report && coverage html
 Python_Web/          # konfiguracja projektu (settings, urls)
 szkp/                # główna aplikacja domenowa
   models/            # modele (jeden plik = jeden model)
-  views.py           # widoki
+  views/             # widoki (jeden plik = jeden obszar domenowy)
+  forms.py           # formularze
   urls.py            # routing
   admin.py           # panel administracyjny
+  tests/             # testy jednostkowe i integracyjne
   management/
     commands/        # komendy manage.py (seed_*)
-templates/           # szablony HTML (Bootstrap 5.3 dark)
-  registration/      # strona logowania
-  szkp/              # widoki aplikacji
+templates/           # szablony HTML (Bootstrap 5.3)
 Functional_tests/    # testy Selenium (LiveServerTestCase)
-static/              # pliki CSS/JS
+static/              # CSS/JS
 ```
 
 ## Zależności
@@ -131,7 +134,9 @@ Pełna lista w `requirements.txt`. Główne pakiety:
 | Pakiet | Wersja | Opis |
 |---|---|---|
 | Django | 5.1.2 | framework webowy |
+| dj-database-url | 2.3.0 | parsowanie `DATABASE_URL` (SQLite / PostgreSQL) |
 | Faker | 40.11.0 | generowanie danych testowych |
+| psycopg | 3.3.2 | sterownik PostgreSQL |
 | selenium | 4.38.0 | testy funkcjonalne |
 | coverage | 7.13.1 | pokrycie kodu testami |
 | python-dotenv | 1.2.1 | zmienne środowiskowe z pliku `.env` |
