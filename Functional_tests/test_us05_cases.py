@@ -28,7 +28,7 @@ class US05CasesTest(SzkpSeleniumTestCase):
         )
         self._zaloguj_przez_orm(self.user)
 
-    # --- lista i wyszukiwanie (GREEN) ---
+    # --- lista i wyszukiwanie ---
 
     def test_lista_spraw_wyswietla_sie(self):
         self.selenium.get(self.live_server_url + '/szkp/sprawy/')
@@ -58,7 +58,7 @@ class US05CasesTest(SzkpSeleniumTestCase):
         self.assertIn('TST-NOWA-001', src)
         self.assertNotIn('TST-ZAKONCZONA-001', src)
 
-    # --- zmiana statusu przez case_detail (GREEN) ---
+    # --- zmiana statusu przez case_detail ---
 
     def test_zmiana_statusu_na_zakonczona(self):
         sprawa = Case.objects.create(
@@ -75,7 +75,7 @@ class US05CasesTest(SzkpSeleniumTestCase):
         )
         self.assertIn('Zakończona', self.selenium.page_source)
 
-    # --- tworzenie (RED — brak widoku case_form) ---
+    # --- tworzenie ---
 
     def test_dodaj_sprawe(self):
         self.selenium.get(self.live_server_url + '/szkp/sprawy/')
@@ -124,7 +124,7 @@ class US05CasesTest(SzkpSeleniumTestCase):
             ).exists()
         )
 
-    # --- edycja (RED — brak widoku case_edit) ---
+    # --- edycja ---
 
     def test_edycja_tytulu_sprawy(self):
         sprawa = Case.objects.create(

@@ -81,7 +81,7 @@ class MyTasksViewTest(StaffLawyerTestCase):
         pks = [t.pk for t in r.context['tasks']]
         self.assertLess(pks.index(t_pilna.pk), pks.index(t_niska.pk))
 
-    # --- filtrowanie po zalogowanym prawniku (RED — brak filtra) ---
+    # --- filtrowanie po zalogowanym prawniku ---
 
     def test_filtr_case_number_ogranicza_wyniki(self):
         case_a = Case.objects.create(
@@ -122,8 +122,7 @@ class MyTasksViewTest(StaffLawyerTestCase):
 
 @tag('integration')
 class TaskCreateViewTest(StaffLawyerTestCase):
-    """task_form (nowe zadanie): walidacja, tworzenie, domyślne wartości.
-    RED — URL szkp:task_new nie istnieje."""
+    """task_form (nowe zadanie): walidacja, tworzenie, domyślne wartości."""
 
     def _url_new(self):
         return reverse('szkp:task_new')
@@ -169,8 +168,7 @@ class TaskCreateViewTest(StaffLawyerTestCase):
 
 @tag('integration')
 class TaskEditViewTest(StaffLawyerTestCase):
-    """task_form (edycja zadania): zmiana statusu, completed_at.
-    RED — URL szkp:task_edit nie istnieje."""
+    """task_form (edycja zadania): zmiana statusu, completed_at."""
 
     @classmethod
     def setUpTestData(cls):

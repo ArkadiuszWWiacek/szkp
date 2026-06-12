@@ -128,7 +128,7 @@ class US04ClientsTest(SzkpSeleniumTestCase):
         self.selenium.find_element(By.CSS_SELECTOR, 'button.btn-szkp--primary').click()
         self.assertIn('Zmieniony', self.selenium.page_source)
 
-    # --------------------------------------------------------- usuwanie (RED)
+    # --- usuwanie ---
 
     def test_usuniecie_klienta_bez_spraw(self):
         """Klient bez przypisanych spraw może być usunięty."""

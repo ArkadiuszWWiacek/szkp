@@ -172,7 +172,7 @@ class ClientFormValidationTest(TestCase):
 
 @tag('integration')
 class ClientDeleteViewTest(TestCase):
-    """client_delete: strona potwierdzenia i usuwanie — RED do implementacji widoku."""
+    """client_delete: strona potwierdzenia i usuwanie."""
 
     @classmethod
     def setUpTestData(cls):

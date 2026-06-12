@@ -46,7 +46,7 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
     def _za_30_dni(self):
         return (date.today() + timedelta(days=30)).strftime('%Y-%m-%d')
 
-    # --- widoczność faktur na stronie sprawy (GREEN) ---
+    # --- widoczność faktur na stronie sprawy ---
 
     def test_zakladka_faktury_jest_widoczna(self):
         self.selenium.get(self._url_faktury())
@@ -67,7 +67,7 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
         self.selenium.get(self._url_faktury())
         self.assertIn('FV/2025/001', self.selenium.page_source)
 
-    # --- dodawanie faktury przez formularz (RED — brak widoku) ---
+    # --- dodawanie faktury przez formularz ---
 
     def test_link_wystaw_fakture_przenosi_do_formularza(self):
         self.selenium.get(self._url_faktury())
@@ -168,7 +168,7 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
         )
         self.assertIn('1230,00', self.selenium.page_source)
 
-    # --- walidacja formularza (RED — brak widoku) ---
+    # --- walidacja formularza ---
 
     def test_duplikat_numeru_faktury_blokuje_zapis(self):
         Invoice.objects.create(
@@ -200,7 +200,7 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
             self.selenium.current_url,
         )
 
-    # --- zmiana statusu faktury (RED — brak widoku edycji) ---
+    # --- zmiana statusu faktury ---
 
     def test_zmiana_statusu_faktury_na_oplacona(self):
         faktura = Invoice.objects.create(

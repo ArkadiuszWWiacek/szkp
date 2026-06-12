@@ -40,7 +40,7 @@ class US06CourtHearingsTest(SzkpSeleniumTestCase):
     def _url_terminy(self):
         return self.live_server_url + f'/szkp/sprawy/{self.sprawa.pk}/?tab=terminy'
 
-    # --- widoczność terminów na stronie sprawy (GREEN) ---
+    # --- widoczność terminów na stronie sprawy ---
 
     def test_zakladka_terminy_wyswietla_sie(self):
         self.selenium.get(self._url_terminy())
@@ -60,7 +60,7 @@ class US06CourtHearingsTest(SzkpSeleniumTestCase):
         self.selenium.get(self._url_terminy())
         self.assertIn('Sąd Rejonowy w Krakowie', self.selenium.page_source)
 
-    # --- dodawanie terminu przez formularz (RED — brak widoku) ---
+    # --- dodawanie terminu przez formularz ---
 
     def test_dodaj_termin_z_data_w_przyszlosci(self):
         self.selenium.get(self._url_terminy())
@@ -127,7 +127,7 @@ class US06CourtHearingsTest(SzkpSeleniumTestCase):
         pole = self.selenium.find_element(By.NAME, 'reminder_minutes_before')
         self.assertEqual(pole.get_attribute('value'), '1440')
 
-    # --- zmiana statusu terminu (RED — brak widoku edycji) ---
+    # --- zmiana statusu terminu ---
 
     def test_zmiana_statusu_terminu_na_odbyty(self):
         termin = CourtHearing.objects.create(

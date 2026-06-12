@@ -59,7 +59,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
             **kwargs,
         )
 
-    # --- widok Moje zadania (GREEN) ---
+    # --- widok Moje zadania ---
 
     def test_strona_moje_zadania_jest_dostepna(self):
         self.selenium.get(self._url_zadania())
@@ -95,7 +95,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         self.assertIn('Zadanie nadrzędne', self.selenium.page_source)
         self.assertIn('Podzadanie pierwsze', self.selenium.page_source)
 
-    # --- filtry (GREEN) ---
+    # --- filtry ---
 
     def test_input_filtr_sygnatury_widoczny_na_stronie(self):
         self.selenium.get(self._url_zadania())
@@ -156,7 +156,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         )
         self.assertNotIn('status=', self.selenium.current_url)
 
-    # --- filtrowanie po zalogowanym prawniku (RED — brak filtra) ---
+    # --- filtrowanie po zalogowanym prawniku ---
 
     def test_zadania_innego_prawnika_nie_sa_widoczne(self):
         inny_user = User.objects.create_user(
@@ -174,7 +174,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         self.selenium.get(self._url_zadania())
         self.assertNotIn('Zadanie innego prawnika', self.selenium.page_source)
 
-    # --- tworzenie zadania (RED — brak widoku) ---
+    # --- tworzenie zadania ---
 
     def test_link_nowe_zadanie_przenosi_do_formularza(self):
         self.selenium.get(self._url_zadania())
@@ -220,7 +220,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         )
         self.assertIn('Pilna', self.selenium.page_source)
 
-    # --- zmiana statusu (RED — brak widoku edycji) ---
+    # --- zmiana statusu ---
 
     def test_zmiana_statusu_zadania_na_zakonczone(self):
         zadanie = self._nowe_zadanie(title='Do zakończenia')
@@ -253,7 +253,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         zadanie.refresh_from_db()
         self.assertIsNotNone(zadanie.completed_at)
 
-    # --- zadania przeterminowane (RED — brak CSS) ---
+    # --- zadania przeterminowane ---
 
     def test_zadanie_przeterminowane_wyroznione_wizualnie(self):
         self._nowe_zadanie(title='Zadanie przeterminowane', due_date=self._wczoraj())
