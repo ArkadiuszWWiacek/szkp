@@ -124,6 +124,72 @@ class US05CasesTest(SzkpSeleniumTestCase):
             ).exists()
         )
 
+    # --- zakładka prawnicy: przypisywanie ---
+
+    def _url_prawnicy(self, sprawa):
+        return self.live_server_url + f'/szkp/sprawy/{sprawa.pk}/?tab=prawnicy'
+
+    def _url_dodaj_prawnika(self, sprawa):
+        return self.live_server_url + f'/szkp/sprawy/{sprawa.pk}/prawnicy/dodaj/'
+
+    def _sprawa_z_prowadzacym(self):
+        sprawa = Case.objects.create(
+            client=self.klient, case_number='TST-CL-001',
+            title='Sprawa do testów prawników', case_type=CaseType.CYWILNA,
+        )
+        CaseLawyer.objects.create(
+            case=sprawa, lawyer=self.lawyer, role=CaseLawyerRole.PROWADZACY,
+        )
+        return sprawa
+
+    def test_zakladka_prawnicy_wyswietla_button_przypisz(self):
+        sprawa = self._sprawa_z_prowadzacym()
+        self.selenium.get(self._url_prawnicy(sprawa))
+        self.selenium.find_element(By.CSS_SELECTOR, 'a[href*="prawnicy/dodaj"]')
+
+    def test_klik_przycisku_otwiera_formularz(self):
+        sprawa = self._sprawa_z_prowadzacym()
+        self.selenium.get(self._url_prawnicy(sprawa))
+        self.selenium.find_element(By.CSS_SELECTOR, 'a[href*="prawnicy/dodaj"]').click()
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.NAME, 'lawyer'))
+        )
+        self.assertIn('prawnicy/dodaj', self.selenium.current_url)
+
+    def test_dodaj_prawnika_asystenta(self):
+        sprawa = self._sprawa_z_prowadzacym()
+        lawyer2 = Lawyer.objects.create(
+            first_name='Maria', last_name='Asystentka', bar_number='PL002',
+        )
+        self.selenium.get(self._url_dodaj_prawnika(sprawa))
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.NAME, 'lawyer'))
+        )
+        Select(self.selenium.find_element(By.NAME, 'lawyer')).select_by_value(str(lawyer2.pk))
+        Select(self.selenium.find_element(By.NAME, 'role')).select_by_value('asystent')
+        self.selenium.find_element(By.CSS_SELECTOR, 'button.btn-szkp--primary').click()
+        WebDriverWait(self.selenium, 5).until(EC.url_contains('tab=prawnicy'))
+        self.assertIn('Asystentka', self.selenium.page_source)
+
+    def test_walidacja_brak_prawnika_blokuje_zapis(self):
+        sprawa = self._sprawa_z_prowadzacym()
+        self.selenium.get(self._url_dodaj_prawnika(sprawa))
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.NAME, 'lawyer'))
+        )
+        self.selenium.find_element(By.CSS_SELECTOR, 'button.btn-szkp--primary').click()
+        self.assertIn('prawnicy/dodaj', self.selenium.current_url)
+
+    def test_prowadzacy_nie_jest_dostepna_opcja_roli(self):
+        sprawa = self._sprawa_z_prowadzacym()
+        self.selenium.get(self._url_dodaj_prawnika(sprawa))
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.NAME, 'role'))
+        )
+        opcje = self.selenium.find_elements(By.CSS_SELECTOR, 'select[name="role"] option')
+        wartosci = [o.get_attribute('value') for o in opcje]
+        self.assertNotIn('prowadzacy', wartosci)
+
     # --- edycja ---
 
     def test_edycja_tytulu_sprawy(self):

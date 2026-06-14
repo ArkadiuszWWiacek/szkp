@@ -7,10 +7,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
-from szkp.forms import CaseForm
+from szkp.forms import CaseForm, CaseLawyerForm
 from szkp.models import (
     Case, CaseLawyer, CaseLawyerRole, CasePriority, CaseStatus, CaseType,
-    Client, CourtHearing, Document, Invoice, Task,
+    Client, CourtHearing, Document, Invoice, Lawyer, Task,
 )
 
 
@@ -146,6 +146,56 @@ def case_lawyer_delete(request, case_pk, pk):
         return redirect(f"{reverse('szkp:case_detail', args=[case_pk])}?tab=prawnicy")
 
     return render(request, 'szkp/case_lawyer_confirm_delete.html', {'cl': cl})
+
+
+@login_required
+def case_lawyer_add(request, case_pk):
+    case = get_object_or_404(Case, pk=case_pk)
+
+    if not request.user.is_staff:
+        if not CaseLawyer.objects.filter(case=case, lawyer__user=request.user).exists():
+            raise PermissionDenied
+
+    already_assigned_pks = list(
+        CaseLawyer.objects.filter(case=case).values_list('lawyer_id', flat=True)
+    )
+    available_lawyers = Lawyer.objects.filter(activeflag=True).exclude(
+        pk__in=already_assigned_pks
+    ).order_by('last_name', 'first_name')
+    available_lawyer_pks = list(available_lawyers.values_list('pk', flat=True))
+
+    role_choices = [
+        (CaseLawyerRole.ASYSTENT, CaseLawyerRole.ASYSTENT.label),
+        (CaseLawyerRole.DORADCA,  CaseLawyerRole.DORADCA.label),
+    ]
+    redirect_url = reverse('szkp:case_detail', args=[case_pk]) + '?tab=prawnicy'
+
+    if request.method == 'POST':
+        form = CaseLawyerForm(request.POST, available_lawyer_pks=available_lawyer_pks)
+        if form.is_valid():
+            cd = form.cleaned_data
+            CaseLawyer.objects.create(
+                case=case,
+                lawyer=Lawyer.objects.get(pk=cd['lawyer']),
+                role=cd['role'],
+            )
+            messages.success(request, 'Prawnik został przypisany do sprawy.')
+            return redirect(redirect_url)
+        return render(request, 'szkp/case_lawyer_add.html', {
+            'case': case,
+            'form_data': request.POST,
+            'errors': form.errors,
+            'available_lawyers': available_lawyers,
+            'role_choices': role_choices,
+        })
+
+    return render(request, 'szkp/case_lawyer_add.html', {
+        'case': case,
+        'form_data': {},
+        'errors': {},
+        'available_lawyers': available_lawyers,
+        'role_choices': role_choices,
+    })
 
 
 def _case_form_context(case, form_data, errors):

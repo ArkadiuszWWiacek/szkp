@@ -4,7 +4,7 @@ from django.urls import reverse
 
 from szkp.models import (
     Case, CaseLawyer, CaseLawyerRole, CaseStatus, CaseType,
-    Client, ClientType, Task,
+    Client, ClientType, Lawyer, Task,
 )
 from szkp.tests.base import StaffLawyerTestCase
 
@@ -205,3 +205,130 @@ class CaseDetailTasksTabLinksTest(StaffLawyerTestCase):
         r = self.client.get(self._url())
         expected_url = reverse('szkp:my_tasks') + f'?case_number={self.sprawa.case_number}'
         self.assertContains(r, expected_url)
+
+
+@tag('integration')
+class CaseLawyerAddViewTest(StaffLawyerTestCase):
+    """case_lawyer_add: formularz przypisania prawnika do sprawy."""
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.sprawa = Case.objects.create(
+            client=cls.klient, case_number='TST-CLADD-001',
+            title='Sprawa do testów', case_type=CaseType.CYWILNA,
+        )
+        CaseLawyer.objects.create(
+            case=cls.sprawa, lawyer=cls.lawyer, role=CaseLawyerRole.PROWADZACY,
+        )
+        cls.lawyer2 = Lawyer.objects.create(
+            first_name='Maria', last_name='Kowalska', bar_number='PL002',
+        )
+
+    def _url(self):
+        return reverse('szkp:case_lawyer_add', kwargs={'case_pk': self.sprawa.pk})
+
+    def _valid_data(self, **overrides):
+        data = {
+            'lawyer': self.lawyer2.pk,
+            'role': CaseLawyerRole.ASYSTENT,
+        }
+        data.update(overrides)
+        return data
+
+    def _post(self, data):
+        return self.client.post(self._url(), data)
+
+    def test_get_formularz_zwraca_200(self):
+        r = self.client.get(self._url())
+        self.assertEqual(r.status_code, 200)
+
+    def test_get_kontekst_zawiera_dostepnych_prawnikow(self):
+        r = self.client.get(self._url())
+        available = list(r.context['available_lawyers'])
+        self.assertIn(self.lawyer2, available)
+        self.assertNotIn(self.lawyer, available)
+
+    def test_get_kontekst_zawiera_role_bez_prowadzacego(self):
+        r = self.client.get(self._url())
+        wartosci = [val for val, _ in r.context['role_choices']]
+        self.assertNotIn(CaseLawyerRole.PROWADZACY, wartosci)
+        self.assertIn(CaseLawyerRole.ASYSTENT, wartosci)
+        self.assertIn(CaseLawyerRole.DORADCA, wartosci)
+
+    def test_get_kontekst_zawiera_sprawe(self):
+        r = self.client.get(self._url())
+        self.assertEqual(r.context['case'], self.sprawa)
+
+    def test_post_valid_tworzy_caselawyer(self):
+        self._post(self._valid_data())
+        self.assertTrue(
+            CaseLawyer.objects.filter(
+                case=self.sprawa, lawyer=self.lawyer2, role=CaseLawyerRole.ASYSTENT,
+            ).exists()
+        )
+
+    def test_post_valid_redirect_do_prawnicy_tab(self):
+        r = self._post(self._valid_data())
+        expected = reverse('szkp:case_detail', args=[self.sprawa.pk]) + '?tab=prawnicy'
+        self.assertRedirects(r, expected, fetch_redirect_response=False)
+
+    def test_post_brak_prawnika_zwraca_blad(self):
+        r = self._post({'lawyer': '', 'role': CaseLawyerRole.ASYSTENT})
+        self.assertEqual(r.status_code, 200)
+        self.assertIn('lawyer', r.context['errors'])
+
+    def test_post_brak_roli_zwraca_blad(self):
+        r = self._post({'lawyer': self.lawyer2.pk, 'role': ''})
+        self.assertEqual(r.status_code, 200)
+        self.assertIn('role', r.context['errors'])
+
+    def test_post_rola_prowadzacy_zwraca_blad(self):
+        r = self._post(self._valid_data(role=CaseLawyerRole.PROWADZACY))
+        self.assertEqual(r.status_code, 200)
+        self.assertIn('role', r.context['errors'])
+
+    def test_post_duplikat_prawnika_zwraca_blad(self):
+        CaseLawyer.objects.create(
+            case=self.sprawa, lawyer=self.lawyer2, role=CaseLawyerRole.ASYSTENT,
+        )
+        r = self._post(self._valid_data())
+        self.assertEqual(r.status_code, 200)
+        self.assertIn('lawyer', r.context['errors'])
+
+
+@tag('integration')
+class CaseLawyerAddAccessTest(TestCase):
+    """case_lawyer_add: kontrola dostępu."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_staff = User.objects.create_user('staff_cl', password='pass', is_staff=True)
+        cls.lawyer_staff = Lawyer.objects.create(
+            user=cls.user_staff, first_name='Jan', last_name='Prawnik', bar_number='PL-ACC-001',
+        )
+        cls.klient = Client.objects.create(
+            type=ClientType.OSOBA_FIZYCZNA,
+            first_name='Anna', last_name='Klientka', pesel='99010112345',
+        )
+        cls.sprawa = Case.objects.create(
+            client=cls.klient, case_number='TST-CLADD-ACC-001',
+            title='Sprawa do testów dostępu', case_type=CaseType.CYWILNA,
+        )
+
+    def _url(self):
+        return reverse('szkp:case_lawyer_add', kwargs={'case_pk': self.sprawa.pk})
+
+    def test_wymaga_zalogowania(self):
+        r = self.client.get(self._url())
+        self.assertEqual(r.status_code, 302)
+        self.assertIn('/accounts/', r['Location'])
+
+    def test_nieprzypisany_prawnik_nie_ma_dostepu(self):
+        user2 = User.objects.create_user('obcy_cl', password='pass', is_staff=False)
+        Lawyer.objects.create(
+            user=user2, first_name='Obcy', last_name='Prawnik', bar_number='PL-ACC-999',
+        )
+        self.client.force_login(user2)
+        r = self.client.get(self._url())
+        self.assertEqual(r.status_code, 403)

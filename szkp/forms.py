@@ -4,7 +4,7 @@ from django import forms
 from django.utils import timezone
 
 from szkp.models import (
-    CasePriority, CaseStatus, CaseType, Client, ClientType,
+    CaseLawyerRole, CasePriority, CaseStatus, CaseType, Client, ClientType,
     HearingStatus, HearingType, Invoice, InvoiceStatus,
     TaskPriority, TaskStatus,
 )
@@ -110,9 +110,7 @@ class TaskForm(forms.Form):
 
     def clean_assigned_lawyer(self):
         pk = self.cleaned_data.get('assigned_lawyer')
-        if self._case_lawyer_pks is not None:
-            if pk is None:
-                raise forms.ValidationError('Wybierz prawnika przypisanego do sprawy.')
+        if self._case_lawyer_pks is not None and pk is not None:
             if pk not in self._case_lawyer_pks:
                 raise forms.ValidationError('Wybrany prawnik nie jest przypisany do tej sprawy.')
         return pk
@@ -131,3 +129,31 @@ class CaseForm(forms.Form):
     )
     court_case_number = forms.CharField(max_length=100, required=False)
     description      = forms.CharField(required=False)
+
+
+class CaseLawyerForm(forms.Form):
+    lawyer = forms.IntegerField()
+    role   = forms.ChoiceField(choices=[
+        (CaseLawyerRole.ASYSTENT, CaseLawyerRole.ASYSTENT.label),
+        (CaseLawyerRole.DORADCA,  CaseLawyerRole.DORADCA.label),
+    ])
+
+    def __init__(self, *args, available_lawyer_pks=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._available_lawyer_pks = available_lawyer_pks or []
+
+    def clean_lawyer(self):
+        pk = self.cleaned_data.get('lawyer')
+        if pk not in self._available_lawyer_pks:
+            raise forms.ValidationError(
+                'Wybrany prawnik jest już przypisany do tej sprawy lub nie istnieje.'
+            )
+        return pk
+
+    def clean_role(self):
+        role = self.cleaned_data.get('role')
+        if role == CaseLawyerRole.PROWADZACY:
+            raise forms.ValidationError(
+                'Nie można przypisać roli Prowadzący przez ten formularz.'
+            )
+        return role

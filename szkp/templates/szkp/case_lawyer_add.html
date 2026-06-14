@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Przypisz prawnika — SZKP{% endblock title %}
+
+{% block content %}
+<div class="szkp-page szkp-page--narrow">
+
+    <div class="szkp-breadcrumb mb-2">
+        <a href="{% url 'szkp:case_list' %}">Sprawy</a>
+        <span class="szkp-breadcrumb__sep">›</span>
+        <a href="{% url 'szkp:case_detail' case.pk %}">{{ case.case_number }}</a>
+        <span class="szkp-breadcrumb__sep">›</span>
+        <a href="{% url 'szkp:case_detail' case.pk %}?tab=prawnicy">Prawnicy</a>
+        <span class="szkp-breadcrumb__sep">›</span>
+        <span>Przypisz prawnika</span>
+    </div>
+
+    <div class="szkp-page-header">
+        <h1 class="szkp-page-title">Przypisz prawnika do sprawy</h1>
+    </div>
+
+    <div class="szkp-card">
+        <div class="szkp-card__body szkp-card__body--lg">
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label for="id_lawyer" class="szkp-label">Prawnik</label>
+                    <select id="id_lawyer" name="lawyer"
+                            class="szkp-select-full{% if errors.lawyer %} is-invalid{% endif %}">
+                        <option value="">— wybierz prawnika —</option>
+                        {% for l in available_lawyers %}
+                        <option value="{{ l.pk }}"
+                            {% if form_data.lawyer == l.pk|stringformat:"s" %}selected{% endif %}>
+                            {{ l.last_name }} {{ l.first_name }}{% if l.bar_number %} ({{ l.bar_number }}){% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if errors.lawyer %}
+                    <span class="szkp-error">{{ errors.lawyer.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_role" class="szkp-label">Rola</label>
+                    <select id="id_role" name="role"
+                            class="szkp-select-full{% if errors.role %} is-invalid{% endif %}">
+                        {% for val, label in role_choices %}
+                        <option value="{{ val }}"
+                            {% if form_data.role == val %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% if errors.role %}
+                    <span class="szkp-error">{{ errors.role.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <hr class="divider mb-4">
+
+                <div class="d-flex justify-content-end gap-3">
+                    <a href="{% url 'szkp:case_detail' case.pk %}?tab=prawnicy"
+                       class="btn-szkp btn-szkp--outline">Anuluj</a>
+                    <button type="submit" class="btn-szkp btn-szkp--primary">Przypisz prawnika</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock content %}

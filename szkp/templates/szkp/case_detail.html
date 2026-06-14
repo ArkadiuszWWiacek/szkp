@@ -280,7 +280,7 @@
     <div class="szkp-card">
         <div class="szkp-card__header">
             <h2 class="szkp-card__title">Przypisani prawnicy</h2>
-            <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Przypisz prawnika</a>
+            <a href="{% url 'szkp:case_lawyer_add' case.pk %}" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Przypisz prawnika</a>
         </div>
         {% if lawyers %}
         {% for cl in lawyers %}
@@ -303,7 +303,7 @@
         <div class="szkp-empty szkp-empty--compact">
             <div class="szkp-empty__title">Brak przypisanych prawników</div>
             <div class="szkp-empty__desc">Przypisz prawników do tej sprawy.</div>
-            <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Przypisz prawnika</a>
+            <a href="{% url 'szkp:case_lawyer_add' case.pk %}" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Przypisz prawnika</a>
         </div>
         {% endif %}
     </div>
