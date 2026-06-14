@@ -17,6 +17,8 @@ def client_list(request):
             Q(last_name__icontains=q)
             | Q(first_name__icontains=q)
             | Q(company_name__icontains=q)
+            | Q(pesel__icontains=q)
+            | Q(nip__icontains=q)
         )
     sort = request.GET.get('sort', 'last_name')
     direction = request.GET.get('dir', 'asc')

@@ -74,3 +74,20 @@ class ClientListSortTest(StaffLawyerTestCase):
         r = self.client.get(self._url(q='Anna', sort='created_at', dir='desc'))
         self.assertEqual(r.context['sort'], 'created_at')
         self.assertEqual(r.context['direction'], 'desc')
+
+    def test_wyszukiwanie_po_pesel(self):
+        r = self.client.get(self._url(q='90020223456'))
+        pks = self._pks(r)
+        self.assertIn(self.klient_b.pk, pks)
+        self.assertNotIn(self.klient.pk, pks)
+
+    def test_wyszukiwanie_po_nip(self):
+        r = self.client.get(self._url(q='1234567890'))
+        pks = self._pks(r)
+        self.assertIn(self.klient_c.pk, pks)
+        self.assertNotIn(self.klient.pk, pks)
+
+    def test_wyszukiwanie_po_fragmencie_peselu(self):
+        r = self.client.get(self._url(q='900202'))
+        pks = self._pks(r)
+        self.assertIn(self.klient_b.pk, pks)

@@ -45,6 +45,24 @@ class US04ClientsTest(SzkpSeleniumTestCase):
         self.selenium.get(self.live_server_url + '/szkp/klienci/?q=FirmaXYZ')
         self.assertIn('FirmaXYZ', self.selenium.page_source)
 
+    def test_wyszukiwanie_po_pesel(self):
+        """Wyszukiwanie po PESEL zwraca pasującą osobę fizyczną."""
+        Client.objects.create(
+            type=ClientType.OSOBA_FIZYCZNA,
+            first_name='Piotr', last_name='Peseltowski', pesel='92051412345',
+        )
+        self.selenium.get(self.live_server_url + '/szkp/klienci/?q=92051412345')
+        self.assertIn('Peseltowski', self.selenium.page_source)
+
+    def test_wyszukiwanie_po_nip(self):
+        """Wyszukiwanie po NIP zwraca pasującą firmę."""
+        Client.objects.create(
+            type=ClientType.FIRMA,
+            company_name='NIP-Test Sp. z o.o.', nip='5250012346',
+        )
+        self.selenium.get(self.live_server_url + '/szkp/klienci/?q=5250012346')
+        self.assertIn('NIP-Test', self.selenium.page_source)
+
     def test_wyszukiwanie_bez_wynikow(self):
         """Wyszukiwanie bez dopasowań wyświetla stan pusty, nie błąd."""
         self.selenium.get(
