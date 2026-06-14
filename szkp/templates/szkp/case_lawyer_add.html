@@ -31,7 +31,7 @@
                         {% for l in available_lawyers %}
                         <option value="{{ l.pk }}"
                             {% if form_data.lawyer == l.pk|stringformat:"s" %}selected{% endif %}>
-                            {{ l.last_name }} {{ l.first_name }}{% if l.bar_number %} ({{ l.bar_number }}){% endif %}
+                            {{ l.last_name }} {{ l.first_name }}{% if l.bar_number %} ({{ l.bar_number }}){% endif %}{% if l.specialization %} · {{ l.specialization }}{% endif %}
                         </option>
                         {% endfor %}
                     </select>
