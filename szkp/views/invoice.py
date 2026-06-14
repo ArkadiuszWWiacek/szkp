@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
@@ -80,6 +81,7 @@ def invoice_form(request, case_pk, pk=None):
 
 @login_required
 def invoice_list(request):
+    q = request.GET.get('q', '').strip()
     status = request.GET.get('status')
     sort = request.GET.get('sort', 'issue_date')
     direction = request.GET.get('dir', 'desc')
@@ -102,12 +104,18 @@ def invoice_list(request):
         qs = qs.filter(case__in=assigned)
     if status in dict(InvoiceStatus.choices):
         qs = qs.filter(status=status)
+    if q:
+        qs = qs.filter(
+            Q(invoice_number__icontains=q)
+            | Q(case__case_number__icontains=q)
+        )
     return render(request, 'szkp/invoice_list.html', {
         'invoices':       qs,
         'status_choices': InvoiceStatus.choices,
         'current_status': status or '',
         'sort':           sort,
         'direction':      direction,
+        'q':              q,
     })
 
 

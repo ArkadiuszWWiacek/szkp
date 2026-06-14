@@ -111,3 +111,30 @@ class InvoiceListSortTest(StaffLawyerTestCase):
         r = self.client.get(self._url(status='wystawiona', sort='due_date', dir='asc'))
         self.assertEqual(r.context['sort'], 'due_date')
         self.assertEqual(r.context['direction'], 'asc')
+
+    def test_wyszukiwanie_po_numerze_faktury(self):
+        r = self.client.get(self._url(q='FV/2024/001'))
+        pks = self._pks(r)
+        self.assertIn(self.inv1.pk, pks)
+        self.assertNotIn(self.inv2.pk, pks)
+        self.assertNotIn(self.inv3.pk, pks)
+
+    def test_wyszukiwanie_po_fragmencie_numeru_faktury(self):
+        r = self.client.get(self._url(q='FV/2024'))
+        pks = self._pks(r)
+        self.assertIn(self.inv1.pk, pks)
+        self.assertIn(self.inv2.pk, pks)
+        self.assertIn(self.inv3.pk, pks)
+
+    def test_wyszukiwanie_po_numerze_sprawy(self):
+        r = self.client.get(self._url(q='TST-SORT-INV-002'))
+        pks = self._pks(r)
+        self.assertIn(self.inv2.pk, pks)
+        self.assertNotIn(self.inv1.pk, pks)
+
+    def test_wyszukiwanie_zachowuje_filtr_statusu(self):
+        r = self.client.get(self._url(q='FV/2024', status='wystawiona'))
+        pks = self._pks(r)
+        self.assertIn(self.inv1.pk, pks)
+        self.assertNotIn(self.inv2.pk, pks)
+        self.assertNotIn(self.inv3.pk, pks)

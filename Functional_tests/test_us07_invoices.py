@@ -46,6 +46,36 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
     def _za_30_dni(self):
         return (date.today() + timedelta(days=30)).strftime('%Y-%m-%d')
 
+    # --- wyszukiwanie na liście faktur ---
+
+    def test_wyszukiwanie_po_numerze_faktury(self):
+        """Wyszukiwanie po numerze faktury zwraca pasującą fakturę."""
+        case = Case.objects.create(
+            client=self.klient, case_number='TST-FNK-001',
+            title='Sprawa testowa', case_type=CaseType.CYWILNA,
+        )
+        Invoice.objects.create(
+            case=case, invoice_number='FV/TEST/2025/001',
+            issue_date=date.today(), due_date=date.today(),
+            net_amount=Decimal('100.00'),
+        )
+        self.selenium.get(self.live_server_url + '/szkp/faktury/?q=FV%2FTEST%2F2025%2F001')
+        self.assertIn('FV/TEST/2025/001', self.selenium.page_source)
+
+    def test_wyszukiwanie_po_numerze_sprawy(self):
+        """Wyszukiwanie po numerze sprawy zwraca faktury tej sprawy."""
+        case = Case.objects.create(
+            client=self.klient, case_number='TST-FNK-002',
+            title='Sprawa testowa 2', case_type=CaseType.CYWILNA,
+        )
+        Invoice.objects.create(
+            case=case, invoice_number='FV/TEST/2025/002',
+            issue_date=date.today(), due_date=date.today(),
+            net_amount=Decimal('200.00'),
+        )
+        self.selenium.get(self.live_server_url + '/szkp/faktury/?q=TST-FNK-002')
+        self.assertIn('FV/TEST/2025/002', self.selenium.page_source)
+
     # --- widoczność faktur na stronie sprawy ---
 
     def test_zakladka_faktury_jest_widoczna(self):

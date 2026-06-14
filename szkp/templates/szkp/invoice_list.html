@@ -11,14 +11,39 @@
         </div>
     </div>
 
+    <form method="get" class="szkp-toolbar mb-3">
+        <div class="szkp-search">
+            <svg class="szkp-search__icon"
+                 width="14"
+                 height="14"
+                 viewBox="0 0 14 14"
+                 fill="none">
+                <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.4" />
+                <path d="M9.5 9.5L12.5 12.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+            </svg>
+            <input type="search"
+                   name="q"
+                   value="{{ q }}"
+                   placeholder="Numer faktury lub numer sprawy…">
+        </div>
+        <button type="submit" class="btn-szkp btn-szkp--outline">Szukaj</button>
+        {% if q %}
+            <a href="{% url 'szkp:invoice_list' %}{% if current_status %}?status={{ current_status }}{% endif %}"
+               class="btn-szkp btn-szkp--outline text-muted-szkp">Wyczyść</a>
+        {% endif %}
+        {% if current_status %}<input type="hidden" name="status" value="{{ current_status }}">{% endif %}
+        {% if sort %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %}
+        {% if direction %}<input type="hidden" name="dir" value="{{ direction }}">{% endif %}
+    </form>
+
     <!-- Filtr statusu -->
     <div class="d-flex gap-2 mb-3 flex-wrap">
-        <a href="{% url 'szkp:invoice_list' %}?sort={{ sort }}&dir={{ direction }}"
+        <a href="{% url 'szkp:invoice_list' %}?sort={{ sort }}&dir={{ direction }}{% if q %}&q={{ q }}{% endif %}"
            class="btn-szkp {% if not current_status %}btn-szkp--primary{% else %}btn-szkp--outline{% endif %}">
             Wszystkie
         </a>
         {% for val, label in status_choices %}
-        <a href="{% url 'szkp:invoice_list' %}?status={{ val }}&sort={{ sort }}&dir={{ direction }}"
+        <a href="{% url 'szkp:invoice_list' %}?status={{ val }}&sort={{ sort }}&dir={{ direction }}{% if q %}&q={{ q }}{% endif %}"
            class="btn-szkp {% if current_status == val %}btn-szkp--primary{% else %}btn-szkp--outline{% endif %}">
             {{ label }}
         </a>
@@ -31,37 +56,37 @@
             <thead>
                 <tr>
                     <th class="{% if sort == 'invoice_number' %}szkp-sort-active{% endif %}">
-                        <a href="?status={{ current_status }}&sort=invoice_number&dir={% if sort == 'invoice_number' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                        <a href="?status={{ current_status }}&sort=invoice_number&dir={% if sort == 'invoice_number' and direction == 'asc' %}desc{% else %}asc{% endif %}{% if q %}&q={{ q }}{% endif %}">
                             Numer faktury
                             <span class="szkp-sort-icon {% if sort == 'invoice_number' %}szkp-sort-icon--{% if direction == 'asc' %}asc{% else %}desc{% endif %}{% endif %}"></span>
                         </a>
                     </th>
                     <th class="{% if sort == 'case' %}szkp-sort-active{% endif %}">
-                        <a href="?status={{ current_status }}&sort=case&dir={% if sort == 'case' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                        <a href="?status={{ current_status }}&sort=case&dir={% if sort == 'case' and direction == 'asc' %}desc{% else %}asc{% endif %}{% if q %}&q={{ q }}{% endif %}">
                             Sprawa
                             <span class="szkp-sort-icon {% if sort == 'case' %}szkp-sort-icon--{% if direction == 'asc' %}asc{% else %}desc{% endif %}{% endif %}"></span>
                         </a>
                     </th>
                     <th class="{% if sort == 'issue_date' %}szkp-sort-active{% endif %}">
-                        <a href="?status={{ current_status }}&sort=issue_date&dir={% if sort == 'issue_date' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                        <a href="?status={{ current_status }}&sort=issue_date&dir={% if sort == 'issue_date' and direction == 'asc' %}desc{% else %}asc{% endif %}{% if q %}&q={{ q }}{% endif %}">
                             Wystawiona
                             <span class="szkp-sort-icon {% if sort == 'issue_date' %}szkp-sort-icon--{% if direction == 'asc' %}asc{% else %}desc{% endif %}{% endif %}"></span>
                         </a>
                     </th>
                     <th class="{% if sort == 'due_date' %}szkp-sort-active{% endif %}">
-                        <a href="?status={{ current_status }}&sort=due_date&dir={% if sort == 'due_date' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                        <a href="?status={{ current_status }}&sort=due_date&dir={% if sort == 'due_date' and direction == 'asc' %}desc{% else %}asc{% endif %}{% if q %}&q={{ q }}{% endif %}">
                             Termin
                             <span class="szkp-sort-icon {% if sort == 'due_date' %}szkp-sort-icon--{% if direction == 'asc' %}asc{% else %}desc{% endif %}{% endif %}"></span>
                         </a>
                     </th>
                     <th class="{% if sort == 'gross_amount' %}szkp-sort-active{% endif %}">
-                        <a href="?status={{ current_status }}&sort=gross_amount&dir={% if sort == 'gross_amount' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                        <a href="?status={{ current_status }}&sort=gross_amount&dir={% if sort == 'gross_amount' and direction == 'asc' %}desc{% else %}asc{% endif %}{% if q %}&q={{ q }}{% endif %}">
                             Kwota brutto
                             <span class="szkp-sort-icon {% if sort == 'gross_amount' %}szkp-sort-icon--{% if direction == 'asc' %}asc{% else %}desc{% endif %}{% endif %}"></span>
                         </a>
                     </th>
                     <th class="{% if sort == 'status' %}szkp-sort-active{% endif %}">
-                        <a href="?status={{ current_status }}&sort=status&dir={% if sort == 'status' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                        <a href="?status={{ current_status }}&sort=status&dir={% if sort == 'status' and direction == 'asc' %}desc{% else %}asc{% endif %}{% if q %}&q={{ q }}{% endif %}">
                             Status
                             <span class="szkp-sort-icon {% if sort == 'status' %}szkp-sort-icon--{% if direction == 'asc' %}asc{% else %}desc{% endif %}{% endif %}"></span>
                         </a>
@@ -109,8 +134,8 @@
     {% else %}
     <div class="szkp-card">
         <div class="szkp-empty">
-            <div class="szkp-empty__title">Brak faktur{% if current_status %} o statusie „{{ current_status }}"{% endif %}</div>
-            {% if current_status %}
+            <div class="szkp-empty__title">Brak faktur{% if current_status %} o statusie „{{ current_status }}"{% endif %}{% if q %} pasujących do „{{ q }}"{% endif %}</div>
+            {% if current_status or q %}
             <a href="{% url 'szkp:invoice_list' %}" class="btn-szkp btn-szkp--outline">Pokaż wszystkie</a>
             {% endif %}
         </div>
