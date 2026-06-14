@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}{% if document %}Edytuj dokument{% else %}Nowy dokument{% endif %} — SZKP{% endblock title %}
+
+{% block content %}
+<div class="szkp-page szkp-page--narrow">
+
+    <div class="szkp-breadcrumb mb-2">
+        <a href="{% url 'szkp:case_list' %}">Sprawy</a>
+        <span class="szkp-breadcrumb__sep">›</span>
+        <a href="{% url 'szkp:case_detail' case.pk %}?tab=dokumenty">{{ case.case_number }}</a>
+        <span class="szkp-breadcrumb__sep">›</span>
+        <span>{% if document %}Edytuj dokument{% else %}Nowy dokument{% endif %}</span>
+    </div>
+
+    <div class="szkp-page-header">
+        <h1 class="szkp-page-title">{% if document %}Edytuj dokument{% else %}Nowy dokument{% endif %}</h1>
+    </div>
+
+    <div class="szkp-card">
+        <div class="szkp-card__body szkp-card__body--lg">
+            <form method="post" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label for="id_title" class="szkp-label">Tytuł <span class="text-danger">*</span></label>
+                    <input type="text" id="id_title" name="title"
+                           class="szkp-input{% if errors.title %} is-invalid{% endif %}"
+                           value="{{ form_data.title|default:'' }}">
+                    {% if errors.title %}
+                    <span class="szkp-error">{{ errors.title.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-6">
+                        <label for="id_document_type" class="szkp-label">Typ dokumentu <span class="text-danger">*</span></label>
+                        <select id="id_document_type" name="document_type"
+                                class="szkp-select-full{% if errors.document_type %} is-invalid{% endif %}">
+                            <option value="">---------</option>
+                            {% for val, label in document_type_choices %}
+                            <option value="{{ val }}"
+                                {% if form_data.document_type == val %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% if errors.document_type %}
+                        <span class="szkp-error">{{ errors.document_type.0 }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="col-sm-6 d-flex align-items-end">
+                        <div class="form-check">
+                            <input type="checkbox" id="id_is_internal" name="is_internal"
+                                   class="form-check-input"
+                                   {% if form_data.is_internal %}checked{% endif %}>
+                            <label for="id_is_internal" class="form-check-label szkp-label mb-0">Dokument wewnętrzny</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="id_file" class="szkp-label">
+                        Plik
+                        {% if not document %}<span class="text-danger">*</span>{% else %}(opcjonalnie — dodaj nową wersję){% endif %}
+                    </label>
+                    <input type="file" id="id_file" name="file"
+                           class="szkp-input{% if errors.file %} is-invalid{% endif %}">
+                    {% if errors.file %}
+                    <span class="szkp-error">{{ errors.file.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <hr class="divider mb-4">
+
+                <div class="d-flex justify-content-end gap-3">
+                    <a href="{% url 'szkp:case_detail' case.pk %}?tab=dokumenty"
+                       class="btn-szkp btn-szkp--outline">Anuluj</a>
+                    <button type="submit" class="btn-szkp btn-szkp--primary">
+                        {% if document %}Zapisz zmiany{% else %}Dodaj dokument{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock content %}

@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from szkp.models import (
     CaseLawyerRole, CasePriority, CaseStatus, CaseType, Client, ClientType,
-    HearingStatus, HearingType, Invoice, InvoiceStatus,
+    DocumentType, HearingStatus, HearingType, Invoice, InvoiceStatus,
     TaskPriority, TaskStatus,
 )
 
@@ -129,6 +129,27 @@ class CaseForm(forms.Form):
     )
     court_case_number = forms.CharField(max_length=100, required=False)
     description      = forms.CharField(required=False)
+
+
+class DocumentForm(forms.Form):
+    title         = forms.CharField(max_length=300)
+    document_type = forms.ChoiceField(choices=DocumentType.choices)
+    is_internal   = forms.BooleanField(required=False)
+    file          = forms.FileField(required=False)
+
+    def __init__(self, *args, is_new=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.is_new = is_new
+
+    def clean_file(self):
+        f = self.cleaned_data.get('file')
+        if self.is_new and not f:
+            raise forms.ValidationError('Plik jest wymagany.')
+        return f
+
+
+class DocumentVersionForm(forms.Form):
+    file = forms.FileField()
 
 
 class CaseLawyerForm(forms.Form):

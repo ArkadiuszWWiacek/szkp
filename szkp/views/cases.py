@@ -96,7 +96,7 @@ def case_detail(request, pk):
             return redirect('szkp:case_detail', pk=pk)
 
     hearings = case.courthearing_set.order_by('scheduled_at')
-    documents = case.document_set.order_by('-created_at')
+    documents = case.document_set.prefetch_related('documentversion_set').order_by('-created_at')
     tasks = (case.task_set
              .filter(parent_task__isnull=True)
              .prefetch_related('task_set__assigned_lawyer')

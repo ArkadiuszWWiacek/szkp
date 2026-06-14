@@ -1,0 +1,133 @@
+import os
+
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
+from django.db.models import Max
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+
+from szkp.forms import DocumentForm, DocumentVersionForm
+from szkp.models import Case, CaseLawyer, Document, DocumentType, DocumentVersion, Lawyer
+
+
+def _save_file(uploaded_file, case_pk):
+    """Zapisuje plik do media/documents/case_<pk>/ i zwraca ścieżkę względną."""
+    directory = os.path.join(settings.MEDIA_ROOT, 'documents', f'case_{case_pk}')
+    os.makedirs(directory, exist_ok=True)
+    name = uploaded_file.name
+    filepath = os.path.join(directory, name)
+    base, ext = os.path.splitext(name)
+    counter = 1
+    while os.path.exists(filepath):
+        filepath = os.path.join(directory, f'{base}_{counter}{ext}')
+        counter += 1
+    with open(filepath, 'wb+') as f:
+        for chunk in uploaded_file.chunks():
+            f.write(chunk)
+    return os.path.relpath(filepath, settings.MEDIA_ROOT)
+
+
+def _next_version_number(document):
+    max_ver = document.documentversion_set.aggregate(m=Max('version_number'))['m']
+    return (max_ver or 0) + 1
+
+
+def _check_access(request, case):
+    if not request.user.is_staff:
+        if not CaseLawyer.objects.filter(case=case, lawyer__user=request.user).exists():
+            raise PermissionDenied
+
+
+def _form_context(case, document, form_data, errors):
+    return {
+        'case': case,
+        'document': document,
+        'form_data': form_data,
+        'errors': errors,
+        'document_type_choices': DocumentType.choices,
+    }
+
+
+@login_required
+def document_form(request, case_pk, pk=None):
+    case = get_object_or_404(Case, pk=case_pk)
+    document = get_object_or_404(Document, pk=pk, case=case) if pk else None
+    _check_access(request, case)
+
+    redirect_url = reverse('szkp:case_detail', kwargs={'pk': case_pk}) + '?tab=dokumenty'
+
+    if request.method == 'POST':
+        form = DocumentForm(request.POST, request.FILES, is_new=(document is None))
+        if form.is_valid():
+            cd = form.cleaned_data
+            obj = document or Document(case=case)
+            obj.title         = cd['title']
+            obj.document_type = cd['document_type']
+            obj.is_internal   = cd.get('is_internal') or False
+            obj.save()
+
+            uploaded = cd.get('file')
+            if uploaded:
+                lawyer = get_object_or_404(Lawyer, user=request.user)
+                DocumentVersion.objects.create(
+                    document=obj,
+                    created_by_lawyer=lawyer,
+                    version_number=_next_version_number(obj),
+                    file_path=_save_file(uploaded, case_pk),
+                )
+
+            messages.success(request, 'Dokument został zapisany.')
+            return redirect(redirect_url)
+
+        return render(
+            request,
+            'szkp/document_form.html',
+            _form_context(case, document, request.POST, form.errors),
+        )
+
+    form_data = {
+        'title':         document.title          if document else '',
+        'document_type': document.document_type  if document else '',
+        'is_internal':   document.is_internal    if document else False,
+    }
+    return render(
+        request,
+        'szkp/document_form.html',
+        _form_context(case, document, form_data, {}),
+    )
+
+
+@login_required
+def document_version_upload(request, case_pk, document_pk):
+    case = get_object_or_404(Case, pk=case_pk)
+    document = get_object_or_404(Document, pk=document_pk, case=case)
+    _check_access(request, case)
+
+    redirect_url = reverse('szkp:case_detail', kwargs={'pk': case_pk}) + '?tab=dokumenty'
+
+    if request.method == 'POST':
+        form = DocumentVersionForm(request.POST, request.FILES)
+        if form.is_valid():
+            lawyer = get_object_or_404(Lawyer, user=request.user)
+            DocumentVersion.objects.create(
+                document=document,
+                created_by_lawyer=lawyer,
+                version_number=_next_version_number(document),
+                file_path=_save_file(form.cleaned_data['file'], case_pk),
+            )
+            messages.success(request, 'Nowa wersja została dodana.')
+            return redirect(redirect_url)
+
+        return render(
+            request,
+            'szkp/document_version_upload.html',
+            {'case': case, 'document': document, 'errors': form.errors},
+        )
+
+    return render(
+        request,
+        'szkp/document_version_upload.html',
+        {'case': case, 'document': document, 'errors': {}},
+    )

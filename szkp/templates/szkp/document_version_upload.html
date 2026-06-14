@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Dodaj wersję — {{ document.title }} — SZKP{% endblock title %}
+
+{% block content %}
+<div class="szkp-page szkp-page--narrow">
+
+    <div class="szkp-breadcrumb mb-2">
+        <a href="{% url 'szkp:case_list' %}">Sprawy</a>
+        <span class="szkp-breadcrumb__sep">›</span>
+        <a href="{% url 'szkp:case_detail' case.pk %}?tab=dokumenty">{{ case.case_number }}</a>
+        <span class="szkp-breadcrumb__sep">›</span>
+        <span>Dodaj wersję</span>
+    </div>
+
+    <div class="szkp-page-header">
+        <h1 class="szkp-page-title">Nowa wersja: {{ document.title }}</h1>
+    </div>
+
+    <div class="szkp-card">
+        <div class="szkp-card__body szkp-card__body--lg">
+            <form method="post" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label for="id_file" class="szkp-label">Plik <span class="text-danger">*</span></label>
+                    <input type="file" id="id_file" name="file"
+                           class="szkp-input{% if errors.file %} is-invalid{% endif %}">
+                    {% if errors.file %}
+                    <span class="szkp-error">{{ errors.file.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <hr class="divider mb-4">
+
+                <div class="d-flex justify-content-end gap-3">
+                    <a href="{% url 'szkp:case_detail' case.pk %}?tab=dokumenty"
+                       class="btn-szkp btn-szkp--outline">Anuluj</a>
+                    <button type="submit" class="btn-szkp btn-szkp--primary">Wgraj wersję</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock content %}

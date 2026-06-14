@@ -173,24 +173,33 @@
     <div class="szkp-card">
         <div class="szkp-card__header">
             <h2 class="szkp-card__title">Dokumenty</h2>
-            <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Dodaj dokument</a>
+            <a href="{% url 'szkp:document_new' case.pk %}" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Dodaj dokument</a>
         </div>
         {% if documents %}
         {% for doc in documents %}
         <div class="doc-item">
-            <div class="doc-item__title">{{ doc.title }}</div>
-            <span class="text-faint fs-12">{{ doc.get_document_type_display }}</span>
-            {% if doc.is_internal %}
-            <span class="label-caps label-brass">wewn.</span>
-            {% endif %}
-            <div class="doc-item__date">{{ doc.created_at|date:"d.m.Y" }}</div>
+            <div class="doc-item__meta">
+                <a href="{% url 'szkp:document_edit' case.pk doc.pk %}" class="doc-item__title">{{ doc.title }}</a>
+                <span class="text-faint fs-12">{{ doc.get_document_type_display }}</span>
+                {% if doc.is_internal %}
+                <span class="label-caps label-brass">wewn.</span>
+                {% endif %}
+                <div class="doc-item__date">{{ doc.created_at|date:"d.m.Y" }}</div>
+            </div>
+            <div class="doc-item__versions">
+                {% for ver in doc.documentversion_set.all %}
+                <span class="label-caps label-slate">Wersja {{ ver.version_number }}</span>
+                {% endfor %}
+                <a href="{% url 'szkp:document_version_upload' case.pk doc.pk %}"
+                   class="btn-szkp btn-szkp--outline btn-szkp--xs">+ Wersja</a>
+            </div>
         </div>
         {% endfor %}
         {% else %}
         <div class="szkp-empty szkp-empty--compact">
             <div class="szkp-empty__title">Brak dokumentów</div>
             <div class="szkp-empty__desc">Nie dodano jeszcze żadnych dokumentów.</div>
-            <a href="#" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Dodaj dokument</a>
+            <a href="{% url 'szkp:document_new' case.pk %}" class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Dodaj dokument</a>
         </div>
         {% endif %}
     </div>
