@@ -147,6 +147,13 @@ class US08TasksTest(SzkpSeleniumTestCase):
         self.assertIn('Na dziś', self.selenium.page_source)
         self.assertNotIn('Za tydzień', self.selenium.page_source)
 
+    def test_filtr_przeterminowane_pokazuje_tylko_przeterminowane(self):
+        self._nowe_zadanie(title='Przeterminowane', due_date=self._wczoraj(), status=TaskStatus.NOWE)
+        self._nowe_zadanie(title='Na dziś', due_date=self._dzisiaj())
+        self.selenium.get(self._url_zadania() + '?period=overdue')
+        self.assertIn('Przeterminowane', self.selenium.page_source)
+        self.assertNotIn('Na dziś', self.selenium.page_source)
+
     def test_wyczysc_filtry_usuwa_parametry_url(self):
         self._nowe_zadanie()
         self.selenium.get(self._url_zadania() + '?status=nowe')
@@ -476,4 +483,61 @@ class US08TasksTest(SzkpSeleniumTestCase):
         )
         self.assertIn('Moje zadania', self.selenium.page_source)
         self.assertIn(self.sprawa.case_number, self.selenium.current_url)
+
+    # --- widok szczegółów zadania ---
+
+    def test_przycisk_szczegolów_przenosi_do_widoku_szczegolów(self):
+        """Przycisk 'Szczegóły' w sekcji akcji przenosi do strony szczegółów."""
+        task = Task.objects.create(
+            title='Zadanie szczegółowe',
+            description='Opis do zobaczenia w widoku szczegółów',
+            priority=TaskPriority.NORMALNA,
+            status=TaskStatus.NOWE,
+            assigned_lawyer=self.lawyer,
+            created_by=self.lawyer,
+        )
+        self.selenium.get(self.live_server_url + '/szkp/zadania/')
+        self.selenium.find_element(
+            By.CSS_SELECTOR, f'a[href*="/szkp/zadania/{task.pk}/"]'
+        ).click()
+        WebDriverWait(self.selenium, 5).until(
+            EC.url_contains(f'/szkp/zadania/{task.pk}/')
+        )
+        self.assertIn(f'/szkp/zadania/{task.pk}/', self.selenium.current_url)
+
+    def test_strona_szczegolów_zadania_pokazuje_opis(self):
+        """Strona szczegółów zadania wyświetla tytuł i opis."""
+        task = Task.objects.create(
+            title='Zadanie z opisem',
+            description='Szczegółowy opis zadania testowego',
+            priority=TaskPriority.WYSOKA,
+            status=TaskStatus.W_TOKU,
+            assigned_lawyer=self.lawyer,
+            created_by=self.lawyer,
+        )
+        self.selenium.get(self.live_server_url + f'/szkp/zadania/{task.pk}/')
+        src = self.selenium.page_source
+        self.assertIn('Zadanie z opisem', src)
+        self.assertIn('Szczegółowy opis zadania testowego', src)
+
+    def test_strona_szczegolów_pokazuje_opis_podzadania(self):
+        """Opis podzadania jest widoczny na stronie szczegółów zadania nadrzędnego."""
+        task = Task.objects.create(
+            title='Zadanie z podzadaniem',
+            priority=TaskPriority.NORMALNA,
+            status=TaskStatus.NOWE,
+            assigned_lawyer=self.lawyer,
+            created_by=self.lawyer,
+        )
+        Task.objects.create(
+            title='Podzadanie opisowe',
+            description='Treść opisu podzadania',
+            priority=TaskPriority.NORMALNA,
+            status=TaskStatus.NOWE,
+            assigned_lawyer=self.lawyer,
+            created_by=self.lawyer,
+            parent_task=task,
+        )
+        self.selenium.get(self.live_server_url + f'/szkp/zadania/{task.pk}/')
+        self.assertIn('Treść opisu podzadania', self.selenium.page_source)
 

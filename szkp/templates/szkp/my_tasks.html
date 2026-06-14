@@ -27,6 +27,8 @@
            class="btn-szkp {% if period_filter == 'today' %}btn-szkp--primary{% else %}btn-szkp--outline{% endif %}">Dziś</a>
         <a href="?period=week{% if status_filter %}&status={{ status_filter }}{% endif %}{% if case_number_filter %}&case_number={{ case_number_filter }}{% endif %}"
            class="btn-szkp {% if period_filter == 'week' %}btn-szkp--primary{% else %}btn-szkp--outline{% endif %}">Ten tydzień</a>
+        <a href="?period=overdue{% if status_filter %}&status={{ status_filter }}{% endif %}{% if case_number_filter %}&case_number={{ case_number_filter }}{% endif %}"
+           class="btn-szkp {% if period_filter == 'overdue' %}btn-szkp--primary{% else %}btn-szkp--outline{% endif %}">Przeterminowane</a>
         {% if status_filter or period_filter or case_number_filter %}
         <a href="{% url 'szkp:my_tasks' %}" class="btn-szkp btn-szkp--outline text-muted-szkp">Wyczyść</a>
         {% endif %}
@@ -73,6 +75,7 @@
                         {% endfor %}
                     </select>
                 </form>
+                <a href="{% url 'szkp:task_detail' task.pk %}" class="btn-szkp btn-szkp--outline btn-szkp--sm">Szczegóły</a>
                 <a href="{% url 'szkp:task_edit' task.pk %}" class="btn-szkp btn-szkp--outline btn-szkp--sm">Edytuj</a>
                 <a href="{% url 'szkp:task_delete' task.pk %}" class="btn-szkp btn-szkp--danger btn-szkp--sm">Usuń</a>
             </div>

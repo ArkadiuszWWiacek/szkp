@@ -1392,3 +1392,9 @@ a.invoice-item:hover {
   margin-bottom: var(--sp-4);
   letter-spacing: -2px;
 }
+
+
+/* Pre-formatted description text */
+.szkp-description {
+  white-space: pre-wrap;
+}

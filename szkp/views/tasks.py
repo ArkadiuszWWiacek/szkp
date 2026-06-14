@@ -42,6 +42,8 @@ def my_tasks(request):
     elif period_filter == 'week':
         qs = qs.filter(due_date__date__lte=today + timezone.timedelta(days=7),
                        due_date__date__gte=today)
+    elif period_filter == 'overdue':
+        qs = qs.filter(due_date__date__lt=today).exclude(status=TaskStatus.ZAKOŃCZONE)
 
     if case_number_filter:
         qs = qs.filter(case__case_number__icontains=case_number_filter)
@@ -57,6 +59,20 @@ def my_tasks(request):
         'today': today,
     }
     return render(request, 'szkp/my_tasks.html', context)
+
+
+@login_required
+def task_detail(request, pk):
+    task = get_object_or_404(Task, pk=pk)
+    if not request.user.is_staff:
+        lawyer = get_object_or_404(Lawyer, user=request.user)
+        if task.assigned_lawyer != lawyer:
+            raise PermissionDenied
+    subtasks = task.task_set.select_related('assigned_lawyer__user').order_by('created_at')
+    return render(request, 'szkp/task_detail.html', {
+        'task': task,
+        'subtasks': subtasks,
+    })
 
 
 def _task_context(task, form_data, errors, parent_pk=None, case=None):
