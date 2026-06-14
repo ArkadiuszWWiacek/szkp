@@ -48,11 +48,10 @@ class Command(BaseCommand):
             responsible_lawyer = choice(assigned_lawyers)
 
             for lawyer in assigned_lawyers:
-                role = choice([
-                    CaseLawyerRole.PROWADZACY,
-                    CaseLawyerRole.ASYSTENT,
-                    CaseLawyerRole.DORADCA,
-                ])
+                if lawyer == responsible_lawyer:
+                    role = CaseLawyerRole.PROWADZACY
+                else:
+                    role = choice([CaseLawyerRole.ASYSTENT, CaseLawyerRole.DORADCA])
 
                 unassigned_at = None
                 if role != CaseLawyerRole.PROWADZACY and randint(1, 10) == 1:

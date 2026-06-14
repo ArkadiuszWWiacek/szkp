@@ -4,6 +4,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 
 from szkp.forms import CaseForm
@@ -124,6 +125,25 @@ def case_detail(request, pk):
         },
     }
     return render(request, 'szkp/case_detail.html', context)
+
+
+@login_required
+def case_lawyer_delete(request, case_pk, pk):
+    cl = get_object_or_404(CaseLawyer, pk=pk, case_id=case_pk)
+
+    if not request.user.is_staff:
+        if not CaseLawyer.objects.filter(case_id=case_pk, lawyer__user=request.user).exists():
+            raise PermissionDenied
+
+    if cl.role == CaseLawyerRole.PROWADZACY:
+        raise PermissionDenied
+
+    if request.method == 'POST':
+        cl.delete()
+        messages.success(request, 'Prawnik został usunięty ze sprawy.')
+        return redirect(f"{reverse('szkp:case_detail', args=[case_pk])}?tab=prawnicy")
+
+    return render(request, 'szkp/case_lawyer_confirm_delete.html', {'cl': cl})
 
 
 def _case_form_context(case, form_data, errors):

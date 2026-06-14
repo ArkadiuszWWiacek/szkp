@@ -10,6 +10,7 @@ urlpatterns = [
     path('sprawy/nowy/',            views.case_form,    name='case_new'),
     path('sprawy/<int:pk>/',        views.case_detail,  name='case_detail'),
     path('sprawy/<int:pk>/edytuj/', views.case_form,    name='case_edit'),
+    path('sprawy/<int:case_pk>/prawnicy/<int:pk>/usun/', views.case_lawyer_delete, name='case_lawyer_delete'),
     path('klienci/',                views.client_list,  name='client_list'),
     path('klienci/nowy/',           views.client_form,  name='client_new'),
     path('klienci/<int:pk>/edytuj/',views.client_form,   name='client_edit'),

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Usuń prawnika ze sprawy — SZKP{% endblock title %}
+
+{% block content %}
+<div class="szkp-page szkp-page--narrow">
+
+    <div class="szkp-breadcrumb mb-2">
+        <a href="{% url 'szkp:case_list' %}">Sprawy</a>
+        <span class="szkp-breadcrumb__sep">›</span>
+        <a href="{% url 'szkp:case_detail' cl.case.pk %}">{{ cl.case.case_number }}</a>
+        <span class="szkp-breadcrumb__sep">›</span>
+        <a href="{% url 'szkp:case_detail' cl.case.pk %}?tab=prawnicy">Prawnicy</a>
+        <span class="szkp-breadcrumb__sep">›</span>
+        <span>Usuń prawnika</span>
+    </div>
+
+    <div class="szkp-page-header">
+        <h1 class="szkp-page-title">Usuń prawnika ze sprawy</h1>
+    </div>
+
+    <div class="szkp-card">
+        <div class="szkp-card__body szkp-card__body--lg">
+
+            <p class="mb-1">Czy na pewno chcesz usunąć ze sprawy prawnika:</p>
+            <p class="fw-medium fs-135 mb-1">{{ cl.lawyer.first_name }} {{ cl.lawyer.last_name }}</p>
+            <p class="text-muted-szkp fs-13 mb-4">{{ cl.get_role_display }}</p>
+
+            <p class="text-muted-szkp fs-13 mb-4">Tej operacji nie można cofnąć.</p>
+
+            <div class="d-flex justify-content-end gap-3">
+                <a href="{% url 'szkp:case_detail' cl.case.pk %}?tab=prawnicy" class="btn-szkp btn-szkp--outline">Anuluj</a>
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-szkp btn-szkp--danger">Usuń prawnika</button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock content %}

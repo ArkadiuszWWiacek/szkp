@@ -1398,3 +1398,10 @@ a.invoice-item:hover {
 .szkp-description {
   white-space: pre-wrap;
 }
+
+
+/* Muted link — inherits text color, no underline in any state */
+.link-muted {
+  color: inherit;
+  text-decoration: none;
+}

@@ -48,7 +48,7 @@
                     <span class="badge-prio badge-prio--{{ task.priority }}">{{ task.get_priority_display }}</span>
                     <span class="badge-status badge-status--{{ task.status }} badge-status--sm">{{ task.get_status_display }}</span>
                     {% if task.case %}
-                    <a href="{% url 'szkp:case_detail' task.case.pk %}" class="sig">
+                    <a href="{% url 'szkp:case_detail' task.case.pk %}?tab=zadania" class="sig">
                         <span class="sig-bar sig-bar--{{ task.case.case_type }}"></span>{{ task.case.case_number }}
                     </a>
                     {% endif %}

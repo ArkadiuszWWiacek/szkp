@@ -296,6 +296,9 @@
             {% if cl.lawyer.email %}
             <a href="mailto:{{ cl.lawyer.email }}" class="text-faint fs-125">{{ cl.lawyer.email }}</a>
             {% endif %}
+            {% if cl.role != 'prowadzacy' %}
+            <a href="{% url 'szkp:case_lawyer_delete' case.pk cl.pk %}" class="btn-szkp btn-szkp--danger btn-szkp--sm">Usuń</a>
+            {% endif %}
         </div>
         {% endfor %}
         {% else %}
