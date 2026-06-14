@@ -94,14 +94,28 @@ class InvoiceForm(forms.Form):
 
 
 class TaskForm(forms.Form):
-    title       = forms.CharField(max_length=300)
-    description = forms.CharField(required=False)
-    priority    = forms.ChoiceField(choices=TaskPriority.choices, required=False)
-    status      = forms.ChoiceField(choices=TaskStatus.choices, required=False)
-    due_date    = forms.DateTimeField(
+    title           = forms.CharField(max_length=300)
+    description     = forms.CharField(required=False)
+    priority        = forms.ChoiceField(choices=TaskPriority.choices, required=False)
+    status          = forms.ChoiceField(choices=TaskStatus.choices, required=False)
+    due_date        = forms.DateTimeField(
         required=False,
         input_formats=['%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M'],
     )
+    assigned_lawyer = forms.IntegerField(required=False)
+
+    def __init__(self, *args, case_lawyer_pks=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._case_lawyer_pks = case_lawyer_pks
+
+    def clean_assigned_lawyer(self):
+        pk = self.cleaned_data.get('assigned_lawyer')
+        if self._case_lawyer_pks is not None:
+            if pk is None:
+                raise forms.ValidationError('Wybierz prawnika przypisanego do sprawy.')
+            if pk not in self._case_lawyer_pks:
+                raise forms.ValidationError('Wybrany prawnik nie jest przypisany do tej sprawy.')
+        return pk
 
 
 class CaseForm(forms.Form):

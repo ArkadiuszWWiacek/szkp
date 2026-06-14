@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from szkp.models import (
     Case,
+    CaseLawyer,
     Lawyer,
     Task,
     TaskPriority,
@@ -56,14 +57,24 @@ class Command(BaseCommand):
         priorities = [item[0] for item in TaskPriority.choices]
         statuses = [item[0] for item in TaskStatus.choices]
 
+        case_lawyers_map = {}
+        for cl in CaseLawyer.objects.select_related('lawyer').all():
+            case_lawyers_map.setdefault(cl.case_id, []).append(cl.lawyer)
+
         created = 0
         parent_tasks = []
         now = timezone.now()
 
         for i in range(count):
-            assigned_lawyer = choice(lawyers)
-            created_by = choice(lawyers)
             case = choice(cases) if cases and random() > 0.15 else None
+            if case:
+                available = case_lawyers_map.get(case.pk, [])
+                if not available:
+                    case = None
+                assigned_lawyer = choice(available) if available else choice(lawyers)
+            else:
+                assigned_lawyer = choice(lawyers)
+            created_by = choice(lawyers)
 
             due_date = None
             if random() > 0.2:
@@ -105,7 +116,11 @@ class Command(BaseCommand):
                 subtasks_count = randint(1, 3)
 
                 for _ in range(subtasks_count):
-                    assigned_lawyer = choice(lawyers)
+                    if parent.case:
+                        available = case_lawyers_map.get(parent.case_id, [])
+                        assigned_lawyer = choice(available) if available else choice(lawyers)
+                    else:
+                        assigned_lawyer = choice(lawyers)
                     created_by = choice(lawyers)
 
                     due_date = None

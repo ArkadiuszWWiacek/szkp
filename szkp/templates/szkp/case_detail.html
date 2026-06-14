@@ -48,14 +48,12 @@
                             <div class="font-mono text-ink">{{ case.court_case_number }}</div>
                         </div>
                         {% endif %}
-                        {% with lead=lawyers|first %}
-                        {% if lead %}
+                        {% if lead_lawyer %}
                         <div>
                             <div class="label-caps mb-1">Prowadzący</div>
-                            <div class="text-ink fw-medium">{{ lead.lawyer.first_name }} {{ lead.lawyer.last_name }}</div>
+                            <div class="text-ink fw-medium">{{ lead_lawyer.lawyer.first_name }} {{ lead_lawyer.lawyer.last_name }}</div>
                         </div>
                         {% endif %}
-                        {% endwith %}
                         {% if case.opened_at %}
                         <div>
                             <div class="label-caps mb-1">Data otwarcia</div>

@@ -45,10 +45,13 @@ class Command(BaseCommand):
             assign_count = min(randint(1, 3), len(available_lawyers))
             assigned_lawyers = sample(available_lawyers, assign_count)
 
-            responsible_lawyer = choice(assigned_lawyers)
+            has_prowadzacy = CaseLawyer.objects.filter(
+                case=case, role=CaseLawyerRole.PROWADZACY
+            ).exists()
+            responsible_lawyer = None if has_prowadzacy else choice(assigned_lawyers)
 
             for lawyer in assigned_lawyers:
-                if lawyer == responsible_lawyer:
+                if responsible_lawyer is not None and lawyer == responsible_lawyer:
                     role = CaseLawyerRole.PROWADZACY
                 else:
                     role = choice([CaseLawyerRole.ASYSTENT, CaseLawyerRole.DORADCA])
@@ -62,7 +65,7 @@ class Command(BaseCommand):
                     lawyer=lawyer,
                     role=role,
                     unassigned_at=unassigned_at,
-                    responsible_flag=(lawyer == responsible_lawyer),
+                    responsible_flag=(responsible_lawyer is not None and lawyer == responsible_lawyer),
                 )
                 obj.full_clean()
                 obj.save()

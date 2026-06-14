@@ -68,6 +68,21 @@
                            value="{{ form_data.due_date|default:'' }}">
                 </div>
 
+                {% if lawyer_choices %}
+                <div class="mb-3">
+                    <label for="id_assigned_lawyer" class="szkp-label">Przypisz do</label>
+                    <select id="id_assigned_lawyer" name="assigned_lawyer"
+                            class="szkp-select-full{% if errors.assigned_lawyer %} is-invalid{% endif %}">
+                        {% for pk, name in lawyer_choices %}
+                        <option value="{{ pk }}"{% if form_data.assigned_lawyer == pk|stringformat:"s" %} selected{% endif %}>{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if errors.assigned_lawyer %}
+                    <span class="szkp-error">{{ errors.assigned_lawyer.0 }}</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+
                 <div class="mb-3">
                     <label for="id_description" class="szkp-label">Opis</label>
                     <textarea id="id_description" name="description"

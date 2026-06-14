@@ -25,8 +25,8 @@ class Command(BaseCommand):
                 company = None
                 first = fake.first_name_female() if i % 2 else fake.first_name_male()
             else:
-                nip = fake.random_int(min=0, max=9999999999999)
-                nip_str = f"{nip:013d}"
+                nip = fake.random_int(min=0, max=9999999999)
+                nip_str = f"{nip:010d}"
                 pesel = None
                 company = fake.company()
                 first = None

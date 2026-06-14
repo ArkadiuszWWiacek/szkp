@@ -104,6 +104,7 @@ def case_detail(request, pk):
              .order_by('priority'))
     invoices = case.invoice_set.order_by('-issue_date')
     lawyers = case.caselawyer_set.select_related('lawyer').order_by('role')
+    lead_lawyer = case.caselawyer_set.filter(role=CaseLawyerRole.PROWADZACY).select_related('lawyer').first()
 
     active_tab = request.GET.get('tab', 'terminy')
 
@@ -114,6 +115,7 @@ def case_detail(request, pk):
         'tasks': tasks,
         'invoices': invoices,
         'lawyers': lawyers,
+        'lead_lawyer': lead_lawyer,
         'status_choices': CaseStatus.choices,
         'active_tab': active_tab,
         'tab_counts': {
