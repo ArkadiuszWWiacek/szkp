@@ -1,5 +1,7 @@
 import os
 
+import markdown as md_lib
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -48,6 +50,44 @@ def _form_context(case, document, form_data, errors):
         'errors': errors,
         'document_type_choices': DocumentType.choices,
     }
+
+
+@login_required
+def document_detail(request, case_pk, pk):
+    case = get_object_or_404(Case, pk=case_pk)
+    document = get_object_or_404(Document, pk=pk, case=case)
+    _check_access(request, case)
+    versions = document.documentversion_set.select_related('created_by_lawyer').order_by('version_number')
+    try:
+        ver_num = int(request.GET.get('wersja', 0))
+    except ValueError:
+        ver_num = 0
+    selected = versions.filter(version_number=ver_num).first() or versions.last()
+    file_ext = os.path.splitext(selected.file_path)[1].lower() if selected else ''
+
+    preview_content = None
+    preview_html = None
+    if selected and file_ext in ('.txt', '.md'):
+        abs_path = os.path.join(settings.MEDIA_ROOT, selected.file_path)
+        try:
+            with open(abs_path, encoding='utf-8') as f:
+                raw = f.read()
+            if file_ext == '.md':
+                preview_html = md_lib.markdown(raw, extensions=['tables', 'fenced_code'])
+            else:
+                preview_content = raw
+        except (OSError, UnicodeDecodeError):
+            pass
+
+    return render(request, 'szkp/document_detail.html', {
+        'case': case,
+        'document': document,
+        'versions': versions,
+        'selected_version': selected,
+        'file_ext': file_ext,
+        'preview_content': preview_content,
+        'preview_html': preview_html,
+    })
 
 
 @login_required

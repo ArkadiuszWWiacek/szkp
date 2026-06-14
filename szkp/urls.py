@@ -22,6 +22,8 @@ urlpatterns = [
          views.court_hearing_form, name='court_hearing_edit'),
     path('faktury/', views.invoice_list, name='invoice_list'),
     path('faktury/<int:pk>/oplacona/', views.invoice_mark_paid, name='invoice_mark_paid'),
+    path('sprawy/<int:case_pk>/dokumenty/<int:pk>/',
+         views.document_detail, name='document_detail'),
     path('sprawy/<int:case_pk>/dokumenty/nowy/',
          views.document_form, name='document_new'),
     path('sprawy/<int:case_pk>/dokumenty/<int:pk>/edytuj/',

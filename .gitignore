@@ -11,3 +11,4 @@ CLAUDE.md
 .venv/
 staticfiles/
 htmlcov/
+media/

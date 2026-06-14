@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}
+    {{ document.title }} — SZKP
+{% endblock title %}
+
+{% block content %}
+    <div class="szkp-page">
+
+        <div class="szkp-breadcrumb mb-2">
+            <a href="{% url 'szkp:case_list' %}">Sprawy</a>
+            <span class="szkp-breadcrumb__sep">›</span>
+            <a href="{% url 'szkp:case_detail' case.pk %}?tab=dokumenty">{{ case.case_number }}</a>
+            <span class="szkp-breadcrumb__sep">›</span>
+            <span>{{ document.title }}</span>
+        </div>
+
+        <div class="szkp-page-header mb-3">
+            <h1 class="szkp-page-title">
+                {{ document.title }}
+            </h1>
+            <div class="d-flex gap-2">
+                <a href="{% url 'szkp:document_version_upload' case.pk document.pk %}"
+                   class="btn-szkp btn-szkp--outline btn-szkp--sm">+ Wersja</a>
+                <a href="{% url 'szkp:document_edit' case.pk document.pk %}"
+                   class="btn-szkp btn-szkp--outline btn-szkp--sm">Edytuj</a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+
+            {# --- Lewa kolumna: metadane + lista wersji --- #}
+            <div class="col-lg-3">
+                <div class="szkp-card mb-3">
+                    <div class="szkp-card__body">
+                        <dl class="doc-meta">
+                            <dt class="szkp-label">
+                                Typ
+                            </dt>
+                            <dd>
+                                {{ document.get_document_type_display }}
+                            </dd>
+
+                            <dt class="szkp-label mt-2">
+                                Charakter
+                            </dt>
+                            <dd>
+                                {% if document.is_internal %}
+                                    <span class="label-caps label-brass">wewnętrzny</span>
+                                {% else %}
+                                    <span class="label-caps label-slate">zewnętrzny</span>
+                                {% endif %}
+                            </dd>
+
+                            <dt class="szkp-label mt-2">
+                                Dodano
+                            </dt>
+                            <dd class="text-faint fs-12">
+                                {{ document.created_at|date:"d.m.Y H:i" }}
+                            </dd>
+
+                            <dt class="szkp-label mt-2">
+                                Zmieniono
+                            </dt>
+                            <dd class="text-faint fs-12">
+                                {{ document.updated_at|date:"d.m.Y H:i" }}
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <div class="szkp-card">
+                    <div class="szkp-card__header">
+                        <h2 class="szkp-card__title">
+                            Wersje
+                        </h2>
+                    </div>
+                    {% if versions %}
+                        <div class="doc-versions-sidebar">
+                            {% for ver in versions %}
+                                <a href="?wersja={{ ver.version_number }}"
+                                   class="version-item
+                                          {% if selected_version and ver.version_number == selected_version.version_number %}
+                                              version-item--active
+                                          {% endif %}">
+                                    <span class="version-item__num">v{{ ver.version_number }}</span>
+                                    <span class="version-item__info">
+                                        <span class="version-item__author">{{ ver.created_by_lawyer.first_name }} {{ ver.created_by_lawyer.last_name }}</span>
+                                        <span class="version-item__date">{{ ver.created_at|date:"d.m.Y" }}</span>
+                                    </span>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="szkp-empty szkp-empty--compact">
+                            <div class="szkp-empty__title">
+                                Brak wersji
+                            </div>
+                            <a href="{% url 'szkp:document_version_upload' case.pk document.pk %}"
+                               class="btn-szkp btn-szkp--outline btn-szkp--sm mt-2">+ Wgraj plik</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# --- Prawa kolumna: podgląd pliku --- #}
+            <div class="col-lg-9">
+                <div class="szkp-card">
+                    <div class="szkp-card__header">
+                        <h2 class="szkp-card__title">
+                            Podgląd
+                            {% if selected_version %}
+                                <span class="text-faint fs-12 fw-normal">— wersja {{ selected_version.version_number }}</span>
+                            {% endif %}
+                        </h2>
+                        {% if selected_version %}
+                            <a href="{{ MEDIA_URL }}{{ selected_version.file_path }}"
+                               download
+                               class="btn-szkp btn-szkp--outline btn-szkp--sm">Pobierz</a>
+                        {% endif %}
+                    </div>
+                    <div class="szkp-card__body">
+                        {% if selected_version %}
+                            {% if file_ext == '.pdf' %}
+                                <iframe src="{{ MEDIA_URL }}{{ selected_version.file_path }}"
+                                        class="doc-preview"
+                                        title="{{ document.title }}"></iframe>
+                            {% elif file_ext == '.jpg' or file_ext == '.jpeg' or file_ext == '.png' or file_ext == '.gif' or file_ext == '.webp' %}
+                                <div class="doc-preview-img">
+                                    <img src="{{ MEDIA_URL }}{{ selected_version.file_path }}"
+                                         alt="{{ document.title }}"
+                                         class="doc-preview-img__el"
+                                         width="800"
+                                         height="600">
+                                </div>
+                            {% elif file_ext == '.txt' and preview_content is not None %}
+                                <div class="doc-preview-text-wrap">
+                                    <pre class="doc-preview-text">{{ preview_content }}</pre>
+                                </div>
+                            {% elif file_ext == '.md' and preview_html is not None %}
+                                <div class="doc-preview-md">
+                                    {{ preview_html|safe }}
+                                </div>
+                            {% else %}
+                                <div class="doc-preview-unavailable">
+                                    <p class="text-faint">
+                                        Podgląd niedostępny dla tego formatu.
+                                    </p>
+                                    <a href="{{ MEDIA_URL }}{{ selected_version.file_path }}"
+                                       download
+                                       class="btn-szkp btn-szkp--primary">Pobierz plik</a>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="doc-preview-unavailable">
+                                <p class="text-faint">
+                                    Brak wersji do wyświetlenia.
+                                </p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+{% endblock content %}
