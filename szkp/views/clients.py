@@ -18,10 +18,25 @@ def client_list(request):
             | Q(first_name__icontains=q)
             | Q(company_name__icontains=q)
         )
-    qs = qs.order_by('last_name', 'company_name')
+    sort = request.GET.get('sort', 'last_name')
+    direction = request.GET.get('dir', 'asc')
+    valid_sort_fields = {
+        'last_name':  'last_name',
+        'type':       'type',
+        'created_at': 'created_at',
+    }
+    sort_field = valid_sort_fields.get(sort, 'last_name')
+    if direction == 'desc':
+        sort_field = f'-{sort_field}'
+    qs = qs.order_by(sort_field)
     paginator = Paginator(qs, 20)
     page_obj = paginator.get_page(request.GET.get('page', 1))
-    return render(request, 'szkp/client_list.html', {'page_obj': page_obj, 'q': q})
+    return render(request, 'szkp/client_list.html', {
+        'page_obj':  page_obj,
+        'q':         q,
+        'sort':      sort,
+        'direction': direction,
+    })
 
 
 @login_required

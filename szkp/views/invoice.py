@@ -81,7 +81,20 @@ def invoice_form(request, case_pk, pk=None):
 @login_required
 def invoice_list(request):
     status = request.GET.get('status')
-    qs = Invoice.objects.select_related('case').order_by('-issue_date')
+    sort = request.GET.get('sort', 'issue_date')
+    direction = request.GET.get('dir', 'desc')
+    valid_sort_fields = {
+        'invoice_number': 'invoice_number',
+        'case':           'case__case_number',
+        'issue_date':     'issue_date',
+        'due_date':       'due_date',
+        'gross_amount':   'gross_amount',
+        'status':         'status',
+    }
+    sort_field = valid_sort_fields.get(sort, 'issue_date')
+    if direction == 'desc':
+        sort_field = f'-{sort_field}'
+    qs = Invoice.objects.select_related('case').order_by(sort_field)
     if not request.user.is_staff:
         assigned = CaseLawyer.objects.filter(
             lawyer__user=request.user
@@ -90,9 +103,11 @@ def invoice_list(request):
     if status in dict(InvoiceStatus.choices):
         qs = qs.filter(status=status)
     return render(request, 'szkp/invoice_list.html', {
-        'invoices': qs,
+        'invoices':       qs,
         'status_choices': InvoiceStatus.choices,
         'current_status': status or '',
+        'sort':           sort,
+        'direction':      direction,
     })
 
 

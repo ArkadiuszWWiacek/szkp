@@ -1,115 +1,187 @@
 {% extends "base.html" %}
-{% block title %}Klienci — SZKP{% endblock title %}
+{% block title %}
+    Klienci — SZKP
+{% endblock title %}
 
 {% block content %}
-<div class="szkp-page">
+    <div class="szkp-page">
 
-    <div class="szkp-page-header">
-        <div>
-            <div class="label-brass mb-1">Klienci</div>
-            <h1 class="szkp-page-title">Klienci</h1>
-        </div>
-        <a href="{% url 'szkp:client_new' %}" class="btn-szkp btn-szkp--primary">+ Nowy klient</a>
-    </div>
-
-    <form method="get" class="szkp-toolbar mb-3">
-        <div class="szkp-search">
-            <svg class="szkp-search__icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.4"/>
-                <path d="M9.5 9.5L12.5 12.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-            </svg>
-            <input type="search" name="q" value="{{ q }}" placeholder="Imię, nazwisko lub firma…">
-        </div>
-        <button type="submit" class="btn-szkp btn-szkp--outline">Szukaj</button>
-        {% if q %}<a href="{% url 'szkp:client_list' %}" class="btn-szkp btn-szkp--outline text-muted-szkp">Wyczyść</a>{% endif %}
-    </form>
-
-    {% if page_obj %}
-    <div class="szkp-table-wrap">
-        <table class="szkp-table">
-            <thead>
-                <tr>
-                    <th>Klient</th>
-                    <th>Typ</th>
-                    <th>PESEL / NIP</th>
-                    <th>Kontakt</th>
-                    <th>Dodano</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for client in page_obj %}
-                <tr>
-                    <td>
-                        <div class="fw-medium fs-135">
-                            {% if client.is_individual %}
-                                {{ client.first_name }} {{ client.last_name }}
-                            {% else %}
-                                {{ client.company_name }}
-                            {% endif %}
-                        </div>
-                    </td>
-                    <td>
-                        <span class="label-caps">{{ client.get_type_display }}</span>
-                    </td>
-                    <td>
-                        <span class="font-mono fs-125">
-                            {% if client.pesel %}{{ client.pesel }}{% elif client.nip %}{{ client.nip }}{% else %}—{% endif %}
-                        </span>
-                    </td>
-                    <td class="fs-13">
-                        {% if client.email %}<div>{{ client.email }}</div>{% endif %}
-                        {% if client.phone %}<div class="text-faint">{{ client.phone }}</div>{% endif %}
-                    </td>
-                    <td>
-                        <span class="font-mono text-faint fs-115">{{ client.created_at|date:"d.m.Y" }}</span>
-                    </td>
-                    <td class="d-flex gap-2">
-                        <a href="{% url 'szkp:client_edit' client.pk %}" class="btn-szkp btn-szkp--outline btn-szkp--sm">Edytuj</a>
-                        <a href="{% url 'szkp:client_delete' client.pk %}" class="btn-szkp btn-szkp--danger btn-szkp--sm">Usuń</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <div class="szkp-pagination">
-            <div class="szkp-pagination__info">Pokazano {{ page_obj.start_index }}–{{ page_obj.end_index }} z {{ page_obj.paginator.count }}</div>
-            <div class="szkp-pagination__pages">
-                {% if page_obj.has_previous %}
-                <a class="szkp-page-btn" href="?q={{ q }}&page={{ page_obj.previous_page_number }}">‹</a>
-                {% else %}
-                <span class="szkp-page-btn szkp-page-btn--disabled">‹</span>
-                {% endif %}
-                {% for num in page_obj.paginator.page_range %}
-                {% if page_obj.number == num %}
-                <span class="szkp-page-btn active">{{ num }}</span>
-                {% elif num >= page_obj.number|add:"-3" and num <= page_obj.number|add:"3" %}
-                <a class="szkp-page-btn" href="?q={{ q }}&page={{ num }}">{{ num }}</a>
-                {% elif num == 1 or num == page_obj.paginator.num_pages %}
-                <a class="szkp-page-btn" href="?q={{ q }}&page={{ num }}">{{ num }}</a>
-                {% endif %}
-                {% endfor %}
-                {% if page_obj.has_next %}
-                <a class="szkp-page-btn" href="?q={{ q }}&page={{ page_obj.next_page_number }}">›</a>
-                {% else %}
-                <span class="szkp-page-btn szkp-page-btn--disabled">›</span>
-                {% endif %}
+        <div class="szkp-page-header">
+            <div>
+                <div class="label-brass mb-1">
+                    Klienci
+                </div>
+                <h1 class="szkp-page-title">
+                    Klienci
+                </h1>
             </div>
-        </div>
-    </div>
-    {% else %}
-    <div class="szkp-card">
-        <div class="szkp-empty">
-            <div class="szkp-empty__title">Brak klientów{% if q %} pasujących do frazy „{{ q }}"{% endif %}</div>
-            <div class="szkp-empty__desc">{% if q %}Zmień wyszukiwaną frazę lub{% else %}Baza klientów jest pusta.{% endif %}</div>
-            {% if q %}
-            <a href="{% url 'szkp:client_list' %}" class="btn-szkp btn-szkp--outline">Wyczyść</a>
-            {% else %}
             <a href="{% url 'szkp:client_new' %}" class="btn-szkp btn-szkp--primary">+ Nowy klient</a>
-            {% endif %}
         </div>
-    </div>
-    {% endif %}
 
-</div>
+        <form method="get" class="szkp-toolbar mb-3">
+            <div class="szkp-search">
+                <svg class="szkp-search__icon"
+                     width="14"
+                     height="14"
+                     viewBox="0 0 14 14"
+                     fill="none">
+                    <circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.4" />
+                    <path d="M9.5 9.5L12.5 12.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+                </svg>
+                <input type="search"
+                       name="q"
+                       value="{{ q }}"
+                       placeholder="Imię, nazwisko lub firma…">
+            </div>
+            <button type="submit" class="btn-szkp btn-szkp--outline">
+                Szukaj
+            </button>
+            {% if q %}
+                <a href="{% url 'szkp:client_list' %}"
+                   class="btn-szkp btn-szkp--outline text-muted-szkp">Wyczyść</a>
+            {% endif %}
+            {% if sort %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %}
+            {% if direction %}<input type="hidden" name="dir" value="{{ direction }}">{% endif %}
+        </form>
+
+        {% if page_obj %}
+            <div class="szkp-table-wrap">
+                <table class="szkp-table">
+                    <thead>
+                        <tr>
+                            <th class="{% if sort == 'last_name' %}szkp-sort-active{% endif %}">
+                                <a href="?q={{ q }}&sort=last_name&dir={% if sort == 'last_name' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                                    Klient
+                                    <span class="szkp-sort-icon {% if sort == 'last_name' %}szkp-sort-icon--{% if direction == 'asc' %}asc{% else %}desc{% endif %}{% endif %}"></span>
+                                </a>
+                            </th>
+                            <th class="{% if sort == 'type' %}szkp-sort-active{% endif %}">
+                                <a href="?q={{ q }}&sort=type&dir={% if sort == 'type' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                                    Typ
+                                    <span class="szkp-sort-icon {% if sort == 'type' %}szkp-sort-icon--{% if direction == 'asc' %}asc{% else %}desc{% endif %}{% endif %}"></span>
+                                </a>
+                            </th>
+                            <th>
+                                PESEL / NIP
+                            </th>
+                            <th>
+                                Kontakt
+                            </th>
+                            <th class="{% if sort == 'created_at' %}szkp-sort-active{% endif %}">
+                                <a href="?q={{ q }}&sort=created_at&dir={% if sort == 'created_at' and direction == 'asc' %}desc{% else %}asc{% endif %}">
+                                    Dodano
+                                    <span class="szkp-sort-icon {% if sort == 'created_at' %}szkp-sort-icon--{% if direction == 'asc' %}asc{% else %}desc{% endif %}{% endif %}"></span>
+                                </a>
+                            </th>
+                            <th>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for client in page_obj %}
+                            <tr>
+                                <td>
+                                    <div class="fw-medium fs-135">
+                                        {% if client.is_individual %}
+                                            {{ client.first_name }} {{ client.last_name }}
+                                        {% else %}
+                                            {{ client.company_name }}
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="label-caps">{{ client.get_type_display }}</span>
+                                </td>
+                                <td>
+                                    <span class="font-mono fs-125">
+                                        {% if client.pesel %}
+                                            {{ client.pesel }}
+                                        {% elif client.nip %}
+                                            {{ client.nip }}
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td class="fs-13">
+                                    {% if client.email %}
+                                        <div>
+                                            {{ client.email }}
+                                        </div>
+                                    {% endif %}
+                                    {% if client.phone %}
+                                        <div class="text-faint">
+                                            {{ client.phone }}
+                                        </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="font-mono text-faint fs-115">{{ client.created_at|date:"d.m.Y" }}</span>
+                                </td>
+                                <td class="fs-125">
+                                    <a href="{% url 'szkp:client_edit' client.pk %}"
+                                       class="btn-szkp btn-szkp--outline btn-szkp--sm">Edytuj</a>
+                                    <a href="{% url 'szkp:client_delete' client.pk %}"
+                                       class="btn-szkp btn-szkp--danger btn-szkp--sm">Usuń</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div class="szkp-pagination">
+                    <div class="szkp-pagination__info">
+                        Pokazano {{ page_obj.start_index }}–{{ page_obj.end_index }} z {{ page_obj.paginator.count }}
+                    </div>
+                    <div class="szkp-pagination__pages">
+                        {% if page_obj.has_previous %}
+                            <a class="szkp-page-btn"
+                               href="?q={{ q }}&sort={{ sort }}&dir={{ direction }}&page={{ page_obj.previous_page_number }}">‹</a>
+                        {% else %}
+                            <span class="szkp-page-btn szkp-page-btn--disabled">‹</span>
+                        {% endif %}
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <span class="szkp-page-btn active">{{ num }}</span>
+                            {% elif num >= page_obj.number|add:"-3" and num <= page_obj.number|add:"3" %}
+                                <a class="szkp-page-btn" href="?q={{ q }}&sort={{ sort }}&dir={{ direction }}&page={{ num }}">{{ num }}</a>
+                            {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                                <a class="szkp-page-btn" href="?q={{ q }}&sort={{ sort }}&dir={{ direction }}&page={{ num }}">{{ num }}</a>
+                            {% endif %}
+                        {% endfor %}
+                        {% if page_obj.has_next %}
+                            <a class="szkp-page-btn"
+                               href="?q={{ q }}&sort={{ sort }}&dir={{ direction }}&page={{ page_obj.next_page_number }}">›</a>
+                        {% else %}
+                            <span class="szkp-page-btn szkp-page-btn--disabled">›</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="szkp-card">
+                <div class="szkp-empty">
+                    <div class="szkp-empty__title">
+                        Brak klientów
+                        {% if q %}
+                            pasujących do frazy „{{ q }}"
+                        {% endif %}
+                    </div>
+                    <div class="szkp-empty__desc">
+                        {% if q %}
+                            Zmień wyszukiwaną frazę lub
+                        {% else %}
+                            Baza klientów jest pusta.
+                        {% endif %}
+                    </div>
+                    {% if q %}
+                        <a href="{% url 'szkp:client_list' %}"
+                           class="btn-szkp btn-szkp--outline">Wyczyść</a>
+                    {% else %}
+                        <a href="{% url 'szkp:client_new' %}" class="btn-szkp btn-szkp--primary">+ Nowy klient</a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+
+    </div>
 {% endblock content %}
