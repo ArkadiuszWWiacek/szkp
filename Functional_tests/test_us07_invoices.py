@@ -254,3 +254,118 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
             EC.url_contains('tab=faktury')
         )
         self.assertIn('Opłacona', self.selenium.page_source)
+
+    # --- lista faktur ---
+
+    def _url_lista(self, status=None):
+        url = self.live_server_url + '/szkp/faktury/'
+        if status:
+            url += f'?status={status}'
+        return url
+
+    def _make_invoice(self, number, status=InvoiceStatus.WYSTAWIONA, **kwargs):
+        return Invoice.objects.create(
+            case=self.sprawa,
+            invoice_number=number,
+            net_amount=Decimal('500.00'),
+            issue_date=date.today(),
+            due_date=date.today() + timedelta(days=14),
+            status=status,
+            **kwargs,
+        )
+
+    def test_lista_faktur_dostepna(self):
+        self.selenium.get(self._url_lista())
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.TAG_NAME, 'body'))
+        )
+        self.assertIn('Faktury', self.selenium.page_source)
+
+    def test_lista_faktur_wyswietla_faktury(self):
+        self._make_invoice('FV/US07-L/001')
+        self.selenium.get(self._url_lista())
+        self.assertIn('FV/US07-L/001', self.selenium.page_source)
+
+    def test_lista_faktur_brak_wyswietla_pusty_stan(self):
+        self.selenium.get(self._url_lista())
+        self.assertIn('Brak faktur', self.selenium.page_source)
+
+    def test_filtr_listy_po_statusie_oplacona(self):
+        self._make_invoice('FV/US07-L/WYS', status=InvoiceStatus.WYSTAWIONA)
+        self._make_invoice('FV/US07-L/OPL', status=InvoiceStatus.OPŁACONA)
+        self.selenium.get(self._url_lista(status='opłacona'))
+        self.assertIn('FV/US07-L/OPL', self.selenium.page_source)
+        self.assertNotIn('FV/US07-L/WYS', self.selenium.page_source)
+
+    def test_filtr_listy_po_statusie_przeterminowana(self):
+        self._make_invoice('FV/US07-L/WYS2', status=InvoiceStatus.WYSTAWIONA)
+        self._make_invoice('FV/US07-L/PRZ', status=InvoiceStatus.PRZETERMINOWANA)
+        self.selenium.get(self._url_lista(status='przeterminowana'))
+        self.assertIn('FV/US07-L/PRZ', self.selenium.page_source)
+        self.assertNotIn('FV/US07-L/WYS2', self.selenium.page_source)
+
+    def test_filtr_listy_wszystkie_pokazuje_wszystkie(self):
+        self._make_invoice('FV/US07-L/A', status=InvoiceStatus.WYSTAWIONA)
+        self._make_invoice('FV/US07-L/B', status=InvoiceStatus.OPŁACONA)
+        self.selenium.get(self._url_lista())
+        self.selenium.find_element(By.LINK_TEXT, 'Wszystkie').click()
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.LINK_TEXT, 'Wszystkie'))
+        )
+        self.assertIn('FV/US07-L/A', self.selenium.page_source)
+        self.assertIn('FV/US07-L/B', self.selenium.page_source)
+
+    def test_lista_faktura_ma_link_do_sprawy(self):
+        self._make_invoice('FV/US07-L/LINK')
+        self.selenium.get(self._url_lista())
+        self.selenium.find_element(
+            By.CSS_SELECTOR, f'a[href*="/sprawy/{self.sprawa.pk}/"]'
+        ).click()
+        WebDriverWait(self.selenium, 5).until(
+            EC.url_contains(f'/sprawy/{self.sprawa.pk}/')
+        )
+        self.assertIn('tab=faktury', self.selenium.current_url)
+
+    def test_przycisk_oplacona_widoczny_przy_wystawionej(self):
+        self._make_invoice('FV/US07-L/BTN')
+        self.selenium.get(self._url_lista())
+        btn = self.selenium.find_element(
+            By.CSS_SELECTOR, 'button[data-invoice-action="mark-paid"]'
+        )
+        self.assertIsNotNone(btn)
+
+    def test_przycisk_oplacona_niewidoczny_przy_oplaconej(self):
+        self._make_invoice('FV/US07-L/NOBTN', status=InvoiceStatus.OPŁACONA)
+        self.selenium.get(self._url_lista())
+        btns = self.selenium.find_elements(
+            By.CSS_SELECTOR, 'button[data-invoice-action="mark-paid"]'
+        )
+        self.assertEqual(len(btns), 0)
+
+    def test_klik_oplacona_na_liscie_zmienia_status(self):
+        self._make_invoice('FV/US07-L/KLIK')
+        self.selenium.get(self._url_lista())
+        self.selenium.find_element(
+            By.CSS_SELECTOR, 'button[data-invoice-action="mark-paid"]'
+        ).click()
+        WebDriverWait(self.selenium, 5).until(
+            EC.presence_of_element_located((By.TAG_NAME, 'body'))
+        )
+        self.assertIn('Opłacona', self.selenium.page_source)
+        btns = self.selenium.find_elements(
+            By.CSS_SELECTOR, 'button[data-invoice-action="mark-paid"]'
+        )
+        self.assertEqual(len(btns), 0)
+
+    # --- kliknięcie pozycji faktury na zakładce faktury sprawy ---
+
+    def test_klikniecie_pozycji_faktury_przenosi_na_liste_z_filtrem(self):
+        self._make_invoice('FV/US07/LINK')
+        self.selenium.get(self._url_faktury())
+        element = self.selenium.find_element(By.CSS_SELECTOR, 'a.invoice-item')
+        self.selenium.execute_script('arguments[0].click();', element)
+        WebDriverWait(self.selenium, 5).until(EC.url_contains('/szkp/faktury/'))
+        current = self.selenium.current_url
+        self.assertIn('/szkp/faktury/', current)
+        self.assertIn('q=', current)
+        self.assertIn('FV', current)

@@ -168,3 +168,130 @@ class InvoiceEditViewTest(StaffLawyerTestCase):
         self.client.post(self._url_edit(), self._valid_edit_data(status='opłacona'))
         self.faktura.refresh_from_db()
         self.assertIsNotNone(self.faktura.paid_at)
+
+
+def _make_invoice(case, number, status=InvoiceStatus.WYSTAWIONA):
+    return Invoice.objects.create(
+        case=case,
+        invoice_number=number,
+        net_amount=Decimal('500.00'),
+        issue_date=date.today(),
+        due_date=date.today() + timedelta(days=14),
+        status=status,
+    )
+
+
+@tag('integration')
+class InvoiceListViewTest(StaffLawyerTestCase):
+    """invoice_list: dostępność, filtr po statusie, uprawnienia."""
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.sprawa = Case.objects.create(
+            client=cls.klient, case_number='TST-US07-LIST-001',
+            title='Sprawa do testów listy faktur', case_type=CaseType.CYWILNA,
+        )
+
+    def _url(self, status=None):
+        url = reverse('szkp:invoice_list')
+        if status:
+            url += f'?status={status}'
+        return url
+
+    def test_get_lista_zwraca_200(self):
+        r = self.client.get(self._url())
+        self.assertEqual(r.status_code, 200)
+
+    def test_lista_zawiera_faktury(self):
+        _make_invoice(self.sprawa, 'FV/US07-L/VW001')
+        r = self.client.get(self._url())
+        self.assertContains(r, 'FV/US07-L/VW001')
+
+    def test_filtr_po_statusie_oplacona(self):
+        _make_invoice(self.sprawa, 'FV/US07-L/VW-WYS', InvoiceStatus.WYSTAWIONA)
+        _make_invoice(self.sprawa, 'FV/US07-L/VW-OPL', InvoiceStatus.OPŁACONA)
+        r = self.client.get(self._url(status='opłacona'))
+        self.assertContains(r, 'FV/US07-L/VW-OPL')
+        self.assertNotContains(r, 'FV/US07-L/VW-WYS')
+
+    def test_filtr_po_statusie_przeterminowana(self):
+        _make_invoice(self.sprawa, 'FV/US07-L/VW-WYS2', InvoiceStatus.WYSTAWIONA)
+        _make_invoice(self.sprawa, 'FV/US07-L/VW-PRZ', InvoiceStatus.PRZETERMINOWANA)
+        r = self.client.get(self._url(status='przeterminowana'))
+        self.assertContains(r, 'FV/US07-L/VW-PRZ')
+        self.assertNotContains(r, 'FV/US07-L/VW-WYS2')
+
+    def test_filtr_nieznany_status_ignorowany(self):
+        _make_invoice(self.sprawa, 'FV/US07-L/VW-IGN')
+        r = self.client.get(self._url(status='nieznany'))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, 'FV/US07-L/VW-IGN')
+
+    def test_wymaga_zalogowania(self):
+        self.client.logout()
+        r = self.client.get(self._url())
+        self.assertEqual(r.status_code, 302)
+        self.assertIn('/accounts/', r['Location'])
+
+
+@tag('integration')
+class InvoiceMarkPaidViewTest(StaffLawyerTestCase):
+    """invoice_mark_paid: zmiana statusu na opłacona, auto paid_at, uprawnienia."""
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.sprawa = Case.objects.create(
+            client=cls.klient, case_number='TST-US07-MP-001',
+            title='Sprawa do testów mark_paid', case_type=CaseType.CYWILNA,
+        )
+
+    def setUp(self):
+        super().setUp()
+        self.faktura = _make_invoice(self.sprawa, 'FV/US07-L/MP001')
+
+    def _url(self):
+        return reverse('szkp:invoice_mark_paid', kwargs={'pk': self.faktura.pk})
+
+    def test_mark_paid_zmienia_status(self):
+        self.client.post(self._url())
+        self.faktura.refresh_from_db()
+        self.assertEqual(self.faktura.status, InvoiceStatus.OPŁACONA)
+
+    def test_mark_paid_ustawia_paid_at(self):
+        self.client.post(self._url())
+        self.faktura.refresh_from_db()
+        self.assertIsNotNone(self.faktura.paid_at)
+
+    def test_mark_paid_przekierowuje_na_liste(self):
+        r = self.client.post(self._url())
+        self.assertRedirects(r, reverse('szkp:invoice_list'))
+
+    def test_mark_paid_wymaga_zalogowania(self):
+        self.client.logout()
+        r = self.client.post(self._url())
+        self.assertEqual(r.status_code, 302)
+        self.assertIn('/accounts/', r['Location'])
+
+
+@tag('integration')
+class CaseDetailInvoiceTabLinkTest(StaffLawyerTestCase):
+    """case_detail zakładka faktury: pozycja faktury ma link do listy z filtrem."""
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.sprawa = Case.objects.create(
+            client=cls.klient, case_number='TST-US07-LINK-001',
+            title='Sprawa do testów linku faktury', case_type=CaseType.CYWILNA,
+        )
+        cls.faktura = _make_invoice(cls.sprawa, 'FV/US07/LINK')
+
+    def _url(self):
+        return reverse('szkp:case_detail', kwargs={'pk': self.sprawa.pk}) + '?tab=faktury'
+
+    def test_pozycja_faktury_ma_link_do_listy_z_filtrem(self):
+        r = self.client.get(self._url())
+        expected_href = reverse('szkp:invoice_list') + '?q=FV/US07/LINK'
+        self.assertContains(r, f'href="{expected_href}"')

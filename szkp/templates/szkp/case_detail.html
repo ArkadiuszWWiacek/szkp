@@ -370,7 +370,7 @@
                 </div>
                 {% if invoices %}
                     {% for inv in invoices %}
-                        <div class="invoice-item">
+                        <a href="{% url 'szkp:invoice_list' %}?q={{ inv.invoice_number }}" class="invoice-item">
                             <div class="invoice-item__number">
                                 {{ inv.invoice_number }}
                             </div>
@@ -386,7 +386,7 @@
                                 {{ inv.gross_amount|floatformat:2 }} {{ inv.currency }}
                             </div>
                             <span class="badge-status badge-status--{{ inv.status }} ms-3">{{ inv.get_status_display }}</span>
-                        </div>
+                        </a>
                     {% endfor %}
                 {% else %}
                     <div class="szkp-empty szkp-empty--compact">
