@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -108,8 +109,11 @@ def invoice_list(request):
             Q(invoice_number__icontains=q)
             | Q(case__case_number__icontains=q)
         )
+    paginator = Paginator(qs, 20)
+    page_obj = paginator.get_page(request.GET.get('page', 1))
     return render(request, 'szkp/invoice_list.html', {
-        'invoices':       qs,
+        'page_obj':       page_obj,
+        'invoices':       page_obj,
         'status_choices': InvoiceStatus.choices,
         'current_status': status or '',
         'sort':           sort,
