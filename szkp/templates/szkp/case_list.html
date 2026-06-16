@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load szkp_tags %}
 {% block title %}Sprawy — SZKP{% endblock title %}
 
 {% block content %}
@@ -38,9 +39,6 @@
         {% if q or status or case_type %}
         <a href="{% url 'szkp:case_list' %}" class="btn-szkp btn-szkp--outline text-muted-szkp">Wyczyść</a>
         {% endif %}
-        <!-- Ukryte pola dla sortowania -->
-        {% if sort %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %}
-        {% if direction %}<input type="hidden" name="dir" value="{{ direction }}">{% endif %}
     </form>
 
     <!-- Tabela spraw -->
@@ -49,36 +47,11 @@
         <table class="szkp-table">
             <thead>
                 <tr>
-                    <th class="{% if sort == 'case_number' %}szkp-sort-active{% endif %}">
-                        <a href="?q={{ q }}&status={{ status }}&type={{ case_type }}&sort=case_number&dir={% if sort == 'case_number' and direction == 'asc' %}desc{% else %}asc{% endif %}">
-                            Sygnatura
-                            <span class="szkp-sort-icon {% if sort == 'case_number' %}szkp-sort-icon--{% if direction == 'asc' %}asc{% else %}desc{% endif %}{% endif %}"></span>
-                        </a>
-                    </th>
-                    <th class="{% if sort == 'client' %}szkp-sort-active{% endif %}">
-                        <a href="?q={{ q }}&status={{ status }}&type={{ case_type }}&sort=client&dir={% if sort == 'client' and direction == 'asc' %}desc{% else %}asc{% endif %}">
-                            Klient
-                            <span class="szkp-sort-icon {% if sort == 'client' %}szkp-sort-icon--{% if direction == 'asc' %}asc{% else %}desc{% endif %}{% endif %}"></span>
-                        </a>
-                    </th>
-                    <th class="{% if sort == 'case_type' %}szkp-sort-active{% endif %}">
-                        <a href="?q={{ q }}&status={{ status }}&type={{ case_type }}&sort=case_type&dir={% if sort == 'case_type' and direction == 'asc' %}desc{% else %}asc{% endif %}">
-                            Typ
-                            <span class="szkp-sort-icon {% if sort == 'case_type' %}szkp-sort-icon--{% if direction == 'asc' %}asc{% else %}desc{% endif %}{% endif %}"></span>
-                        </a>
-                    </th>
-                    <th class="{% if sort == 'status' %}szkp-sort-active{% endif %}">
-                        <a href="?q={{ q }}&status={{ status }}&type={{ case_type }}&sort=status&dir={% if sort == 'status' and direction == 'asc' %}desc{% else %}asc{% endif %}">
-                            Status
-                            <span class="szkp-sort-icon {% if sort == 'status' %}szkp-sort-icon--{% if direction == 'asc' %}asc{% else %}desc{% endif %}{% endif %}"></span>
-                        </a>
-                    </th>
-                    <th class="{% if sort == 'case_priority' %}szkp-sort-active{% endif %}">
-                        <a href="?q={{ q }}&status={{ status }}&type={{ case_type }}&sort=case_priority&dir={% if sort == 'case_priority' and direction == 'asc' %}desc{% else %}asc{% endif %}">
-                            Priorytet
-                            <span class="szkp-sort-icon {% if sort == 'case_priority' %}szkp-sort-icon--{% if direction == 'asc' %}asc{% else %}desc{% endif %}{% endif %}"></span>
-                        </a>
-                    </th>
+                    {% sort_th "case_number" "Sygnatura" %}
+                    {% sort_th "client" "Klient" %}
+                    {% sort_th "case_type" "Typ" %}
+                    {% sort_th "status" "Status" %}
+                    {% sort_th "case_priority" "Priorytet" %}
                     <th>Prawnicy</th>
                 </tr>
             </thead>

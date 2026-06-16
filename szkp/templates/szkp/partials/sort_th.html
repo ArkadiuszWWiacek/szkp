@@ -1,0 +1,6 @@
+<th class="{% if is_active %}szkp-sort-active{% endif %}">
+    <a href="{{ url }}">
+        {{ label }}
+        <span class="szkp-sort-icon{% if is_active %} szkp-sort-icon--{{ current_dir }}{% endif %}"></span>
+    </a>
+</th>

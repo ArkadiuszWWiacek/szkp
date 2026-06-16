@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load szkp_tags %}
 {% block title %}
     Klienci — SZKP
 {% endblock title %}
@@ -40,8 +41,6 @@
                 <a href="{% url 'szkp:client_list' %}"
                    class="btn-szkp btn-szkp--outline text-muted-szkp">Wyczyść</a>
             {% endif %}
-            {% if sort %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %}
-            {% if direction %}<input type="hidden" name="dir" value="{{ direction }}">{% endif %}
         </form>
 
         {% if page_obj %}
@@ -49,32 +48,12 @@
                 <table class="szkp-table">
                     <thead>
                         <tr>
-                            <th class="{% if sort == 'last_name' %}szkp-sort-active{% endif %}">
-                                <a href="?q={{ q }}&sort=last_name&dir={% if sort == 'last_name' and direction == 'asc' %}desc{% else %}asc{% endif %}">
-                                    Klient
-                                    <span class="szkp-sort-icon {% if sort == 'last_name' %}szkp-sort-icon--{% if direction == 'asc' %}asc{% else %}desc{% endif %}{% endif %}"></span>
-                                </a>
-                            </th>
-                            <th class="{% if sort == 'type' %}szkp-sort-active{% endif %}">
-                                <a href="?q={{ q }}&sort=type&dir={% if sort == 'type' and direction == 'asc' %}desc{% else %}asc{% endif %}">
-                                    Typ
-                                    <span class="szkp-sort-icon {% if sort == 'type' %}szkp-sort-icon--{% if direction == 'asc' %}asc{% else %}desc{% endif %}{% endif %}"></span>
-                                </a>
-                            </th>
-                            <th>
-                                PESEL / NIP
-                            </th>
-                            <th>
-                                Kontakt
-                            </th>
-                            <th class="{% if sort == 'created_at' %}szkp-sort-active{% endif %}">
-                                <a href="?q={{ q }}&sort=created_at&dir={% if sort == 'created_at' and direction == 'asc' %}desc{% else %}asc{% endif %}">
-                                    Dodano
-                                    <span class="szkp-sort-icon {% if sort == 'created_at' %}szkp-sort-icon--{% if direction == 'asc' %}asc{% else %}desc{% endif %}{% endif %}"></span>
-                                </a>
-                            </th>
-                            <th>
-                            </th>
+                            {% sort_th "last_name" "Klient" %}
+                            {% sort_th "type" "Typ" %}
+                            <th>PESEL / NIP</th>
+                            <th>Kontakt</th>
+                            {% sort_th "created_at" "Dodano" %}
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
