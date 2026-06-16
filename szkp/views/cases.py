@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from szkp.forms import CaseForm, CaseLawyerForm
+from szkp.permissions import require_case_access, require_case_access_by_pk
 from szkp.models import (
     Case, CaseLawyer, CaseLawyerRole, CasePriority, CaseStatus, CaseType,
     Client, CourtHearing, Document, Invoice, Lawyer, Task,
@@ -73,9 +74,7 @@ def case_list(request):
 def case_detail(request, pk):
     case = get_object_or_404(Case.objects.select_related('client'), pk=pk)
 
-    if not request.user.is_staff:
-        if not CaseLawyer.objects.filter(case=case, lawyer__user=request.user).exists():
-            raise PermissionDenied
+    require_case_access(request, case)
 
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -133,9 +132,7 @@ def case_detail(request, pk):
 def case_lawyer_delete(request, case_pk, pk):
     cl = get_object_or_404(CaseLawyer, pk=pk, case_id=case_pk)
 
-    if not request.user.is_staff:
-        if not CaseLawyer.objects.filter(case_id=case_pk, lawyer__user=request.user).exists():
-            raise PermissionDenied
+    require_case_access_by_pk(request, case_pk)
 
     if cl.role == CaseLawyerRole.PROWADZACY:
         raise PermissionDenied
@@ -152,9 +149,7 @@ def case_lawyer_delete(request, case_pk, pk):
 def case_lawyer_add(request, case_pk):
     case = get_object_or_404(Case, pk=case_pk)
 
-    if not request.user.is_staff:
-        if not CaseLawyer.objects.filter(case=case, lawyer__user=request.user).exists():
-            raise PermissionDenied
+    require_case_access(request, case)
 
     already_assigned_pks = list(
         CaseLawyer.objects.filter(case=case).values_list('lawyer_id', flat=True)

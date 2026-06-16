@@ -86,7 +86,7 @@ class CaseDetailAccessTest(_US03SetUpMixin, TestCase):
     def test_nieprzypisany_prawnik_jest_blokowany(self):
         self.client.force_login(self.user_a)
         response = self.client.get(f'/szkp/sprawy/{self.case_b.pk}/')
-        self.assertNotEqual(response.status_code, 200)  # 302 / 403 / 404
+        self.assertEqual(response.status_code, 403)
 
     def test_admin_ma_dostep_do_kazdej_sprawy(self):
         self.client.force_login(self.admin)

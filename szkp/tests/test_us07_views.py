@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 from decimal import Decimal
 
+from django.contrib.auth.models import User
 from django.test import tag
 from django.urls import reverse
 
@@ -99,6 +100,12 @@ class InvoiceCreateViewTest(StaffLawyerTestCase):
         self.assertEqual(r.status_code, 302)
         self.assertIn('/accounts/', r['Location'])
 
+    def test_nieprzypisany_prawnik_dostaje_403(self):
+        user2 = User.objects.create_user('obcy_us07', password='pass', is_staff=False)
+        self.client.force_login(user2)
+        r = self.client.get(self._url_new())
+        self.assertEqual(r.status_code, 403)
+
 
 @tag('integration')
 class InvoiceEditViewTest(StaffLawyerTestCase):
@@ -163,6 +170,18 @@ class InvoiceEditViewTest(StaffLawyerTestCase):
             r,
             reverse('szkp:case_detail', kwargs={'pk': self.sprawa.pk}) + '?tab=faktury',
         )
+
+    def test_wymaga_zalogowania(self):
+        self.client.logout()
+        r = self.client.get(self._url_edit())
+        self.assertEqual(r.status_code, 302)
+        self.assertIn('/accounts/', r['Location'])
+
+    def test_nieprzypisany_prawnik_dostaje_403(self):
+        user2 = User.objects.create_user('obcy_us07_edit', password='pass', is_staff=False)
+        self.client.force_login(user2)
+        r = self.client.get(self._url_edit())
+        self.assertEqual(r.status_code, 403)
 
     def test_post_status_oplacona_ustawia_paid_at(self):
         self.client.post(self._url_edit(), self._valid_edit_data(status='opłacona'))

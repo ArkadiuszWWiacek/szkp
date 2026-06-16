@@ -332,3 +332,50 @@ class CaseLawyerAddAccessTest(TestCase):
         self.client.force_login(user2)
         r = self.client.get(self._url())
         self.assertEqual(r.status_code, 403)
+
+
+@tag('integration')
+class CaseLawyerDeleteAccessTest(TestCase):
+    """case_lawyer_delete: kontrola dostępu."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user_staff = User.objects.create_user('staff_del', password='pass', is_staff=True)
+        cls.lawyer_staff = Lawyer.objects.create(
+            user=cls.user_staff, first_name='Jan', last_name='Prowadzący',
+            bar_number='PL-DEL-001',
+        )
+        cls.klient = Client.objects.create(
+            type=ClientType.OSOBA_FIZYCZNA,
+            first_name='Anna', last_name='Klientka', pesel='98010112345',
+        )
+        cls.sprawa = Case.objects.create(
+            client=cls.klient, case_number='TST-CLDEL-ACC-001',
+            title='Sprawa do testów usuwania prawnika', case_type=CaseType.CYWILNA,
+        )
+        cls.lawyer2 = Lawyer.objects.create(
+            first_name='Maria', last_name='Asystentka', bar_number='PL-DEL-002',
+        )
+        CaseLawyer.objects.create(
+            case=cls.sprawa, lawyer=cls.lawyer_staff, role=CaseLawyerRole.PROWADZACY,
+        )
+        cls.case_lawyer2 = CaseLawyer.objects.create(
+            case=cls.sprawa, lawyer=cls.lawyer2, role=CaseLawyerRole.ASYSTENT,
+        )
+
+    def _url(self):
+        return reverse('szkp:case_lawyer_delete', kwargs={
+            'case_pk': self.sprawa.pk,
+            'pk': self.case_lawyer2.pk,
+        })
+
+    def test_wymaga_zalogowania(self):
+        r = self.client.post(self._url())
+        self.assertEqual(r.status_code, 302)
+        self.assertIn('/accounts/', r['Location'])
+
+    def test_nieprzypisany_prawnik_dostaje_403(self):
+        user2 = User.objects.create_user('obcy_del', password='pass', is_staff=False)
+        self.client.force_login(user2)
+        r = self.client.post(self._url())
+        self.assertEqual(r.status_code, 403)

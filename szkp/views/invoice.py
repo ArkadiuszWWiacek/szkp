@@ -8,6 +8,7 @@ from django.views.decorators.http import require_POST
 
 from szkp.forms import InvoiceForm
 from szkp.models import Case, CaseLawyer, Invoice, InvoiceStatus
+from szkp.permissions import require_case_access
 
 
 def _form_context(case, invoice, form_data, errors):
@@ -25,9 +26,7 @@ def invoice_form(request, case_pk, pk=None):
     case = get_object_or_404(Case, pk=case_pk)
     invoice = get_object_or_404(Invoice, pk=pk, case=case) if pk else None
 
-    if not request.user.is_staff:
-        if not CaseLawyer.objects.filter(case=case, lawyer__user=request.user).exists():
-            raise PermissionDenied
+    require_case_access(request, case)
 
     redirect_url = (
         reverse('szkp:case_detail', kwargs={'pk': case_pk}) + '?tab=faktury'

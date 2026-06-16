@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.test import tag
+from django.urls import reverse
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select, WebDriverWait
@@ -209,3 +210,62 @@ class US05CasesTest(SzkpSeleniumTestCase):
             EC.url_contains('/szkp/sprawy/')
         )
         self.assertIn('Nowy tytuł', self.selenium.page_source)
+
+
+@tag('functional')
+class US05CaseLawyerAddAccessTest(SzkpSeleniumTestCase):
+    """US-05: Kontrola dostępu do formularza dodawania prawnika do sprawy."""
+
+    def setUp(self):
+        self.selenium.get(self.live_server_url)
+        self.selenium.delete_all_cookies()
+        self.user = User.objects.create_user(
+            username='testprawnik_us05acc', password='testpass123', is_staff=True,
+        )
+        self.lawyer = Lawyer.objects.create(
+            user=self.user, first_name='Jan', last_name='Prawnik',
+            bar_number='PL-US05-001',
+        )
+        self.klient = Client.objects.create(
+            type=ClientType.OSOBA_FIZYCZNA,
+            first_name='Anna', last_name='Klientka', pesel='87030312345',
+        )
+        self.sprawa = Case.objects.create(
+            client=self.klient, case_number='TST-US05-ACC-001',
+            title='Sprawa do testów dostępu prawników', case_type=CaseType.CYWILNA,
+        )
+        CaseLawyer.objects.create(
+            case=self.sprawa, lawyer=self.lawyer, role=CaseLawyerRole.PROWADZACY,
+        )
+
+    def _url(self):
+        return self.live_server_url + reverse(
+            'szkp:case_lawyer_add', kwargs={'case_pk': self.sprawa.pk}
+        )
+
+    def test_formularz_dodaj_prawnika_wymaga_zalogowania(self):
+        self.selenium.get(self._url())
+        WebDriverWait(self.selenium, 5).until(
+            lambda d: '/accounts/' in d.current_url or 'login' in d.current_url.lower()
+        )
+        self.assertIn('/accounts/', self.selenium.current_url)
+
+    def test_nieprzypisany_prawnik_nie_ma_dostepu_do_dodania_prawnika(self):
+        inny_user = User.objects.create_user(
+            username='obcy_us05', password='testpass123', is_staff=False,
+        )
+        Lawyer.objects.create(
+            user=inny_user, first_name='Obcy', last_name='Prawnik',
+            bar_number='PL-US05-999',
+        )
+        self._zaloguj_przez_orm(inny_user)
+        self.selenium.get(self._url())
+        WebDriverWait(self.selenium, 5).until(
+            lambda d: '403' in d.page_source or 'Forbidden' in d.page_source
+                      or 'Brak dostępu' in d.page_source
+        )
+        kod = self.selenium.find_element(By.TAG_NAME, 'body').text
+        self.assertTrue(
+            '403' in kod or 'Forbidden' in kod or 'Brak dostępu' in kod,
+            'Oczekiwano 403 dla prawnika bez dostępu do sprawy',
+        )

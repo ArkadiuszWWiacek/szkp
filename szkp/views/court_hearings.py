@@ -1,12 +1,12 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
 from szkp.forms import CourtHearingForm
-from szkp.models import Case, CaseLawyer, CourtHearing, HearingStatus, HearingType
+from szkp.models import Case, CourtHearing, HearingStatus, HearingType
+from szkp.permissions import require_case_access
 
 
 def _form_context(case, hearing, form_data, errors):
@@ -25,9 +25,7 @@ def court_hearing_form(request, case_pk, pk=None):
     case = get_object_or_404(Case, pk=case_pk)
     hearing = get_object_or_404(CourtHearing, pk=pk, case=case) if pk else None
 
-    if not request.user.is_staff:
-        if not CaseLawyer.objects.filter(case=case, lawyer__user=request.user).exists():
-            raise PermissionDenied
+    require_case_access(request, case)
 
     redirect_url = (
         reverse('szkp:case_detail', kwargs={'pk': case_pk}) + '?tab=terminy'
