@@ -5,9 +5,9 @@ from django.utils import timezone
 
 from szkp.models import (
     Case, CaseStatus,
-    CourtHearing,
+    CourtHearing, HearingStatus,
     Invoice, InvoiceStatus,
-    Task,
+    Task, TaskStatus,
 )
 
 
@@ -40,7 +40,7 @@ def dashboard(request):
 
     upcoming_hearings = (
         hearing_qs
-        .filter(scheduled_at__date__gte=today, status='planowany')
+        .filter(scheduled_at__date__gte=today, status=HearingStatus.PLANOWANY)
         .order_by('scheduled_at')
         .select_related('case')[:5]
     )
@@ -54,7 +54,7 @@ def dashboard(request):
 
     today_tasks = (
         task_qs
-        .filter(due_date__date=today, status__in=['nowe', 'w_toku'])
+        .filter(due_date__date=today, status__in=[TaskStatus.NOWE, TaskStatus.W_TOKU])
         .order_by('priority')
         .select_related('case')[:6]
     )
@@ -64,7 +64,7 @@ def dashboard(request):
         .filter(
             due_date__date__gt=today,
             due_date__date__lte=today + timezone.timedelta(days=7),
-            status__in=['nowe', 'w_toku'],
+            status__in=[TaskStatus.NOWE, TaskStatus.W_TOKU],
         )
         .order_by('due_date', 'priority')
         .select_related('case')[:8]
