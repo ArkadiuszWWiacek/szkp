@@ -27,6 +27,13 @@ class TaskDefaultsTest(SimpleTestCase):
         self.assertIsNone(Task(parent_task=None).parent_task)
 
 
+@tag('unit')
+class TaskStrTest(SimpleTestCase):
+    def test_str(self):
+        task = Task(title='Przygotować pismo procesowe')
+        self.assertEqual(str(task), 'Przygotować pismo procesowe')
+
+
 @tag('integration')
 class TaskSubtaskTest(StaffLawyerTestCase):
     """Task model: podzadania i relacja parent_task."""

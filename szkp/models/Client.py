@@ -23,6 +23,11 @@ class Client(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        if self.type == ClientType.FIRMA:
+            return self.company_name or f"Firma (id={self.pk})"
+        return f"{self.first_name} {self.last_name}"
+
     class Meta:
         db_table = 'CLIENTS'
 

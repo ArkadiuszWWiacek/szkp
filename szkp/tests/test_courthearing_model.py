@@ -17,6 +17,18 @@ class CourtHearingDefaultsTest(SimpleTestCase):
         self.assertIsNone(CourtHearing().responsible_lawyer)
 
 
+@tag('unit')
+class CourtHearingStrTest(SimpleTestCase):
+    def test_str(self):
+        case = Case(case_number='1/2024/CIV', title='Sprawa testowa')
+        hearing = CourtHearing(
+            case=case,
+            scheduled_at=datetime(2024, 5, 15, 10, 0, tzinfo=timezone.utc),
+            court_name='Sąd Okręgowy w Warszawie',
+        )
+        self.assertEqual(str(hearing), '1/2024/CIV - Sprawa testowa / 2024-05-15 / Sąd Okręgowy w Warszawie')
+
+
 @tag('integration')
 class CourtHearingPersistenceTest(TestCase):
     @classmethod

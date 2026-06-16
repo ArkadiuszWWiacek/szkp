@@ -61,6 +61,21 @@ class ClientCleanTest(SimpleTestCase):
         self.assertIsNone(client.pesel)
 
 
+@tag('unit')
+class ClientStrTest(SimpleTestCase):
+    def test_str_individual(self):
+        client = Client(type=ClientType.OSOBA_FIZYCZNA, first_name='Anna', last_name='Nowak')
+        self.assertEqual(str(client), 'Anna Nowak')
+
+    def test_str_firm(self):
+        client = Client(type=ClientType.FIRMA, company_name='Acme Sp. z o.o.')
+        self.assertEqual(str(client), 'Acme Sp. z o.o.')
+
+    def test_str_firm_brak_nazwy(self):
+        client = Client(type=ClientType.FIRMA, pk=5)
+        self.assertEqual(str(client), 'Firma (id=5)')
+
+
 @tag('integration')
 class ClientPersistenceTest(TestCase):
     def test_usuniecie_klienta_bez_spraw_jest_mozliwe(self):

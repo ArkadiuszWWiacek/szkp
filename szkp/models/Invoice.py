@@ -25,6 +25,9 @@ class Invoice(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return self.invoice_number
+
     def save(self, *args, **kwargs):
         self.gross_amount = self.net_amount * (1 + self.vat_rate)
         if self.status == InvoiceStatus.OPŁACONA and not self.paid_at:

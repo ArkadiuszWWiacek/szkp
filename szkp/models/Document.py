@@ -21,6 +21,9 @@ class Document(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return self.title
+
     class Meta:
         db_table = 'DOCUMENTS'
 
@@ -30,6 +33,9 @@ class DocumentVersion(models.Model):
     version_number = models.IntegerField(null=False)
     file_path = models.CharField(max_length=500, null=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.document} v{self.version_number}"
 
     class Meta:
         db_table = 'DOCUMENTVERSIONS'

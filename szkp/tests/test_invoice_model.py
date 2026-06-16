@@ -43,6 +43,13 @@ class InvoiceUniquenessTest(TestCase):
 
 
 @tag('unit')
+class InvoiceStrTest(SimpleTestCase):
+    def test_str(self):
+        invoice = Invoice(invoice_number='FV/2024/001')
+        self.assertEqual(str(invoice), 'FV/2024/001')
+
+
+@tag('unit')
 class InvoiceGrossAmountTest(SimpleTestCase):
     """Obliczanie gross_amount w Invoice.save()."""
 

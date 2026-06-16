@@ -29,5 +29,8 @@ class CourtHearing(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return f"{self.case} / {self.scheduled_at:%Y-%m-%d} / {self.court_name}"
+
     class Meta:
         db_table = 'COURTHEARINGS'
