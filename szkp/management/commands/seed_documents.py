@@ -1,5 +1,9 @@
+import json
+import shutil
+from pathlib import Path
 from random import choice, randint, random
 
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
@@ -33,9 +37,16 @@ class Command(BaseCommand):
         count = options["count"]
         clear = options["clear"]
 
+        lorem_path = Path(settings.BASE_DIR) / "docs" / "lorem_docs_merged.json"
+        with lorem_path.open(encoding="utf-8") as f:
+            lorem_docs = list(json.load(f).values())
+
         if clear:
             deleted_versions, _ = DocumentVersion.objects.all().delete()
             deleted_documents, _ = Document.objects.all().delete()
+            docs_dir = Path(settings.MEDIA_ROOT) / "documents"
+            if docs_dir.exists():
+                shutil.rmtree(docs_dir)
             self.stdout.write(
                 self.style.WARNING(
                     f"Usunięto {deleted_versions} rekordów DocumentVersion i {deleted_documents} rekordów Document."
@@ -121,12 +132,15 @@ class Command(BaseCommand):
             for version_no in range(1, versions_count + 1):
                 created_by_lawyer = choice(lawyers)
 
-                ext = choice(["pdf", "docx", "txt"])
                 safe_type = document_type.replace("ą", "a").replace("ł", "l")
                 file_path = (
-                    f"/documents/case_{document.case_id}/"
-                    f"{safe_type}_{document.id}_v{version_no}.{ext}"
+                    f"documents/case_{document.case_id}/"
+                    f"{safe_type}_{document.id}_v{version_no}.md"
                 )
+
+                abs_path = Path(settings.MEDIA_ROOT) / file_path
+                abs_path.parent.mkdir(parents=True, exist_ok=True)
+                abs_path.write_text(choice(lorem_docs), encoding="utf-8")
 
                 version = DocumentVersion(
                     document=document,

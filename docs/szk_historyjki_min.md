@@ -1,4 +1,4 @@
-# SZKP – Historyjki użytkownika (minimum zaliczeniowe)
+# SZKP – Historyjki użytkownika
 
 **System Zarządzania Kancelarią Prawną** | Django | Python
 
