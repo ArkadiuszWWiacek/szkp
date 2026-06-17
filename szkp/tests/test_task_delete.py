@@ -20,23 +20,28 @@ class TaskDeleteViewTest(StaffLawyerTestCase):
         cls.url = reverse('szkp:task_delete', args=[cls.task.pk])
 
     def test_get_renderuje_strone_potwierdzenia(self):
+        """GET na widok usuwania renderuje stronę potwierdzenia z odpowiednim szablonem."""
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'szkp/task_confirm_delete.html')
 
     def test_get_zawiera_tytul_zadania(self):
+        """Strona potwierdzenia usunięcia zawiera tytuł usuwanego zadania."""
         response = self.client.get(self.url)
         self.assertContains(response, 'Zadanie do usunięcia')
 
     def test_post_usuwa_zadanie(self):
+        """POST na widok usuwania trwale usuwa zadanie z bazy danych."""
         self.client.post(self.url)
         self.assertFalse(Task.objects.filter(pk=self.task.pk).exists())
 
     def test_post_przekierowuje_na_liste(self):
+        """Po usunięciu zadania widok przekierowuje na listę zadań."""
         response = self.client.post(self.url)
         self.assertRedirects(response, reverse('szkp:my_tasks'))
 
     def test_post_usuwa_podzadania_kaskadowo(self):
+        """Usunięcie zadania nadrzędnego kaskadowo usuwa jego podzadania."""
         sub = Task.objects.create(
             title='Podzadanie',
             assigned_lawyer=self.lawyer,
@@ -47,16 +52,19 @@ class TaskDeleteViewTest(StaffLawyerTestCase):
         self.assertFalse(Task.objects.filter(pk=sub.pk).exists())
 
     def test_wymaga_logowania(self):
+        """Widok wymaga zalogowania — niezalogowany użytkownik jest przekierowywany."""
         self.client.logout()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 302)
         self.assertIn('/accounts/', response['Location'])
 
     def test_get_bez_podzadan_brak_ostrzezenia_o_kaskadzie(self):
+        """Strona potwierdzenia nie zawiera ostrzeżenia o kaskadzie, gdy zadanie nie ma podzadań."""
         response = self.client.get(self.url)
         self.assertNotContains(response, 'podzadań')
 
     def test_get_z_podzadaniami_zawiera_ostrzezenie(self):
+        """Strona potwierdzenia zawiera ostrzeżenie o kaskadowym usunięciu podzadań."""
         Task.objects.create(
             title='Podzadanie',
             assigned_lawyer=self.lawyer,

@@ -1,6 +1,6 @@
 """
 R-06 — Atrybuty SRI dla zasobów Bootstrap CDN w base.html.
-Testy jednostkowe (SimpleTestCase) + integracyjny (TestCase) — faza RED.
+Testy jednostkowe (SimpleTestCase) + integracyjny (TestCase).
 
 Testy jednostkowe czytają templates/base.html bezpośrednio.
 Brak DB i serwera — bardzo szybkie (SimpleTestCase).
@@ -9,8 +9,8 @@ Test integracyjny renderuje stronę logowania (nie wymaga zalogowania)
 i sprawdza response.content — jeden dowód end-to-end.
 
 Podział klas:
-    BootstrapSriInTemplateTest — odczyt pliku, 4 testy padające + 1 guard.
-    BootstrapSriInResponseTest — renderowanie strony, 1 test padający.
+    BootstrapSriInTemplateTest — odczyt pliku, 5 testów.
+    BootstrapSriInResponseTest — renderowanie strony, 1 test.
 """
 from pathlib import Path
 
@@ -38,9 +38,6 @@ class BootstrapSriInTemplateTest(SimpleTestCase):
     """
     Sprawdza, że templates/base.html zawiera atrybuty SRI dla Bootstrap.
     SimpleTestCase — żadna migracja ani logowanie nie jest potrzebne.
-
-    TU-R06-01 – TU-R06-04 padają: integrity/crossorigin jeszcze nie dodane.
-    TU-R06-05 przechodzi: Google Fonts nie powinno mieć integrity (guard).
     """
 
     @classmethod
@@ -104,12 +101,9 @@ class BootstrapSriInTemplateTest(SimpleTestCase):
             "Tag <script> Bootstrap JS nie ma atrybutu crossorigin=\"anonymous\".",
         )
 
-    # TU-R06-05 — guard (musi przejść przed i po R-06)
+    # TU-R06-05
     def test_google_fonts_nie_ma_atrybutu_integrity(self):
-        """
-        Żaden tag Google Fonts NIE może mieć integrity= — Google rotuje zasoby.
-        Ten test jest guardem: musi przejść w RED i pozostać zielony po R-06.
-        """
+        """Żaden tag Google Fonts NIE może mieć integrity= — Google rotuje zasoby."""
         bootstrap_pos = self.content.find('bootstrap@5.3.0')
         self.assertGreater(bootstrap_pos, -1, "Bootstrap nie istnieje w base.html.")
         fonts_section = self.content[:bootstrap_pos]

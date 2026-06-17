@@ -36,6 +36,7 @@ def _setup_sprawa(test_case):
 
 @tag('functional')
 class US09DocumentDisplayTest(SzkpSeleniumTestCase):
+    """US-09: Wyświetlanie dokumentów na zakładce sprawy."""
 
     def setUp(self):
         self.selenium.get(self.live_server_url)
@@ -48,14 +49,17 @@ class US09DocumentDisplayTest(SzkpSeleniumTestCase):
 
     @tag('smoke')
     def test_zakladka_dokumenty_wyswietla_sie(self):
+        """Zakładka 'Dokumenty' na stronie sprawy jest widoczna i zawiera napis 'Dokumenty'."""
         self.selenium.get(self._url_dokumenty())
         self.assertIn('Dokumenty', self.selenium.page_source)
 
     def test_brak_dokumentow_wyswietla_pusty_stan(self):
+        """Zakładka dokumentów bez rekordów wyświetla komunikat 'Brak dokumentów'."""
         self.selenium.get(self._url_dokumenty())
         self.assertIn('Brak dokumentów', self.selenium.page_source)
 
     def test_dokument_widoczny_na_stronie_sprawy(self):
+        """Istniejący dokument jest widoczny po tytule na zakładce dokumentów sprawy."""
         Document.objects.create(
             case=self.sprawa,
             title='Pozew o zapłatę',
@@ -65,6 +69,7 @@ class US09DocumentDisplayTest(SzkpSeleniumTestCase):
         self.assertIn('Pozew o zapłatę', self.selenium.page_source)
 
     def test_przycisk_dodaj_dokument_dostepny(self):
+        """Na zakładce dokumentów widoczny jest link do formularza dodania nowego dokumentu."""
         self.selenium.get(self._url_dokumenty())
         linki = self.selenium.find_elements(By.CSS_SELECTOR, f'a[href*="dokumenty/nowy"]')
         self.assertTrue(len(linki) > 0, 'Brak linku do dodania dokumentu na zakładce')
@@ -72,6 +77,7 @@ class US09DocumentDisplayTest(SzkpSeleniumTestCase):
 
 @tag('functional')
 class US09DocumentAddTest(SzkpSeleniumTestCase):
+    """US-09: Dodawanie dokumentów — formularz, walidacja, upload pliku."""
 
     def setUp(self):
         self.selenium.get(self.live_server_url)
@@ -97,6 +103,7 @@ class US09DocumentAddTest(SzkpSeleniumTestCase):
 
     @tag('smoke')
     def test_dodaje_nowy_dokument_z_plikiem(self):
+        """Formularz dodania dokumentu z tytułem, typem i plikiem zapisuje rekord i przekierowuje na zakładkę."""
         self.selenium.get(self._url_dokumenty())
         self.selenium.find_element(By.CSS_SELECTOR, 'a[href*="dokumenty/nowy"]').click()
         WebDriverWait(self.selenium, 5).until(
@@ -112,6 +119,7 @@ class US09DocumentAddTest(SzkpSeleniumTestCase):
         self.assertIn('Umowa zlecenia', self.selenium.page_source)
 
     def test_typ_dokumentu_wybierany_z_listy(self):
+        """Select 'document_type' zawiera wszystkie zdefiniowane typy dokumentów."""
         self.selenium.get(self._url_nowy())
         WebDriverWait(self.selenium, 5).until(
             EC.presence_of_element_located((By.NAME, 'document_type'))
@@ -122,6 +130,7 @@ class US09DocumentAddTest(SzkpSeleniumTestCase):
             self.assertIn(oczekiwana, wartosci, f'Brak opcji "{oczekiwana}" w select document_type')
 
     def test_file_path_zapisany_po_uploadzie(self):
+        """Po uploadzie pliku tworzony jest rekord DocumentVersion z niepustym file_path."""
         self.selenium.get(self._url_nowy())
         WebDriverWait(self.selenium, 5).until(
             EC.presence_of_element_located((By.NAME, 'title'))
@@ -138,6 +147,7 @@ class US09DocumentAddTest(SzkpSeleniumTestCase):
         self.assertTrue(wersja.file_path, 'file_path jest pusty po uploadzie')
 
     def test_po_zapisie_redirect_na_zakladke_dokumenty(self):
+        """Po poprawnym zapisie dokumentu URL zawiera parametr 'tab=dokumenty'."""
         self.selenium.get(self._url_nowy())
         WebDriverWait(self.selenium, 5).until(
             EC.presence_of_element_located((By.NAME, 'title'))
@@ -152,6 +162,7 @@ class US09DocumentAddTest(SzkpSeleniumTestCase):
         self.assertIn('tab=dokumenty', self.selenium.current_url)
 
     def test_walidacja_brak_tytulu(self):
+        """Formularz bez tytułu pozostaje na stronie formularza (błąd walidacji)."""
         self.selenium.get(self._url_nowy())
         WebDriverWait(self.selenium, 5).until(
             EC.presence_of_element_located((By.NAME, 'document_type'))
@@ -167,6 +178,7 @@ class US09DocumentAddTest(SzkpSeleniumTestCase):
         )
 
     def test_walidacja_brak_pliku(self):
+        """Formularz bez pliku pozostaje na stronie formularza (plik wymagany dla nowego dokumentu)."""
         self.selenium.get(self._url_nowy())
         WebDriverWait(self.selenium, 5).until(
             EC.presence_of_element_located((By.NAME, 'title'))
@@ -182,6 +194,7 @@ class US09DocumentAddTest(SzkpSeleniumTestCase):
 
 @tag('functional')
 class US09DocumentVersionTest(SzkpSeleniumTestCase):
+    """US-09: Wersjonowanie dokumentów — tworzenie kolejnych wersji i ich wyświetlanie."""
 
     def setUp(self):
         self.selenium.get(self.live_server_url)
@@ -216,12 +229,14 @@ class US09DocumentVersionTest(SzkpSeleniumTestCase):
         WebDriverWait(self.selenium, 5).until(EC.url_contains('tab=dokumenty'))
 
     def test_pierwsza_wersja_ma_numer_1(self):
+        """DocumentVersion utworzona przy pierwszym uploadzie ma version_number == 1."""
         self._dodaj_dokument_przez_formularz()
         wersja = DocumentVersion.objects.filter(document__case=self.sprawa).first()
         self.assertIsNotNone(wersja)
         self.assertEqual(wersja.version_number, 1)
 
     def test_druga_wersja_ma_numer_2(self):
+        """Upload drugiego pliku do dokumentu tworzy wersję z version_number == 2."""
         self._dodaj_dokument_przez_formularz(title='Ugoda')
         dokument = Document.objects.get(case=self.sprawa)
         url = self.live_server_url + reverse(
@@ -242,6 +257,7 @@ class US09DocumentVersionTest(SzkpSeleniumTestCase):
         self.assertEqual(wersje.last().version_number, 2)
 
     def test_wiele_wersji_widocznych_na_stronie(self):
+        """Po uploadzie dwóch wersji na zakładce dokumentów widoczne są 'wersja 1' i 'wersja 2'."""
         self._dodaj_dokument_przez_formularz(title='Odpowiedź na pozew')
         dokument = Document.objects.get(case=self.sprawa)
         url = self.live_server_url + reverse(
@@ -265,6 +281,7 @@ class US09DocumentVersionTest(SzkpSeleniumTestCase):
 
 @tag('functional')
 class US09DocumentAccessTest(SzkpSeleniumTestCase):
+    """US-09: Kontrola dostępu do formularza dokumentu."""
 
     def setUp(self):
         self.selenium.get(self.live_server_url)
@@ -278,6 +295,7 @@ class US09DocumentAccessTest(SzkpSeleniumTestCase):
         )
 
     def test_formularz_wymaga_zalogowania(self):
+        """Niezalogowany użytkownik jest przekierowywany na stronę logowania."""
         self.selenium.get(self._url_nowy())
         WebDriverWait(self.selenium, 5).until(
             lambda d: '/accounts/' in d.current_url or 'login' in d.current_url.lower()
@@ -285,6 +303,7 @@ class US09DocumentAccessTest(SzkpSeleniumTestCase):
         self.assertIn('/accounts/', self.selenium.current_url)
 
     def test_prawnik_bez_dostepu_otrzymuje_403(self):
+        """Prawnik nieprzypisany do sprawy otrzymuje błąd 403 przy próbie dodania dokumentu."""
         inny_user = User.objects.create_user(
             username='obcy_prawnik', password='testpass123', is_staff=False,
         )

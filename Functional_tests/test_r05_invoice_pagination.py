@@ -1,19 +1,7 @@
 """
 R-05 — Paginacja listy faktur.
-Testy funkcjonalne (Selenium) — faza RED.
+Testy funkcjonalne (Selenium).
 
-Wszystkie testy poniżej padają PRZED implementacją, ponieważ:
-- invoice_list.html nie zawiera elementu .szkp-pagination
-- widok zwraca surowy QuerySet bez ograniczenia do 20 rekordów na stronę
-
-TC-R05-01  Strona 1 pokazuje maks. 20 wierszy z 25 faktur
-TC-R05-02  Element .szkp-pagination jest widoczny gdy >20 faktur
-TC-R05-03  Tekst informacyjny "Pokazano 1–20 z 25" pojawia się w .szkp-pagination__info
-TC-R05-04  Przycisk "›" (następna strona) istnieje gdy jest strona 2
-TC-R05-05  Kliknięcie "›" przenosi na stronę 2 — widać faktury 21–25, nie ma faktury nr 1
-TC-R05-06  Link "›" zachowuje parametr status w URL
-TC-R05-07  Link "›" zachowuje parametr q (wyszukiwanie) w URL
-TC-R05-08  Link "›" zachowuje parametry sort i dir w URL
 """
 import datetime
 from decimal import Decimal
@@ -62,7 +50,7 @@ def _faktury(sprawa, count, prefix='FV/R05/', status=InvoiceStatus.WYSTAWIONA):
 
 
 # ===========================================================================
-# TC-R05-01 – TC-R05-08: Paginacja listy faktur
+# Paginacja listy faktur
 # ===========================================================================
 
 @tag('functional')
@@ -85,11 +73,9 @@ class InvoiceListPaginationTest(SzkpSeleniumTestCase):
         _faktury(self.sprawa, 25)
         self._zaloguj_przez_orm(self.user)
 
-    # TC-R05-01
     def test_strona_1_pokazuje_maksymalnie_20_wierszy(self):
         """
         Przy 25 fakturach strona 1 zawiera dokładnie 20 wierszy <tbody>.
-        PADA PRZED R-05: widok zwraca wszystkie 25 bez limitu.
         """
         self.selenium.get(self.live_server_url + self.URL)
         WebDriverWait(self.selenium, 5).until(
@@ -102,11 +88,9 @@ class InvoiceListPaginationTest(SzkpSeleniumTestCase):
             'Brak paginacji — widok zwraca wszystkie rekordy.'
         )
 
-    # TC-R05-02
     def test_element_paginacji_widoczny_gdy_wiecej_niz_20_faktur(self):
         """
         Element .szkp-pagination pojawia się gdy jest >20 faktur.
-        PADA PRZED R-05: szablon nie zawiera .szkp-pagination.
         """
         self.selenium.get(self.live_server_url + self.URL)
         WebDriverWait(self.selenium, 5).until(
@@ -119,11 +103,9 @@ class InvoiceListPaginationTest(SzkpSeleniumTestCase):
             'Paginacja nie jest zaimplementowana.'
         )
 
-    # TC-R05-03
     def test_info_paginacji_wyswietla_zakres_i_total(self):
         """
         Tekst .szkp-pagination__info zawiera informację "Pokazano 1–20 z 25".
-        PADA PRZED R-05: element .szkp-pagination__info nie istnieje w szablonie.
         """
         self.selenium.get(self.live_server_url + self.URL)
         WebDriverWait(self.selenium, 5).until(
@@ -134,11 +116,9 @@ class InvoiceListPaginationTest(SzkpSeleniumTestCase):
         self.assertIn('20', tekst, f'Brak liczby 20 w tekście paginacji: "{tekst}"')
         self.assertIn('25', tekst, f'Brak liczby 25 (total) w tekście paginacji: "{tekst}"')
 
-    # TC-R05-04
     def test_przycisk_nastepna_strona_istnieje(self):
         """
         Link "›" (następna strona) istnieje gdy jest >20 faktur.
-        PADA PRZED R-05: brak przycisku paginacji w szablonie.
         """
         self.selenium.get(self.live_server_url + self.URL)
         WebDriverWait(self.selenium, 5).until(
@@ -153,11 +133,9 @@ class InvoiceListPaginationTest(SzkpSeleniumTestCase):
             'Paginacja nie jest zaimplementowana.'
         )
 
-    # TC-R05-05
     def test_klikniecie_nastepna_strona_przenosi_na_strone_2(self):
         """
         Kliknięcie "›" pokazuje faktury 21–25 i ukrywa faktury ze strony 1.
-        PADA PRZED R-05: przycisk nie istnieje.
         """
         self.selenium.get(self.live_server_url + self.URL)
         WebDriverWait(self.selenium, 5).until(
@@ -185,11 +163,9 @@ class InvoiceListPaginationTest(SzkpSeleniumTestCase):
             'Faktura ze strony 1 pojawia się na stronie 2 — paginacja nie działa.'
         )
 
-    # TC-R05-06
     def test_link_nastepna_strona_zachowuje_filtr_statusu(self):
         """
         Link "›" w URL zawiera parametr status gdy aktywny jest filtr statusu.
-        PADA PRZED R-05: brak linku paginacji w szablonie.
         """
         self.selenium.get(
             self.live_server_url + self.URL + '?status=wystawiona'
@@ -206,11 +182,9 @@ class InvoiceListPaginationTest(SzkpSeleniumTestCase):
             f'Link "›" nie zachowuje parametru status=wystawiona. href={href}'
         )
 
-    # TC-R05-07
     def test_link_nastepna_strona_zachowuje_parametr_q(self):
         """
         Link "›" zachowuje parametr q (wyszukiwanie) w URL.
-        PADA PRZED R-05: brak linku paginacji w szablonie.
         """
         self.selenium.get(
             self.live_server_url + self.URL + '?q=FV%2FR05%2F'
@@ -227,11 +201,9 @@ class InvoiceListPaginationTest(SzkpSeleniumTestCase):
             f'Link "›" nie zachowuje parametru q. href={href}'
         )
 
-    # TC-R05-08
     def test_link_nastepna_strona_zachowuje_sort_i_dir(self):
         """
         Link "›" zachowuje parametry sort i dir w URL.
-        PADA PRZED R-05: brak linku paginacji w szablonie.
         """
         self.selenium.get(
             self.live_server_url + self.URL + '?sort=invoice_number&dir=desc'

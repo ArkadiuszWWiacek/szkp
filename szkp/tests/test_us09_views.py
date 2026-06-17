@@ -41,20 +41,24 @@ class DocumentFormCreateViewTest(StaffLawyerTestCase):
         return data
 
     def test_get_formularz_zwraca_200(self):
+        """GET formularza nowego dokumentu zwraca kod 200."""
         r = self.client.get(self._url())
         self.assertEqual(r.status_code, 200)
 
     def test_get_context_zawiera_form_data(self):
+        """Kontekst widoku zawiera klucz 'form_data'."""
         r = self.client.get(self._url())
         self.assertIn('form', r.context)
 
     def test_post_valid_tworzy_dokument(self):
+        """Poprawny POST tworzy nowy rekord Document."""
         self.client.post(self._url(), self._valid_data())
         self.assertTrue(
             Document.objects.filter(case=self.sprawa, title='Pozew o zapłatę').exists()
         )
 
     def test_post_valid_tworzy_wersje_z_file_path(self):
+        """Poprawny POST tworzy rekord DocumentVersion z niepustym file_path."""
         self.client.post(self._url(), self._valid_data(title='Umowa'))
         dokument = Document.objects.get(case=self.sprawa, title='Umowa')
         wersja = DocumentVersion.objects.get(document=dokument)
@@ -62,38 +66,45 @@ class DocumentFormCreateViewTest(StaffLawyerTestCase):
         self.assertEqual(wersja.version_number, 1)
 
     def test_post_valid_przypisuje_created_by_lawyer(self):
+        """Nowy dokument ma ustawione pole created_by na zalogowanego prawnika."""
         self.client.post(self._url(), self._valid_data(title='Notatka'))
         dokument = Document.objects.get(case=self.sprawa, title='Notatka')
         wersja = DocumentVersion.objects.get(document=dokument)
         self.assertEqual(wersja.created_by_lawyer, self.lawyer)
 
     def test_post_valid_redirect_na_zakladke_dokumenty(self):
+        """Po zapisaniu dokumentu widok przekierowuje na zakładkę ?tab=dokumenty."""
         r = self.client.post(self._url(), self._valid_data())
         self.assertRedirects(r, self._redirect_url())
 
     def test_post_brak_tytulu_zwraca_blad(self):
+        """POST bez tytułu zwraca błąd walidacji."""
         r = self.client.post(self._url(), self._valid_data(title=''))
         self.assertEqual(r.status_code, 200)
         self.assertIn('title', r.context['form'].errors)
 
     def test_post_brak_pliku_zwraca_blad(self):
+        """POST bez pliku dla nowego dokumentu zwraca błąd walidacji."""
         data = {'title': 'Pismo', 'document_type': DocumentType.PISMO_SADOWE}
         r = self.client.post(self._url(), data)
         self.assertEqual(r.status_code, 200)
         self.assertIn('file', r.context['form'].errors)
 
     def test_post_brak_typu_dokumentu_zwraca_blad(self):
+        """POST bez wybranego document_type zwraca błąd walidacji."""
         r = self.client.post(self._url(), self._valid_data(document_type=''))
         self.assertEqual(r.status_code, 200)
         self.assertIn('document_type', r.context['form'].errors)
 
     def test_wymaga_zalogowania(self):
+        """Widok tworzenia dokumentu wymaga zalogowania."""
         self.client.logout()
         r = self.client.get(self._url())
         self.assertEqual(r.status_code, 302)
         self.assertIn('/accounts/', r['Location'])
 
     def test_nieprzypisany_prawnik_dostaje_403(self):
+        """Prawnik nieprzypisany do sprawy otrzymuje 403."""
         user2 = User.objects.create_user('obcy_doc', password='pass', is_staff=False)
         self.client.force_login(user2)
         r = self.client.get(self._url())
@@ -141,32 +152,38 @@ class DocumentFormEditViewTest(StaffLawyerTestCase):
         return data
 
     def test_get_formularz_edycji_zwraca_200(self):
+        """GET formularza edycji dokumentu zwraca kod 200."""
         r = self.client.get(self._url())
         self.assertEqual(r.status_code, 200)
 
     def test_get_form_data_wypelnione_danymi_dokumentu(self):
+        """Formularz edycji jest wstępnie wypełniony tytułem i typem dokumentu."""
         r = self.client.get(self._url())
         self.assertEqual(r.context['form']['title'].value(), self.dokument.title)
         self.assertEqual(r.context['form']['document_type'].value(), self.dokument.document_type)
 
     def test_post_valid_aktualizuje_tytul(self):
+        """POST edycji z nowym tytułem aktualizuje rekord Document."""
         self.client.post(self._url(), self._valid_edit_data(title='Zmieniony tytuł'))
         self.dokument.refresh_from_db()
         self.assertEqual(self.dokument.title, 'Zmieniony tytuł')
 
     def test_post_z_plikiem_tworzy_nowa_wersje(self):
+        """POST edycji z plikiem tworzy nowy rekord DocumentVersion."""
         self.client.post(self._url(), self._valid_edit_data(file=_plik('v2.pdf')))
         wersje = DocumentVersion.objects.filter(document=self.dokument).order_by('version_number')
         self.assertEqual(wersje.count(), 2)
         self.assertEqual(wersje.last().version_number, 2)
 
     def test_post_bez_pliku_nie_tworzy_nowej_wersji(self):
+        """POST edycji bez pliku nie tworzy nowego rekordu DocumentVersion."""
         self.client.post(self._url(), self._valid_edit_data())
         self.assertEqual(
             DocumentVersion.objects.filter(document=self.dokument).count(), 1
         )
 
     def test_post_redirect_na_zakladke_dokumenty(self):
+        """Po edycji dokumentu widok przekierowuje na zakładkę ?tab=dokumenty."""
         r = self.client.post(self._url(), self._valid_edit_data())
         self.assertRedirects(r, self._redirect_url())
 
@@ -204,10 +221,12 @@ class DocumentVersionUploadViewTest(StaffLawyerTestCase):
         return reverse('szkp:case_detail', kwargs={'pk': self.sprawa.pk}) + '?tab=dokumenty'
 
     def test_get_formularz_zwraca_200(self):
+        """GET formularza uploadu nowej wersji zwraca kod 200."""
         r = self.client.get(self._url())
         self.assertEqual(r.status_code, 200)
 
     def test_post_valid_tworzy_wersje_z_numerem_2(self):
+        """POST uploadu drugiego pliku tworzy DocumentVersion z version_number == 2."""
         self.client.post(self._url(), {'file': _plik('v2.pdf')})
         nowa = DocumentVersion.objects.filter(
             document=self.dokument, version_number=2,
@@ -215,25 +234,30 @@ class DocumentVersionUploadViewTest(StaffLawyerTestCase):
         self.assertIsNotNone(nowa, 'Powinna istnieć wersja nr 2')
 
     def test_post_valid_ustawia_file_path(self):
+        """Po uploadzie nowa wersja ma niepusty file_path."""
         self.client.post(self._url(), {'file': _plik('v2.pdf')})
         nowa = DocumentVersion.objects.get(document=self.dokument, version_number=2)
         self.assertTrue(nowa.file_path, 'file_path powinien być ustawiony')
 
     def test_post_valid_przypisuje_created_by_lawyer(self):
+        """Nowa wersja dokumentu ma ustawione pole created_by na zalogowanego prawnika."""
         self.client.post(self._url(), {'file': _plik('v2.pdf')})
         nowa = DocumentVersion.objects.get(document=self.dokument, version_number=2)
         self.assertEqual(nowa.created_by_lawyer, self.lawyer)
 
     def test_post_brak_pliku_zwraca_blad(self):
+        """POST bez pliku przy uploadzie nowej wersji zwraca błąd walidacji."""
         r = self.client.post(self._url(), {})
         self.assertEqual(r.status_code, 200)
         self.assertIn('file', r.context['errors'])
 
     def test_post_redirect_na_zakladke_dokumenty(self):
+        """Po uploadzie nowej wersji widok przekierowuje na zakładkę ?tab=dokumenty."""
         r = self.client.post(self._url(), {'file': _plik('v2.pdf')})
         self.assertRedirects(r, self._redirect_url())
 
     def test_trzecia_wersja_ma_numer_3(self):
+        """Upload trzeciego pliku tworzy DocumentVersion z version_number == 3."""
         DocumentVersion.objects.create(
             document=self.dokument,
             created_by_lawyer=self.lawyer,
@@ -247,12 +271,14 @@ class DocumentVersionUploadViewTest(StaffLawyerTestCase):
         self.assertIsNotNone(nowa, 'Powinna istnieć wersja nr 3')
 
     def test_wymaga_zalogowania(self):
+        """Widok uploadu nowej wersji wymaga zalogowania."""
         self.client.logout()
         r = self.client.get(self._url())
         self.assertEqual(r.status_code, 302)
         self.assertIn('/accounts/', r['Location'])
 
     def test_nieprzypisany_prawnik_dostaje_403(self):
+        """Prawnik nieprzypisany do sprawy otrzymuje 403 przy próbie uploadu wersji."""
         user2 = User.objects.create_user('obcy_ver', password='pass', is_staff=False)
         self.client.force_login(user2)
         r = self.client.get(self._url())

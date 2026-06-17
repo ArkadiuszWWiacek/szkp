@@ -28,21 +28,25 @@ class MyTasksViewTest(StaffLawyerTestCase):
         )
 
     def test_get_zwraca_200(self):
+        """GET /szkp/zadania/ zwraca kod 200."""
         r = self.client.get(self._url())
         self.assertEqual(r.status_code, 200)
 
     def test_wymaga_zalogowania(self):
+        """Widok listy zadań wymaga zalogowania."""
         self.client.logout()
         r = self.client.get(self._url())
         self.assertEqual(r.status_code, 302)
         self.assertIn('/accounts/', r['Location'])
 
     def test_kontekst_zawiera_wymagane_klucze(self):
+        """Kontekst my_tasks zawiera klucze 'tasks', 'statuses', 'priorities'."""
         r = self.client.get(self._url())
         for key in ('tasks', 'status_filter', 'period_filter', 'status_choices', 'today', 'case_number_filter'):
             self.assertIn(key, r.context)
 
     def test_wyswietla_tylko_zadania_top_level(self):
+        """Widok wyświetla tylko zadania najwyższego poziomu (bez podzadań)."""
         parent = self._make_task(title='Rodzic')
         child = self._make_task(title='Dziecko', parent_task=parent)
         r = self.client.get(self._url())
@@ -51,6 +55,7 @@ class MyTasksViewTest(StaffLawyerTestCase):
         self.assertNotIn(child.pk, pks)
 
     def test_filtr_statusu_ogranicza_wyniki(self):
+        """Filtr ?status= ogranicza wyświetlane zadania do podanego statusu."""
         t_nowe = self._make_task(title='Zadanie nowe', status=TaskStatus.NOWE)
         t_zakonczone = self._make_task(title='Zadanie zakończone', status=TaskStatus.ZAKOŃCZONE)
         r = self.client.get(self._url() + '?status=nowe')
@@ -59,6 +64,7 @@ class MyTasksViewTest(StaffLawyerTestCase):
         self.assertNotIn(t_zakonczone.pk, pks)
 
     def test_filtr_period_today(self):
+        """Filtr ?period=today ogranicza zadania do tych z terminem dzisiaj."""
         t_dzis = self._make_task(title='Na dziś', due_date=make_due(0))
         t_tydzien = self._make_task(title='Za tydzień', due_date=make_due(7))
         r = self.client.get(self._url() + '?period=today')
@@ -67,6 +73,7 @@ class MyTasksViewTest(StaffLawyerTestCase):
         self.assertNotIn(t_tydzien.pk, pks)
 
     def test_filtr_period_week(self):
+        """Filtr ?period=week ogranicza zadania do tych z terminem w bieżącym tygodniu."""
         t_za_3_dni = self._make_task(title='Za 3 dni', due_date=make_due(3))
         t_za_14_dni = self._make_task(title='Za 14 dni', due_date=make_due(14))
         r = self.client.get(self._url() + '?period=week')
@@ -75,6 +82,7 @@ class MyTasksViewTest(StaffLawyerTestCase):
         self.assertNotIn(t_za_14_dni.pk, pks)
 
     def test_sortowanie_priorytet_pilna_przed_niska(self):
+        """Domyślne sortowanie wyświetla zadania 'pilna' przed 'niska'."""
         t_niska = self._make_task(title='Niska', priority=TaskPriority.NISKA, due_date=make_due(1))
         t_pilna = self._make_task(title='Pilna', priority=TaskPriority.PILNA, due_date=make_due(5))
         r = self.client.get(self._url())
@@ -84,6 +92,7 @@ class MyTasksViewTest(StaffLawyerTestCase):
     # --- filtrowanie po zalogowanym prawniku ---
 
     def test_filtr_case_number_ogranicza_wyniki(self):
+        """Filtr ?case_number= ogranicza zadania do powiązanych ze wskazaną sprawą."""
         case_a = Case.objects.create(
             client=self.klient, case_number='FILTER-ABC-001',
             title='Sprawa ABC', case_type=CaseType.CYWILNA,
@@ -100,10 +109,12 @@ class MyTasksViewTest(StaffLawyerTestCase):
         self.assertNotIn(t_b.pk, pks)
 
     def test_filtr_case_number_przekazany_w_kontekscie(self):
+        """Wartość parametru ?case_number= jest przekazywana do kontekstu szablonu."""
         r = self.client.get(self._url() + '?case_number=TST')
         self.assertEqual(r.context['case_number_filter'], 'TST')
 
     def test_widok_filtruje_po_zalogowanym_prawniku(self):
+        """Widok wyświetla tylko zadania przypisane do zalogowanego prawnika."""
         inny_user = User.objects.create_user(username='innyprawnik', password='pass')
         inny_prawnik = Lawyer.objects.create(
             user=inny_user, first_name='Inna', last_name='Osoba', bar_number='PL999',
@@ -133,33 +144,40 @@ class TaskCreateViewTest(StaffLawyerTestCase):
         return data
 
     def test_get_formularz_zwraca_200(self):
+        """GET formularza nowego zadania zwraca kod 200."""
         r = self.client.get(self._url_new())
         self.assertEqual(r.status_code, 200)
 
     def test_post_tworzy_zadanie(self):
+        """Poprawny POST tworzy nowy rekord Task."""
         self.client.post(self._url_new(), self._valid_data())
         self.assertTrue(Task.objects.filter(title='Nowe zadanie').exists())
 
     def test_nowe_zadanie_ma_status_nowe(self):
+        """Nowo utworzone zadanie ma domyślnie status NOWE."""
         self.client.post(self._url_new(), self._valid_data(title='Zadanie statusowe'))
         task = Task.objects.get(title='Zadanie statusowe')
         self.assertEqual(task.status, TaskStatus.NOWE)
 
     def test_priorytet_ustawiany_z_formularza(self):
+        """Priorytet wybrany w formularzu jest zapisywany w rekordzie Task."""
         self.client.post(self._url_new(), self._valid_data(title='Pilne', priority='pilna'))
         task = Task.objects.get(title='Pilne')
         self.assertEqual(task.priority, TaskPriority.PILNA)
 
     def test_brak_tytulu_zwraca_blad(self):
+        """POST bez tytułu zadania zwraca błąd walidacji."""
         r = self.client.post(self._url_new(), {})
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.context['form'].errors)
 
     def test_po_zapisie_redirect_do_listy_zadan(self):
+        """Po poprawnym zapisie widok przekierowuje na listę zadań."""
         r = self.client.post(self._url_new(), self._valid_data())
         self.assertRedirects(r, reverse('szkp:my_tasks'))
 
     def test_wymaga_zalogowania(self):
+        """Widok tworzenia zadania wymaga zalogowania."""
         self.client.logout()
         r = self.client.get(self._url_new())
         self.assertEqual(r.status_code, 302)
@@ -192,28 +210,34 @@ class TaskEditViewTest(StaffLawyerTestCase):
         return data
 
     def test_get_formularz_edycji_zwraca_200(self):
+        """GET formularza edycji zadania zwraca kod 200."""
         r = self.client.get(self._url_edit())
         self.assertEqual(r.status_code, 200)
 
     def test_get_formularz_zawiera_dane_zadania(self):
+        """Formularz edycji jest wstępnie wypełniony tytułem zadania."""
         r = self.client.get(self._url_edit())
         self.assertEqual(r.context['form']['title'].value(), self.zadanie.title)
 
     def test_post_zmienia_status_na_zakonczone(self):
+        """POST edycji ze statusem 'zakończone' aktualizuje rekord Task."""
         self.client.post(self._url_edit(), self._valid_edit_data(status='zakończone'))
         self.zadanie.refresh_from_db()
         self.assertEqual(self.zadanie.status, TaskStatus.ZAKOŃCZONE)
 
     def test_zakonczenie_zadania_ustawia_completed_at(self):
+        """Zmiana statusu na ZAKOŃCZONE przez formularz edycji ustawia pole completed_at."""
         self.client.post(self._url_edit(), self._valid_edit_data(status='zakończone'))
         self.zadanie.refresh_from_db()
         self.assertIsNotNone(self.zadanie.completed_at)
 
     def test_po_edycji_redirect_do_listy_zadan(self):
+        """Po edycji widok przekierowuje na listę zadań."""
         r = self.client.post(self._url_edit(), self._valid_edit_data())
         self.assertRedirects(r, reverse('szkp:my_tasks'))
 
     def test_wymaga_zalogowania(self):
+        """Widok edycji zadania wymaga zalogowania."""
         self.client.logout()
         r = self.client.get(self._url_edit())
         self.assertEqual(r.status_code, 302)

@@ -57,6 +57,7 @@ class TaskListFiltersTest(StaffLawyerTestCase):
         return [t.title for t in r.context['tasks']]
 
     def test_filtr_overdue_zwraca_tylko_przeterminowane_niezakonczone(self):
+        """Filtr period=overdue zwraca tylko niezakończone zadania z terminem w przeszłości."""
         r = self.client.get(self._url(period='overdue'))
         titles = self._titles(r)
         self.assertIn('Zadanie wczoraj', titles)
@@ -64,11 +65,13 @@ class TaskListFiltersTest(StaffLawyerTestCase):
         self.assertNotIn('Zadanie zakończone przeterminowane', titles)
 
     def test_filtr_today_nie_zwraca_przeterminowanych(self):
+        """Filtr period=today zwraca zadania na dziś i nie zawiera zadań z terminem w przeszłości."""
         r = self.client.get(self._url(period='today'))
         titles = self._titles(r)
         self.assertIn('Zadanie dzisiaj', titles)
         self.assertNotIn('Zadanie wczoraj', titles)
 
     def test_kontekst_zawiera_period_filter_overdue(self):
+        """Kontekst szablonu zawiera wartość period_filter='overdue' przy odpowiednim filtrze."""
         r = self.client.get(self._url(period='overdue'))
         self.assertEqual(r.context['period_filter'], 'overdue')

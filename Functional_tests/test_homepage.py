@@ -5,9 +5,11 @@ from .base import SzkpSeleniumTestCase
 
 @tag('functional')
 class NewVisitorTest(SzkpSeleniumTestCase):
+    """Scenariusz pierwszej wizyty — weryfikacja tytułu strony i linku nawigacyjnego SZKP."""
 
     @tag('smoke')
     def test_can_open_home_page(self):
+        """Strona główna wyświetla tytuł 'System Zarządzania Kancelarią Prawną', a link nawigacyjny 'SZKP' przenosi na /szkp/."""
         # Edyta dowiedziała się o nowej, wspaniałej aplikacji do prowadzenia kancelarii prawnej.
         # Postanowiła więc przejść na stronę główną tej aplikacji.
         self.selenium.get(self.live_server_url)

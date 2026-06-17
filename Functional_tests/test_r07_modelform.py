@@ -1,12 +1,7 @@
 """
-Testy funkcjonalne dla R-07: Zamiana forms.Form na ModelForm.
+R-07: Zamiana forms.Form na ModelForm.
+Testy funkcjonalne (Selenium).
 
-Pokrywają edge-case'y nie obecne dotąd w pokryciu funkcjonalnym:
-  – pre-populacja pól edycji (firma, faktura, termin, dokument)
-  – walidacje specyficzne dla refaktoryzacji (instance_pk, is_new, case_lawyer_pks)
-  – logika biznesowa zachowana przez save() (closed_at, gross_amount)
-
-IDs testów: TC-R07-01 … TC-R07-13
 """
 
 import os
@@ -66,7 +61,7 @@ def _tmp_file(suffix='.pdf'):
 
 
 # ===========================================================================
-# TC-R07-01 … TC-R07-03  Formularz klienta — edycja
+# Zamiana forms.Form na ModelForm
 # ===========================================================================
 
 @tag('functional')
@@ -81,7 +76,6 @@ class R07ClientFormTest(SzkpSeleniumTestCase):
         )
         self._zaloguj_przez_orm(self.user)
 
-    # TC-R07-01
     def test_edycja_firmy_pola_firmowe_prepopulowane(self):
         """Edycja firmy: company_name i NIP są widoczne i wypełnione w formularzu GET."""
         firma = Client.objects.create(
@@ -100,7 +94,6 @@ class R07ClientFormTest(SzkpSeleniumTestCase):
         self.assertEqual(company_val, 'ACME Sp. z o.o.')
         self.assertEqual(nip_val, '5250012345')
 
-    # TC-R07-02
     def test_edycja_firmy_sekcja_firmowa_widoczna_bez_klikania(self):
         """Edycja firmy: sekcja pól firmowych jest widoczna od razu (nie ukryta przez d-none)."""
         firma = Client.objects.create(
@@ -116,7 +109,6 @@ class R07ClientFormTest(SzkpSeleniumTestCase):
         pole = self.selenium.find_element(By.ID, 'id_company_name')
         self.assertTrue(pole.is_displayed(), 'Pole company_name powinno być widoczne dla firmy')
 
-    # TC-R07-03
     def test_edycja_osoby_fizycznej_pola_prepopulowane(self):
         """Edycja osoby fizycznej: imię, nazwisko i PESEL są wypełnione w formularzu GET."""
         osoba = Client.objects.create(
@@ -144,7 +136,7 @@ class R07ClientFormTest(SzkpSeleniumTestCase):
 
 
 # ===========================================================================
-# TC-R07-04 … TC-R07-06  Formularz sprawy — logika biznesowa
+# Formularz sprawy — logika biznesowa
 # ===========================================================================
 
 @tag('functional')
@@ -156,7 +148,6 @@ class R07CaseFormTest(SzkpSeleniumTestCase):
         self.selenium.delete_all_cookies()
         _setup_base(self)
 
-    # TC-R07-04
     def test_nowa_sprawa_ze_statusem_zakonczona_ustawia_closed_at(self):
         """Tworzenie nowej sprawy z status=ZAKOŃCZONA przez formularz ustawia pole closed_at."""
         self.selenium.get(self.live_server_url + '/szkp/sprawy/nowy/')
@@ -180,7 +171,6 @@ class R07CaseFormTest(SzkpSeleniumTestCase):
             'closed_at powinno być ustawione gdy nowa sprawa ma status ZAKOŃCZONA',
         )
 
-    # TC-R07-05
     def test_edycja_sprawy_zmiana_statusu_na_zakonczona_ustawia_closed_at(self):
         """Edycja istniejącej sprawy (NOWA→ZAKOŃCZONA) przez formularz ustawia closed_at."""
         sprawa = Case.objects.create(
@@ -206,7 +196,6 @@ class R07CaseFormTest(SzkpSeleniumTestCase):
             'closed_at powinno być ustawione po zmianie statusu na ZAKOŃCZONA przez formularz',
         )
 
-    # TC-R07-06
     def test_edycja_sprawy_client_dropdown_ma_wybrany_aktualny_klient(self):
         """Edycja sprawy: dropdown klienta ma pre-wybranego aktualnego klienta."""
         sprawa = Case.objects.create(
@@ -228,7 +217,7 @@ class R07CaseFormTest(SzkpSeleniumTestCase):
 
 
 # ===========================================================================
-# TC-R07-07 … TC-R07-09  Formularz faktury — walidacja unikalności i kwoty
+# Formularz faktury — walidacja unikalności i kwoty
 # ===========================================================================
 
 @tag('functional')
@@ -252,7 +241,6 @@ class R07InvoiceFormTest(SzkpSeleniumTestCase):
             kwargs={'case_pk': self.sprawa.pk, 'pk': pk},
         )
 
-    # TC-R07-07
     def test_edycja_faktury_zachowuje_wlasny_numer_bez_bledu_duplikatu(self):
         """Edycja faktury z własnym numerem nie powoduje błędu unikalności."""
         faktura = Invoice.objects.create(
@@ -280,7 +268,6 @@ class R07InvoiceFormTest(SzkpSeleniumTestCase):
         self.assertIn('tab=faktury', self.selenium.current_url,
                       'Edycja z własnym numerem faktury powinna przekierować na tab=faktury')
 
-    # TC-R07-08
     def test_edycja_faktury_zmiana_kwoty_netto_przelicza_gross_amount(self):
         """Edycja faktury ze zmianą net_amount przelicza gross_amount na Invoice.save()."""
         faktura = Invoice.objects.create(
@@ -314,7 +301,6 @@ class R07InvoiceFormTest(SzkpSeleniumTestCase):
             'gross_amount powinno być przeliczone po zmianie net_amount przez formularz',
         )
 
-    # TC-R07-09
     def test_edycja_faktury_pola_kwot_sa_prepopulowane(self):
         """Edycja faktury: pola net_amount i vat_rate pokazują aktualne wartości."""
         faktura = Invoice.objects.create(
@@ -339,7 +325,7 @@ class R07InvoiceFormTest(SzkpSeleniumTestCase):
 
 
 # ===========================================================================
-# TC-R07-10 … TC-R07-11  Formularz terminu sądowego
+# Formularz terminu sądowego
 # ===========================================================================
 
 @tag('functional')
@@ -357,7 +343,6 @@ class R07CourtHearingFormTest(SzkpSeleniumTestCase):
             kwargs={'case_pk': self.sprawa.pk, 'pk': pk},
         )
 
-    # TC-R07-10
     def test_edycja_terminu_data_w_przeszlosci_jest_akceptowana(self):
         """Edycja istniejącego terminu: zmiana daty na przeszłą jest dozwolona (is_new=False)."""
         from datetime import datetime, timezone as dt_tz
@@ -385,7 +370,6 @@ class R07CourtHearingFormTest(SzkpSeleniumTestCase):
             'Edycja terminu z datą w przeszłości powinna zostać zaakceptowana (is_new=False)',
         )
 
-    # TC-R07-11
     def test_edycja_terminu_court_name_jest_prepopulowany(self):
         """Edycja terminu: pole court_name pokazuje aktualną wartość z bazy."""
         from datetime import datetime, timezone as dt_tz
@@ -407,7 +391,7 @@ class R07CourtHearingFormTest(SzkpSeleniumTestCase):
 
 
 # ===========================================================================
-# TC-R07-12 … TC-R07-13  Formularz dokumentu — edycja bez pliku
+# Formularz dokumentu — edycja bez pliku
 # ===========================================================================
 
 @tag('functional')
@@ -430,7 +414,6 @@ class R07DocumentFormTest(SzkpSeleniumTestCase):
             case=self.sprawa, title=title, document_type=doc_type,
         )
 
-    # TC-R07-12
     def test_edycja_dokumentu_bez_nowego_pliku_jest_mozliwa(self):
         """Edycja dokumentu (tylko tytuł/typ, bez nowego pliku) nie powoduje błędu 'plik wymagany'."""
         dok = self._dodaj_dokument()
@@ -456,7 +439,6 @@ class R07DocumentFormTest(SzkpSeleniumTestCase):
             'Tytuł dokumentu powinien zostać zaktualizowany',
         )
 
-    # TC-R07-13
     def test_edycja_dokumentu_tytul_jest_prepopulowany(self):
         """Edycja dokumentu: pole title zawiera aktualny tytuł z bazy (GET)."""
         dok = self._dodaj_dokument(title='Tytuł Do Sprawdzenia')

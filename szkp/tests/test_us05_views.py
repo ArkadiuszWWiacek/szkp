@@ -45,6 +45,7 @@ class CaseListSearchTest(TestCase):
         self.client.force_login(self.user)
 
     def test_filtr_po_statusie_zaweza_wyniki(self):
+        """Filtr ?status= zawęża wyniki listy spraw do podanego statusu."""
         r = self.client.get(reverse('szkp:case_list'), {'status': 'nowa'})
         numery = [c.case_number for c in r.context['page_obj']]
         self.assertIn('TST-LISTA-001', numery)
@@ -52,22 +53,26 @@ class CaseListSearchTest(TestCase):
         self.assertNotIn('TST-LISTA-003', numery)
 
     def test_filtr_po_typie_zaweza_wyniki(self):
+        """Filtr ?type= zawęża wyniki listy spraw do podanego typu."""
         r = self.client.get(reverse('szkp:case_list'), {'type': 'karna'})
         numery = [c.case_number for c in r.context['page_obj']]
         self.assertIn('TST-LISTA-002', numery)
         self.assertNotIn('TST-LISTA-001', numery)
 
     def test_wyszukiwanie_po_numerze_sprawy(self):
+        """Wyszukiwanie ?q= po numerze sprawy zwraca pasujące wyniki."""
         r = self.client.get(reverse('szkp:case_list'), {'q': 'TST-LISTA-001'})
         numery = [c.case_number for c in r.context['page_obj']]
         self.assertEqual(numery, ['TST-LISTA-001'])
 
     def test_wyszukiwanie_po_sygnaturze_sadowej(self):
+        """Wyszukiwanie ?q= po sygnaturze sądowej zwraca pasujące wyniki."""
         r = self.client.get(reverse('szkp:case_list'), {'q': 'SYGN-123'})
         numery = [c.case_number for c in r.context['page_obj']]
         self.assertIn('TST-LISTA-002', numery)
 
     def test_wyszukiwanie_po_nazwisku_klienta(self):
+        """Wyszukiwanie ?q= po nazwisku klienta zwraca sprawy tego klienta."""
         r = self.client.get(reverse('szkp:case_list'), {'q': 'Testowy'})
         numery = [c.case_number for c in r.context['page_obj']]
         self.assertIn('TST-LISTA-001', numery)
@@ -93,29 +98,35 @@ class CaseCreateViewTest(StaffLawyerTestCase):
         return data
 
     def test_get_zwraca_200(self):
+        """GET formularza tworzenia sprawy zwraca kod 200."""
         r = self.client.get(reverse('szkp:case_new'))
         self.assertEqual(r.status_code, 200)
 
     def test_post_tworzy_sprawe(self):
+        """Poprawny POST tworzy nowy rekord Case w bazie."""
         self._post_new(self._valid_data())
         self.assertTrue(Case.objects.filter(case_number='TST-NEW-001').exists())
 
     def test_post_brak_numeru_zwraca_blad(self):
+        """POST bez numeru sprawy zwraca błąd walidacji."""
         r = self._post_new(self._valid_data(case_number=''))
         self.assertEqual(r.status_code, 200)
         self.assertIn('case_number', r.context['form'].errors)
 
     def test_post_brak_tytulu_zwraca_blad(self):
+        """POST bez tytułu sprawy zwraca błąd walidacji."""
         r = self._post_new(self._valid_data(title=''))
         self.assertEqual(r.status_code, 200)
         self.assertIn('title', r.context['form'].errors)
 
     def test_post_status_domyslnie_nowa(self):
+        """Nowa sprawa tworzona bez podania statusu ma status NOWA."""
         self._post_new(self._valid_data())
         case = Case.objects.get(case_number='TST-NEW-001')
         self.assertEqual(case.status, CaseStatus.NOWA)
 
     def test_post_przypisuje_prawnika_prowadzacy(self):
+        """Po utworzeniu sprawy zalogowany prawnik jest automatycznie przypisany jako PROWADZĄCY."""
         self._post_new(self._valid_data())
         case = Case.objects.get(case_number='TST-NEW-001')
         self.assertTrue(
@@ -125,10 +136,12 @@ class CaseCreateViewTest(StaffLawyerTestCase):
         )
 
     def test_po_utworzeniu_redirect(self):
+        """Po poprawnym utworzeniu sprawy widok przekierowuje na listę spraw."""
         r = self._post_new(self._valid_data())
         self.assertEqual(r.status_code, 302)
 
     def test_wymaga_zalogowania(self):
+        """Widok tworzenia sprawy wymaga zalogowania — niezalogowany użytkownik jest przekierowywany."""
         self.client.logout()
         r = self.client.get(reverse('szkp:case_new'))
         self.assertEqual(r.status_code, 302)
@@ -147,11 +160,13 @@ class CaseEditViewTest(StaffLawyerTestCase):
         )
 
     def test_get_zwraca_200_z_danymi(self):
+        """GET formularza edycji sprawy zwraca kod 200 z danymi sprawy."""
         r = self.client.get(reverse('szkp:case_edit', kwargs={'pk': self.sprawa.pk}))
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.context['form']['title'].value(), 'Stary tytuł')
 
     def test_post_aktualizuje_tytul(self):
+        """POST edycji aktualizuje tytuł sprawy w bazie."""
         self.client.post(
             reverse('szkp:case_edit', kwargs={'pk': self.sprawa.pk}),
             {
@@ -166,6 +181,7 @@ class CaseEditViewTest(StaffLawyerTestCase):
         self.assertEqual(self.sprawa.title, 'Nowy tytuł')
 
     def test_zmiana_statusu_na_zakonczona_ustawia_closed_at(self):
+        """Zmiana statusu na ZAKOŃCZONA przez formularz edycji ustawia pole closed_at."""
         self.client.post(
             reverse('szkp:case_edit', kwargs={'pk': self.sprawa.pk}),
             {
@@ -202,6 +218,7 @@ class CaseDetailTasksTabLinksTest(StaffLawyerTestCase):
         return reverse('szkp:case_detail', kwargs={'pk': self.sprawa.pk}) + '?tab=zadania'
 
     def test_tytul_zadania_jest_linkiem_do_my_tasks_z_filtrem_sygnatury(self):
+        """Tytuł zadania na zakładce zadań sprawy jest linkiem do /szkp/zadania/ z filtrem ?case_number=."""
         r = self.client.get(self._url())
         expected_url = reverse('szkp:my_tasks') + f'?case_number={self.sprawa.case_number}'
         self.assertContains(r, expected_url)
@@ -240,16 +257,19 @@ class CaseLawyerAddViewTest(StaffLawyerTestCase):
         return self.client.post(self._url(), data)
 
     def test_get_formularz_zwraca_200(self):
+        """GET formularza dodania prawnika do sprawy zwraca kod 200."""
         r = self.client.get(self._url())
         self.assertEqual(r.status_code, 200)
 
     def test_get_kontekst_zawiera_dostepnych_prawnikow(self):
+        """Kontekst formularza zawiera listę dostępnych prawników."""
         r = self.client.get(self._url())
         available = list(r.context['available_lawyers'])
         self.assertIn(self.lawyer2, available)
         self.assertNotIn(self.lawyer, available)
 
     def test_get_kontekst_zawiera_role_bez_prowadzacego(self):
+        """Lista ról w kontekście nie zawiera roli PROWADZĄCY."""
         r = self.client.get(self._url())
         wartosci = [val for val, _ in r.context['role_choices']]
         self.assertNotIn(CaseLawyerRole.PROWADZACY, wartosci)
@@ -257,10 +277,12 @@ class CaseLawyerAddViewTest(StaffLawyerTestCase):
         self.assertIn(CaseLawyerRole.DORADCA, wartosci)
 
     def test_get_kontekst_zawiera_sprawe(self):
+        """Kontekst formularza zawiera obiekt sprawy."""
         r = self.client.get(self._url())
         self.assertEqual(r.context['case'], self.sprawa)
 
     def test_post_valid_tworzy_caselawyer(self):
+        """Poprawny POST tworzy nowy rekord CaseLawyer."""
         self._post(self._valid_data())
         self.assertTrue(
             CaseLawyer.objects.filter(
@@ -269,26 +291,31 @@ class CaseLawyerAddViewTest(StaffLawyerTestCase):
         )
 
     def test_post_valid_redirect_do_prawnicy_tab(self):
+        """Po poprawnym zapisie widok przekierowuje na zakładkę ?tab=prawnicy."""
         r = self._post(self._valid_data())
         expected = reverse('szkp:case_detail', args=[self.sprawa.pk]) + '?tab=prawnicy'
         self.assertRedirects(r, expected, fetch_redirect_response=False)
 
     def test_post_brak_prawnika_zwraca_blad(self):
+        """POST bez wybranego prawnika zwraca błąd walidacji."""
         r = self._post({'lawyer': '', 'role': CaseLawyerRole.ASYSTENT})
         self.assertEqual(r.status_code, 200)
         self.assertIn('lawyer', r.context['errors'])
 
     def test_post_brak_roli_zwraca_blad(self):
+        """POST bez wybranej roli zwraca błąd walidacji."""
         r = self._post({'lawyer': self.lawyer2.pk, 'role': ''})
         self.assertEqual(r.status_code, 200)
         self.assertIn('role', r.context['errors'])
 
     def test_post_rola_prowadzacy_zwraca_blad(self):
+        """POST z rolą PROWADZĄCY zwraca błąd walidacji."""
         r = self._post(self._valid_data(role=CaseLawyerRole.PROWADZACY))
         self.assertEqual(r.status_code, 200)
         self.assertIn('role', r.context['errors'])
 
     def test_post_duplikat_prawnika_zwraca_blad(self):
+        """POST z prawnikiem już przypisanym do sprawy zwraca błąd walidacji."""
         CaseLawyer.objects.create(
             case=self.sprawa, lawyer=self.lawyer2, role=CaseLawyerRole.ASYSTENT,
         )
@@ -320,11 +347,13 @@ class CaseLawyerAddAccessTest(TestCase):
         return reverse('szkp:case_lawyer_add', kwargs={'case_pk': self.sprawa.pk})
 
     def test_wymaga_zalogowania(self):
+        """Widok dodania prawnika wymaga zalogowania."""
         r = self.client.get(self._url())
         self.assertEqual(r.status_code, 302)
         self.assertIn('/accounts/', r['Location'])
 
     def test_nieprzypisany_prawnik_nie_ma_dostepu(self):
+        """Prawnik nieprzypisany do sprawy otrzymuje 403."""
         user2 = User.objects.create_user('obcy_cl', password='pass', is_staff=False)
         Lawyer.objects.create(
             user=user2, first_name='Obcy', last_name='Prawnik', bar_number='PL-ACC-999',
@@ -370,11 +399,13 @@ class CaseLawyerDeleteAccessTest(TestCase):
         })
 
     def test_wymaga_zalogowania(self):
+        """Widok usunięcia prawnika ze sprawy wymaga zalogowania."""
         r = self.client.post(self._url())
         self.assertEqual(r.status_code, 302)
         self.assertIn('/accounts/', r['Location'])
 
     def test_nieprzypisany_prawnik_dostaje_403(self):
+        """Prawnik nieprzypisany do sprawy otrzymuje 403 przy próbie usunięcia prawnika."""
         user2 = User.objects.create_user('obcy_del', password='pass', is_staff=False)
         self.client.force_login(user2)
         r = self.client.post(self._url())

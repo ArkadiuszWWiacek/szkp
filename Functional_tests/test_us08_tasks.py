@@ -17,6 +17,7 @@ from Functional_tests.base import SzkpSeleniumTestCase
 
 @tag('functional')
 class US08TasksTest(SzkpSeleniumTestCase):
+    """US-08: Zadania — lista, filtry, CRUD, podzadania, szybka zmiana statusu."""
 
     def setUp(self):
         self.selenium.get(self.live_server_url)
@@ -59,23 +60,29 @@ class US08TasksTest(SzkpSeleniumTestCase):
             **kwargs,
         )
 
-    # --- widok Moje zadania ---
+# ===========================================================================
+# widok Moje zadania
+# ===========================================================================
 
     @tag('smoke')
     def test_strona_moje_zadania_jest_dostepna(self):
+        """Strona /szkp/zadania/ jest dostępna i zawiera nagłówek 'Moje zadania'."""
         self.selenium.get(self._url_zadania())
         self.assertIn('Moje zadania', self.selenium.page_source)
 
     def test_brak_zadan_wyswietla_pusty_stan(self):
+        """Pusta lista zadań wyświetla komunikat 'Brak zadań'."""
         self.selenium.get(self._url_zadania())
         self.assertIn('Brak zadań', self.selenium.page_source)
 
     def test_zadanie_widoczne_na_liscie(self):
+        """Zadanie przypisane do zalogowanego prawnika jest widoczne na liście."""
         self._nowe_zadanie(title='Sprawdzenie dokumentów')
         self.selenium.get(self._url_zadania())
         self.assertIn('Sprawdzenie dokumentów', self.selenium.page_source)
 
     def test_zadanie_bez_sprawy_widoczne(self):
+        """Zadanie niepowiązane ze sprawą jest widoczne na liście."""
         Task.objects.create(
             title='Zadanie bez sprawy',
             assigned_lawyer=self.lawyer,
@@ -85,6 +92,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         self.assertIn('Zadanie bez sprawy', self.selenium.page_source)
 
     def test_podzadanie_widoczne_pod_zadaniem_nadrzednym(self):
+        """Podzadanie wyświetla się pod zadaniem nadrzędnym na liście."""
         parent = self._nowe_zadanie(title='Zadanie nadrzędne')
         Task.objects.create(
             title='Podzadanie pierwsze',
@@ -96,9 +104,12 @@ class US08TasksTest(SzkpSeleniumTestCase):
         self.assertIn('Zadanie nadrzędne', self.selenium.page_source)
         self.assertIn('Podzadanie pierwsze', self.selenium.page_source)
 
-    # --- filtry ---
+# ===========================================================================
+# filtry
+# ===========================================================================
 
     def test_input_filtr_sygnatury_widoczny_na_stronie(self):
+        """Pole filtrowania po sygnaturze sprawy jest widoczne na liście zadań."""
         self.selenium.get(self._url_zadania())
         WebDriverWait(self.selenium, 5).until(
             EC.presence_of_element_located(
@@ -107,6 +118,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         )
 
     def test_filtr_po_sygnaturze_ogranicza_liste(self):
+        """Filtrowanie po numerze sprawy wyświetla tylko zadania tej sprawy."""
         inne_sprawa = Case.objects.create(
             client=self.klient, case_number='TST-US08-999',
             title='Inna sprawa', case_type=CaseType.CYWILNA,
@@ -135,6 +147,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         self.assertNotIn('Zadanie innej sprawy', self.selenium.page_source)
 
     def test_filtr_statusu_ogranicza_liste(self):
+        """Filtr statusu 'nowe' ukrywa zadania o innych statusach."""
         self._nowe_zadanie(title='Zadanie nowe', status=TaskStatus.NOWE)
         self._nowe_zadanie(title='Zadanie zakończone', status=TaskStatus.ZAKOŃCZONE)
         self.selenium.get(self._url_zadania() + '?status=nowe')
@@ -142,6 +155,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         self.assertNotIn('Zadanie zakończone', self.selenium.page_source)
 
     def test_filtr_dzis_pokazuje_zadania_na_dzis(self):
+        """Filtr 'today' wyświetla zadania na dziś i ukrywa zadania za tydzień."""
         self._nowe_zadanie(title='Na dziś', due_date=self._dzisiaj())
         self._nowe_zadanie(title='Za tydzień', due_date=self._za_7_dni())
         self.selenium.get(self._url_zadania() + '?period=today')
@@ -149,6 +163,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         self.assertNotIn('Za tydzień', self.selenium.page_source)
 
     def test_filtr_przeterminowane_pokazuje_tylko_przeterminowane(self):
+        """Filtr 'overdue' wyświetla tylko zadania z terminem w przeszłości."""
         self._nowe_zadanie(title='Przeterminowane', due_date=self._wczoraj(), status=TaskStatus.NOWE)
         self._nowe_zadanie(title='Na dziś', due_date=self._dzisiaj())
         self.selenium.get(self._url_zadania() + '?period=overdue')
@@ -156,6 +171,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         self.assertNotIn('Na dziś', self.selenium.page_source)
 
     def test_wyczysc_filtry_usuwa_parametry_url(self):
+        """Kliknięcie 'Wyczyść filtry' usuwa parametry filtrów z URL."""
         self._nowe_zadanie()
         self.selenium.get(self._url_zadania() + '?status=nowe')
         self.selenium.find_element(By.CSS_SELECTOR, 'a.text-muted-szkp').click()
@@ -164,9 +180,12 @@ class US08TasksTest(SzkpSeleniumTestCase):
         )
         self.assertNotIn('status=', self.selenium.current_url)
 
-    # --- filtrowanie po zalogowanym prawniku ---
+# ===========================================================================
+# filtrowanie po zalogowanym prawniku
+# ===========================================================================
 
     def test_zadania_innego_prawnika_nie_sa_widoczne(self):
+        """Zadania przypisane do innego prawnika nie są widoczne na liście."""
         inny_user = User.objects.create_user(
             username='innyprawnik', password='testpass123',
         )
@@ -182,9 +201,12 @@ class US08TasksTest(SzkpSeleniumTestCase):
         self.selenium.get(self._url_zadania())
         self.assertNotIn('Zadanie innego prawnika', self.selenium.page_source)
 
-    # --- tworzenie zadania ---
+# ===========================================================================
+# tworzenie zadania
+# ===========================================================================
 
     def test_link_nowe_zadanie_przenosi_do_formularza(self):
+        """Link 'Nowe zadanie' przenosi do formularza tworzenia zadania."""
         self.selenium.get(self._url_zadania())
         self.selenium.find_element(By.CSS_SELECTOR, 'a[href*="zadania/nowe"]').click()
         WebDriverWait(self.selenium, 5).until(
@@ -193,6 +215,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
 
     @tag('smoke')
     def test_dodaj_zadanie_z_poprawnymi_danymi(self):
+        """Formularz tworzenia zadania z tytułem zapisuje rekord i przekierowuje na listę."""
         self.selenium.get(self.live_server_url + '/szkp/zadania/nowe/')
         WebDriverWait(self.selenium, 5).until(
             EC.presence_of_element_located((By.NAME, 'title'))
@@ -205,6 +228,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         self.assertIn('Nowe zadanie formularz', self.selenium.page_source)
 
     def test_nowe_zadanie_ma_domyslny_status_nowe(self):
+        """Nowe zadanie ma domyślnie status 'Nowe' widoczny na liście."""
         self.selenium.get(self.live_server_url + '/szkp/zadania/nowe/')
         WebDriverWait(self.selenium, 5).until(
             EC.presence_of_element_located((By.NAME, 'title'))
@@ -217,6 +241,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         self.assertIn('Nowe', self.selenium.page_source)
 
     def test_priorytet_wybierany_z_listy(self):
+        """Priorytet 'Pilna' wybrany w formularzu jest widoczny na liście zadań."""
         self.selenium.get(self.live_server_url + '/szkp/zadania/nowe/')
         WebDriverWait(self.selenium, 5).until(
             EC.presence_of_element_located((By.NAME, 'priority'))
@@ -229,9 +254,12 @@ class US08TasksTest(SzkpSeleniumTestCase):
         )
         self.assertIn('Pilna', self.selenium.page_source)
 
-    # --- zmiana statusu ---
+# ===========================================================================
+# zmiana statusu
+# ===========================================================================
 
     def test_zmiana_statusu_zadania_na_zakonczone(self):
+        """Edycja zadania ze zmianą statusu na 'zakończone' aktualizuje rekord i przekierowuje na listę."""
         zadanie = self._nowe_zadanie(title='Do zakończenia')
         self.selenium.get(
             self.live_server_url + f'/szkp/zadania/{zadanie.pk}/edytuj/'
@@ -247,6 +275,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         self.assertIn('Zakończone', self.selenium.page_source)
 
     def test_zakonczenie_zadania_ustawia_completed_at(self):
+        """Zmiana statusu na 'zakończone' przez formularz ustawia pole completed_at w bazie."""
         zadanie = self._nowe_zadanie(title='Zadanie do zamknięcia')
         self.selenium.get(
             self.live_server_url + f'/szkp/zadania/{zadanie.pk}/edytuj/'
@@ -262,18 +291,24 @@ class US08TasksTest(SzkpSeleniumTestCase):
         zadanie.refresh_from_db()
         self.assertIsNotNone(zadanie.completed_at)
 
-    # --- zadania przeterminowane ---
+# ===========================================================================
+# zadania przeterminowane
+# ===========================================================================
 
     def test_zadanie_przeterminowane_wyroznione_wizualnie(self):
+        """Zadanie z terminem w przeszłości ma klasę CSS szkp-task--overdue."""
         self._nowe_zadanie(title='Zadanie przeterminowane', due_date=self._wczoraj())
         self.selenium.get(self._url_zadania())
         WebDriverWait(self.selenium, 5).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, '.szkp-task--overdue'))
         )
 
-    # --- szybka zmiana statusu z listy ---
+# ===========================================================================
+# szybka zmiana statusu z listy
+# ===========================================================================
 
     def test_dropdown_statusu_widoczny_na_liscie(self):
+        """Dropdown zmiany statusu jest widoczny przy każdym zadaniu na liście."""
         self._nowe_zadanie(title='Zadanie z dropdownem')
         self.selenium.get(self._url_zadania())
         WebDriverWait(self.selenium, 5).until(
@@ -281,6 +316,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         )
 
     def test_zmiana_statusu_przez_dropdown_na_liscie(self):
+        """Wybór statusu z dropdowna na liście zapisuje zmianę w bazie danych."""
         zadanie = self._nowe_zadanie(title='Do zmiany statusu', status=TaskStatus.NOWE)
         self.selenium.get(self._url_zadania())
         select_el = WebDriverWait(self.selenium, 5).until(
@@ -296,6 +332,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         self.assertEqual(zadanie.status, TaskStatus.W_TOKU)
 
     def test_status_archiwalne_niedostepny_w_dropdown(self):
+        """Status 'Archiwalne' nie jest dostępny w dropdownie zmiany statusu."""
         self._nowe_zadanie(title='Zadanie bez archiwum')
         self.selenium.get(self._url_zadania())
         WebDriverWait(self.selenium, 5).until(
@@ -305,9 +342,12 @@ class US08TasksTest(SzkpSeleniumTestCase):
         self.assertNotIn('Archiwalne', page)
         self.assertNotIn('archiwalne', page)
 
-    # --- usuwanie zadania ---
+# ===========================================================================
+# usuwanie zadania
+# ===========================================================================
 
     def test_przycisk_usun_widoczny_przy_zadaniu(self):
+        """Link usunięcia jest widoczny przy każdym zadaniu na liście."""
         self._nowe_zadanie(title='Zadanie do usunięcia')
         self.selenium.get(self._url_zadania())
         WebDriverWait(self.selenium, 5).until(
@@ -315,6 +355,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         )
 
     def test_przycisk_usun_widoczny_przy_podzadaniu(self):
+        """Linki usunięcia są widoczne zarówno przy zadaniu nadrzędnym, jak i podzadaniu."""
         parent = self._nowe_zadanie(title='Zadanie nadrzędne')
         Task.objects.create(
             title='Podzadanie do usunięcia',
@@ -329,6 +370,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         self.assertGreaterEqual(len(delete_links), 2)
 
     def test_klik_usun_prowadzi_do_potwierdzenia(self):
+        """Kliknięcie linku usunięcia przenosi na stronę potwierdzenia z tytułem zadania."""
         zadanie = self._nowe_zadanie(title='Zadanie do potwierdzenia')
         self.selenium.get(self._url_zadania())
         link = WebDriverWait(self.selenium, 5).until(
@@ -341,6 +383,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         self.assertIn('Zadanie do potwierdzenia', self.selenium.page_source)
 
     def test_potwierdzenie_usuwa_zadanie(self):
+        """Zatwierdzenie usunięcia kasuje zadanie i przekierowuje na listę."""
         zadanie = self._nowe_zadanie(title='Zadanie do skasowania')
         self.selenium.get(self.live_server_url + f'/szkp/zadania/{zadanie.pk}/usun/')
         WebDriverWait(self.selenium, 5).until(
@@ -353,6 +396,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         self.assertNotIn('Zadanie do skasowania', self.selenium.page_source)
 
     def test_ostrzezenie_o_kaskadzie_gdy_ma_podzadania(self):
+        """Strona usunięcia zadania z podzadaniami zawiera ostrzeżenie o kaskadowym usunięciu."""
         parent = self._nowe_zadanie(title='Nadrzędne z podzadaniami')
         Task.objects.create(
             title='Podzadanie',
@@ -366,9 +410,12 @@ class US08TasksTest(SzkpSeleniumTestCase):
         )
         self.assertIn('podzadań', self.selenium.page_source)
 
-    # --- edycja podzadania ---
+# ===========================================================================
+# edycja podzadania
+# ===========================================================================
 
     def test_przycisk_edytuj_widoczny_przy_podzadaniu(self):
+        """Link edycji podzadania jest widoczny na liście zadań."""
         parent = self._nowe_zadanie(title='Nadrzędne')
         sub = Task.objects.create(
             title='Podzadanie edytowalne',
@@ -383,6 +430,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         self.assertTrue(len(edit_links) > 0)
 
     def test_edycja_podzadania_otwiera_formularz(self):
+        """Formularz edycji podzadania zawiera jego tytuł w polu 'title'."""
         parent = self._nowe_zadanie(title='Nadrzędne')
         sub = Task.objects.create(
             title='Podzadanie do edycji',
@@ -396,9 +444,12 @@ class US08TasksTest(SzkpSeleniumTestCase):
         )
         self.assertIn('Podzadanie do edycji', self.selenium.find_element(By.NAME, 'title').get_attribute('value'))
 
-    # --- dodawanie podzadania z formularza edycji ---
+# ===========================================================================
+# dodawanie podzadania z formularza edycji
+# ===========================================================================
 
     def test_formularz_edycji_nadrzednego_zawiera_link_dodaj_podzadanie(self):
+        """Formularz edycji zadania nadrzędnego zawiera link do dodania podzadania."""
         zadanie = self._nowe_zadanie(title='Zadanie nadrzędne')
         self.selenium.get(self.live_server_url + f'/szkp/zadania/{zadanie.pk}/edytuj/')
         WebDriverWait(self.selenium, 5).until(
@@ -406,6 +457,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         )
 
     def test_formularz_edycji_podzadania_bez_linku_dodaj_podzadanie(self):
+        """Formularz edycji podzadania nie zawiera linku do dodania zagnieżdżonego podzadania."""
         parent = self._nowe_zadanie(title='Nadrzędne')
         sub = Task.objects.create(
             title='Podzadanie',
@@ -419,12 +471,15 @@ class US08TasksTest(SzkpSeleniumTestCase):
         )
         self.assertNotIn(f'?parent={sub.pk}', self.selenium.page_source)
 
-    # --- dodawanie zadania z poziomu zakładki Zadania w szczegółach sprawy ---
+# ===========================================================================
+# dodawanie zadania z poziomu zakładki Zadania w szczegółach sprawy
+# ===========================================================================
 
     def _url_zadania_sprawy(self):
         return self.live_server_url + f'/szkp/sprawy/{self.sprawa.pk}/?tab=zadania'
 
     def test_przycisk_dodaj_zadanie_na_stronie_sprawy_prowadzi_do_formularza(self):
+        """Przycisk 'Dodaj zadanie' na zakładce zadań sprawy otwiera formularz."""
         self.selenium.get(self._url_zadania_sprawy())
         self.selenium.find_element(By.CSS_SELECTOR, f'a[href*="/sprawy/{self.sprawa.pk}/zadania/nowe"]').click()
         WebDriverWait(self.selenium, 5).until(
@@ -432,6 +487,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         )
 
     def test_dodaj_zadanie_ze_sprawy_powiazuje_je_ze_sprawa(self):
+        """Zadanie dodane z kontekstu sprawy jest powiązane z tą sprawą w bazie danych."""
         self.selenium.get(self._url_zadania_sprawy())
         self.selenium.find_element(By.CSS_SELECTOR, f'a[href*="/sprawy/{self.sprawa.pk}/zadania/nowe"]').click()
         WebDriverWait(self.selenium, 5).until(
@@ -447,6 +503,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
         self.assertEqual(zadanie.case, self.sprawa)
 
     def test_dodaj_podzadanie_przez_link_z_formularza(self):
+        """Link 'Dodaj podzadanie' w formularzu tworzy podzadanie widoczne na liście."""
         parent = self._nowe_zadanie(title='Zadanie z podzadaniem')
         self.selenium.get(self.live_server_url + f'/szkp/zadania/{parent.pk}/edytuj/')
         link = WebDriverWait(self.selenium, 5).until(
@@ -463,9 +520,12 @@ class US08TasksTest(SzkpSeleniumTestCase):
         )
         self.assertIn('Nowe podzadanie', self.selenium.page_source)
 
-    # --- kliknięcie w zadanie → my_tasks z filtrem sygnatury ---
+# ===========================================================================
+# kliknięcie w zadanie → my_tasks z filtrem sygnatury
+# ===========================================================================
 
     def test_wiersz_zadania_na_sprawie_linkuje_do_my_tasks_z_filtrem_sygnatury(self):
+        """Link zadania na zakładce sprawy prowadzi do listy 'Moje zadania' z filtrem sygnatury."""
         Task.objects.create(
             title='Zadanie klikalne',
             assigned_lawyer=self.lawyer,
@@ -486,7 +546,9 @@ class US08TasksTest(SzkpSeleniumTestCase):
         self.assertIn('Moje zadania', self.selenium.page_source)
         self.assertIn(self.sprawa.case_number, self.selenium.current_url)
 
-    # --- widok szczegółów zadania ---
+# ===========================================================================
+# widok szczegółów zadania
+# ===========================================================================
 
     def test_przycisk_szczegolów_przenosi_do_widoku_szczegolów(self):
         """Przycisk 'Szczegóły' w sekcji akcji przenosi do strony szczegółów."""

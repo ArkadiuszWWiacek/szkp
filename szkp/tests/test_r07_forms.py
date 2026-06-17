@@ -11,14 +11,6 @@ Zidentyfikowane jednostki do przetestowania:
   5. TaskForm         – ModelForm z case_lawyer_pks= i clean_assigned_lawyer()
   6. DocumentForm     – ModelForm z is_new= i clean_file() (plik wymagany tylko dla nowych)
 
-Testy RED (wymagają ModelForm — których nie ma):
-  TU-R07-01 … TU-R07-06  issubclass(Xxx, forms.ModelForm) → AssertionError
-  TU-R07-07 … TU-R07-12  Xxx.Meta.model / Xxx.Meta.fields → AttributeError
-  TU-R07-13 … TU-R07-15  hasattr(Xxx, 'save') → AssertionError (forms.Form nie ma save)
-  TU-R07-16 … TU-R07-18  Xxx(instance=None) → TypeError (forms.Form nie przyjmuje instance=)
-
-Testy GREEN (safety-net: logika clean() już istnieje na forms.Form):
-  TU-R07-19 … TU-R07-23  Walidacja clean() identyczna po refaktoryzacji
 """
 
 from datetime import timedelta
@@ -217,16 +209,14 @@ class R07FormInstanceKwargTest(SimpleTestCase):
 
 
 # ===========================================================================
-# TU-R07-19 … TU-R07-23  Logika clean() — safety-net (GREEN)
-# Walidacja musi być identyczna po przejściu na ModelForm.
-# Te testy PRZECHODZĄ już teraz i muszą nadal przechodzić po R-07.
+# TU-R07-19 … TU-R07-23  Logika clean()
 # ===========================================================================
 
 @tag('unit')
 class R07FormValidationLogicTest(SimpleTestCase):
     """Logika clean() i clean_pole() musi być zachowana 1:1 po refaktoryzacji."""
 
-    # TU-R07-19 (SAFETY-NET — GREEN)
+    # TU-R07-19
     def test_clientform_clean_odrzuca_osobe_bez_pesel(self):
         """Osoba fizyczna bez PESEL: is_valid() == False, błąd na polu 'pesel'."""
         form = ClientForm(data={
@@ -237,7 +227,7 @@ class R07FormValidationLogicTest(SimpleTestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('pesel', form.errors)
 
-    # TU-R07-20 (SAFETY-NET — GREEN)
+    # TU-R07-20
     def test_clientform_clean_odrzuca_firme_bez_nip(self):
         """Firma bez NIP: is_valid() == False, błąd na polu 'nip'."""
         form = ClientForm(data={
@@ -247,7 +237,7 @@ class R07FormValidationLogicTest(SimpleTestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('nip', form.errors)
 
-    # TU-R07-21 (SAFETY-NET — GREEN)
+    # TU-R07-21
     def test_courthearingform_clean_odrzuca_przeszla_date_gdy_nowy(self):
         """Nowy termin z datą w przeszłości: is_valid() == False, błąd na 'scheduled_at'."""
         przeszla = (timezone.now() - timedelta(hours=1)).strftime('%Y-%m-%dT%H:%M')
@@ -263,7 +253,7 @@ class R07FormValidationLogicTest(SimpleTestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('scheduled_at', form.errors)
 
-    # TU-R07-22 (SAFETY-NET — GREEN)
+    # TU-R07-22
     def test_courthearingform_clean_akceptuje_przeszla_date_przy_edycji(self):
         """Edycja terminu (is_new=False): data w przeszłości nie powoduje błędu 'scheduled_at'."""
         przeszla = (timezone.now() - timedelta(hours=1)).strftime('%Y-%m-%dT%H:%M')
@@ -282,7 +272,7 @@ class R07FormValidationLogicTest(SimpleTestCase):
             'Edycja terminu (is_new=False) nie powinna dawać błędu daty w przeszłości',
         )
 
-    # TU-R07-23 (SAFETY-NET — GREEN)
+    # TU-R07-23
     def test_documentform_clean_file_wymaga_pliku_dla_nowego(self):
         """Nowy dokument bez pliku: is_valid() == False, błąd na polu 'file'."""
         form = DocumentForm(

@@ -20,7 +20,9 @@ class US04ClientsTest(SzkpSeleniumTestCase):
         )
         self._zaloguj_przez_orm(self.user)
 
-    # ------------------------------------------------------------------ lista
+# ===========================================================================
+# lista
+# ===========================================================================
 
     @tag('smoke')
     def test_lista_klientow_wyswietla_sie(self):
@@ -72,7 +74,9 @@ class US04ClientsTest(SzkpSeleniumTestCase):
         self.assertNotIn('Traceback', self.selenium.page_source)
         self.assertNotIn('NieistniejecaNazwa9999</td>', self.selenium.page_source)
 
-    # -------------------------------------------------------- formularz: osoba
+# ===========================================================================
+# formularz: osoba
+# ===========================================================================
 
     @tag('smoke')
     def test_dodaj_klienta_osobafizyczna(self):
@@ -95,7 +99,9 @@ class US04ClientsTest(SzkpSeleniumTestCase):
         self.assertIn('PESEL', src)
         self.assertIn('nowy', self.selenium.current_url)
 
-    # -------------------------------------------------------- formularz: firma
+# ===========================================================================
+# formularz: firma
+# ===========================================================================
 
     def test_dodaj_klienta_firma(self):
         """Wypełnienie formularza firmy tworzy klienta."""
@@ -131,7 +137,9 @@ class US04ClientsTest(SzkpSeleniumTestCase):
         self.assertIn('NIP', src)
         self.assertIn('nowy', self.selenium.current_url)
 
-    # ------------------------------------------------------------- edycja
+# ===========================================================================
+# edycja
+# ===========================================================================
 
     def test_edycja_klienta_osobafizycznej(self):
         """Edycja klienta zapisuje zmiany i wyświetla je na liście."""
@@ -148,7 +156,9 @@ class US04ClientsTest(SzkpSeleniumTestCase):
         self.selenium.find_element(By.CSS_SELECTOR, 'button.btn-szkp--primary').click()
         self.assertIn('Zmieniony', self.selenium.page_source)
 
-    # --- usuwanie ---
+# ===========================================================================
+# usuwanie
+# ===========================================================================
 
     def test_usuniecie_klienta_bez_spraw(self):
         """Klient bez przypisanych spraw może być usunięty."""

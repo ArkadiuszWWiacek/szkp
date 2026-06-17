@@ -55,11 +55,13 @@ class CaseListAccessTest(_US03SetUpMixin, TestCase):
     """US-03: filtrowanie listy spraw po zalogowanym prawniku."""
 
     def test_case_list_zwraca_200(self):
+        """GET /szkp/sprawy/ dla zalogowanego prawnika zwraca 200."""
         self.client.force_login(self.user_a)
         response = self.client.get('/szkp/sprawy/')
         self.assertEqual(response.status_code, 200)
 
     def test_prawnik_widzi_tylko_swoje_sprawy(self):
+        """Lista spraw zawiera tylko sprawy prawnika A, nie zawiera spraw prawnika B."""
         self.client.force_login(self.user_a)
         response = self.client.get('/szkp/sprawy/')
         cases = list(response.context['page_obj'])
@@ -67,6 +69,7 @@ class CaseListAccessTest(_US03SetUpMixin, TestCase):
         self.assertNotIn(self.case_b, cases)
 
     def test_admin_widzi_wszystkie_sprawy(self):
+        """Administrator widzi sprawy wszystkich prawników na liście."""
         self.client.force_login(self.admin)
         response = self.client.get('/szkp/sprawy/')
         cases = list(response.context['page_obj'])
@@ -79,16 +82,19 @@ class CaseDetailAccessTest(_US03SetUpMixin, TestCase):
     """US-03: kontrola dostępu do szczegółu sprawy."""
 
     def test_przypisany_prawnik_ma_dostep(self):
+        """Prawnik przypisany do sprawy otrzymuje 200 na widoku szczegółów."""
         self.client.force_login(self.user_a)
         response = self.client.get(f'/szkp/sprawy/{self.case_a.pk}/')
         self.assertEqual(response.status_code, 200)
 
     def test_nieprzypisany_prawnik_jest_blokowany(self):
+        """Prawnik nieprzypisany do sprawy otrzymuje 403 na widoku szczegółów."""
         self.client.force_login(self.user_a)
         response = self.client.get(f'/szkp/sprawy/{self.case_b.pk}/')
         self.assertEqual(response.status_code, 403)
 
     def test_admin_ma_dostep_do_kazdej_sprawy(self):
+        """Administrator otrzymuje 200 na widoku szczegółów każdej sprawy."""
         self.client.force_login(self.admin)
         response = self.client.get(f'/szkp/sprawy/{self.case_b.pk}/')
         self.assertEqual(response.status_code, 200)

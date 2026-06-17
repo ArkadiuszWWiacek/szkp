@@ -9,13 +9,6 @@ Testowane zachowania widoku po stronie serwera (odpowiedź HTTP + DB):
   – POST edit musi zapisywać przez form.save() (nie tworzy nowego rekordu)
   – Logika biznesowa (closed_at, gross_amount) musi być zachowana
 
-Testy RED (kontekst nie ma klucza 'form' — widoki nadal używają 'form_data'):
-  TI-R07-01 … TI-R07-05  'form' in response.context → AssertionError
-  TI-R07-06 … TI-R07-08  isinstance(context['form'], forms.ModelForm) → AssertionError/KeyError
-  TI-R07-09 … TI-R07-10  form.instance.pk == edytowany_pk → AssertionError/KeyError
-
-Testy GREEN (safety-net: logika biznesowa działa już teraz):
-  TI-R07-11 … TI-R07-14  Zachowanie widoku po stronie DB
 """
 
 from datetime import date, timedelta
@@ -248,8 +241,7 @@ class R07ViewFormInstanceTest(StaffLawyerTestCase):
 
 
 # ===========================================================================
-# TI-R07-11 … TI-R07-14  Logika biznesowa — safety-net (GREEN)
-# Zachowanie strony DB musi być identyczne po refaktoryzacji.
+# TI-R07-11 … TI-R07-14  Logika biznesowa
 # ===========================================================================
 
 @tag('integration')
@@ -268,7 +260,7 @@ class R07ViewBusinessLogicTest(StaffLawyerTestCase):
             case=cls.sprawa, lawyer=cls.lawyer, role=CaseLawyerRole.PROWADZACY,
         )
 
-    # TI-R07-11 (SAFETY-NET — GREEN)
+    # TI-R07-11
     def test_post_client_edit_nie_tworzy_nowego_rekordu(self):
         """POST edycji klienta aktualizuje istniejący rekord — nie tworzy nowego."""
         klient = Client.objects.create(
@@ -290,7 +282,7 @@ class R07ViewBusinessLogicTest(StaffLawyerTestCase):
             'Edycja klienta nie może tworzyć nowego rekordu w bazie',
         )
 
-    # TI-R07-12 (SAFETY-NET — GREEN)
+    # TI-R07-12
     def test_post_case_edit_zakonczona_ustawia_closed_at(self):
         """POST edycji sprawy ze statusem ZAKOŃCZONA musi ustawić pole closed_at."""
         self.assertIsNone(self.sprawa.closed_at)
@@ -311,7 +303,7 @@ class R07ViewBusinessLogicTest(StaffLawyerTestCase):
             'Po zapisie sprawy z status=ZAKOŃCZONA pole closed_at musi być ustawione',
         )
 
-    # TI-R07-13 (SAFETY-NET — GREEN)
+    # TI-R07-13
     def test_post_invoice_edit_przelicza_gross_amount(self):
         """POST edycji faktury ze zmianą net_amount przelicza gross_amount przez Invoice.save()."""
         faktura = Invoice.objects.create(
@@ -339,7 +331,7 @@ class R07ViewBusinessLogicTest(StaffLawyerTestCase):
             'gross_amount musi być przeliczone po edycji net_amount przez formularz',
         )
 
-    # TI-R07-14 (SAFETY-NET — GREEN)
+    # TI-R07-14
     def test_post_invoice_edit_wlasny_numer_nie_daje_bledu_unikalnosci(self):
         """POST edycji faktury z tym samym invoice_number nie powinien zwracać błędu."""
         faktura = Invoice.objects.create(

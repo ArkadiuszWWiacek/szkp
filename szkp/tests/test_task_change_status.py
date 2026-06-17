@@ -21,47 +21,56 @@ class TaskChangeStatusViewTest(StaffLawyerTestCase):
         cls.url = reverse('szkp:task_change_status', args=[cls.task.pk])
 
     def test_zmiana_statusu_na_w_toku(self):
+        """Zmiana statusu zadania na W_TOKU jest zapisywana w bazie."""
         self.client.post(self.url, {'status': TaskStatus.W_TOKU})
         self.task.refresh_from_db()
         self.assertEqual(self.task.status, TaskStatus.W_TOKU)
 
     def test_zmiana_statusu_na_zakonczone_ustawia_completed_at(self):
+        """Zmiana statusu na ZAKOŃCZONE ustawia pole completed_at."""
         self.client.post(self.url, {'status': TaskStatus.ZAKOŃCZONE})
         self.task.refresh_from_db()
         self.assertEqual(self.task.status, TaskStatus.ZAKOŃCZONE)
         self.assertIsNotNone(self.task.completed_at)
 
     def test_niepoprawny_status_jest_ignorowany(self):
+        """Niepoprawna wartość statusu nie zmienia stanu zadania."""
         self.client.post(self.url, {'status': 'nieistniejacy'})
         self.task.refresh_from_db()
         self.assertEqual(self.task.status, TaskStatus.NOWE)
 
     def test_archiwalne_nie_jest_akceptowane(self):
+        """Status 'archiwalne' nie jest akceptowaną wartością i nie zmienia stanu zadania."""
         self.client.post(self.url, {'status': 'archiwalne'})
         self.task.refresh_from_db()
         self.assertEqual(self.task.status, TaskStatus.NOWE)
 
     def test_redirect_po_zmianie(self):
+        """Po udanej zmianie statusu widok przekierowuje na listę zadań."""
         response = self.client.post(self.url, {'status': TaskStatus.W_TOKU})
         self.assertRedirects(response, reverse('szkp:my_tasks'))
 
     def test_redirect_do_next(self):
+        """Parametr 'next' w POST wyznacza adres przekierowania po zmianie statusu."""
         response = self.client.post(
             self.url, {'status': TaskStatus.W_TOKU, 'next': '/szkp/zadania/?status=nowe'}
         )
         self.assertRedirects(response, '/szkp/zadania/?status=nowe', fetch_redirect_response=False)
 
     def test_get_niedozwolony(self):
+        """Żądanie GET na endpoint zmiany statusu zwraca kod 405 (metoda niedozwolona)."""
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 405)
 
     def test_wymaga_logowania(self):
+        """Widok wymaga zalogowania — niezalogowany użytkownik jest przekierowywany."""
         self.client.logout()
         response = self.client.post(self.url, {'status': TaskStatus.W_TOKU})
         self.assertEqual(response.status_code, 302)
         self.assertIn('/accounts/', response['Location'])
 
     def test_zakonczone_blokowane_gdy_podzadanie_niezakonczone(self):
+        """Zadanie z niezakończonym podzadaniem nie może być oznaczone jako ZAKOŃCZONE."""
         Task.objects.create(
             title='Podzadanie', assigned_lawyer=self.lawyer, created_by=self.lawyer,
             parent_task=self.task, status=TaskStatus.NOWE,
@@ -71,6 +80,7 @@ class TaskChangeStatusViewTest(StaffLawyerTestCase):
         self.assertEqual(self.task.status, TaskStatus.NOWE)
 
     def test_zakonczone_blokowane_komunikat_bledu(self):
+        """Próba zakończenia zadania z niezakończonymi podzadaniami wyświetla komunikat błędu."""
         Task.objects.create(
             title='Podzadanie', assigned_lawyer=self.lawyer, created_by=self.lawyer,
             parent_task=self.task, status=TaskStatus.W_TOKU,
@@ -80,6 +90,7 @@ class TaskChangeStatusViewTest(StaffLawyerTestCase):
         self.assertTrue(any('podzadania' in str(m) for m in messages))
 
     def test_zakonczone_dozwolone_gdy_wszystkie_podzadania_zakonczone(self):
+        """Zadanie może być oznaczone jako ZAKOŃCZONE, gdy wszystkie podzadania są zakończone."""
         Task.objects.create(
             title='Podzadanie', assigned_lawyer=self.lawyer, created_by=self.lawyer,
             parent_task=self.task, status=TaskStatus.ZAKOŃCZONE,

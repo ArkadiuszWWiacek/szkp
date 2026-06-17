@@ -1,14 +1,6 @@
 """
 R-04 — Custom template tag `sort_th` dla sortowalnych nagłówków tabeli.
-Testy funkcjonalne (Selenium) — faza RED.
-
-Testy kluczowe padające TERAZ (przed implementacją):
-- TC-R04-06, TC-R04-13, TC-R04-20: inline szablony hardkodują parametry GET,
-  tag sort_th musi dynamicznie zachowywać WSZYSTKIE params z request.GET.
-
-Pozostałe testy (TC-R04-01–05, 07–12, 14–19) weryfikują wymagane zachowanie
-po refaktoryzacji i służą jako regresja — część może przechodzić już dziś
-(inline HTML jest funktionalnie równoważny), ale całość musi przejść po R-04.
+Testy funkcjonalne (Selenium).
 """
 import datetime
 from decimal import Decimal
@@ -60,7 +52,7 @@ def _faktura(sprawa, number, days_offset=0):
 
 
 # ===========================================================================
-# TC-R04-01 – TC-R04-10: Tabela spraw (case_list)
+# Tabela spraw (case_list)
 # ===========================================================================
 
 @tag('functional')
@@ -79,7 +71,6 @@ class SortThCaseListTest(SzkpSeleniumTestCase):
         _sprawa(k2, 'TST-R04-Z001', CaseType.KARNA)
         self._zaloguj_przez_orm(self.user)
 
-    # TC-R04-01
     def test_aktywna_kolumna_case_number_ma_klase_sort_active(self):
         """Nagłówek <th> kolumny 'case_number' ma klasę szkp-sort-active gdy posortowana."""
         self.selenium.get(self.live_server_url + '/szkp/sprawy/?sort=case_number&dir=asc')
@@ -87,7 +78,6 @@ class SortThCaseListTest(SzkpSeleniumTestCase):
         self.assertEqual(len(active_ths), 1,
                          'Oczekiwano dokładnie jednego <th> z klasą szkp-sort-active')
 
-    # TC-R04-02
     def test_ikona_asc_ma_klase_sort_icon_asc(self):
         """Ikona na aktywnej kolumnie sortowanej ASC ma klasę szkp-sort-icon--asc."""
         self.selenium.get(self.live_server_url + '/szkp/sprawy/?sort=case_number&dir=asc')
@@ -96,7 +86,6 @@ class SortThCaseListTest(SzkpSeleniumTestCase):
         )
         self.assertIsNotNone(icon)
 
-    # TC-R04-03
     def test_ikona_desc_ma_klase_sort_icon_desc(self):
         """Ikona na aktywnej kolumnie sortowanej DESC ma klasę szkp-sort-icon--desc."""
         self.selenium.get(self.live_server_url + '/szkp/sprawy/?sort=case_number&dir=desc')
@@ -105,7 +94,6 @@ class SortThCaseListTest(SzkpSeleniumTestCase):
         )
         self.assertIsNotNone(icon)
 
-    # TC-R04-04
     def test_link_aktywnej_kolumny_asc_wskazuje_na_desc(self):
         """Link aktywnej kolumny ASC wskazuje na dir=desc (przełącza kierunek)."""
         self.selenium.get(self.live_server_url + '/szkp/sprawy/?sort=case_number&dir=asc')
@@ -113,7 +101,6 @@ class SortThCaseListTest(SzkpSeleniumTestCase):
         href = link.get_attribute('href')
         self.assertIn('dir=desc', href)
 
-    # TC-R04-05
     def test_link_aktywnej_kolumny_desc_wskazuje_na_asc(self):
         """Link aktywnej kolumny DESC wskazuje na dir=asc (przełącza kierunek)."""
         self.selenium.get(self.live_server_url + '/szkp/sprawy/?sort=case_number&dir=desc')
@@ -121,13 +108,8 @@ class SortThCaseListTest(SzkpSeleniumTestCase):
         href = link.get_attribute('href')
         self.assertIn('dir=asc', href)
 
-    # TC-R04-06 — PADA TERAZ (inline templates nie zachowują nieznanych params)
     def test_sort_link_zachowuje_nieznane_parametry_get(self):
-        """
-        Tag sort_th dynamicznie zachowuje WSZYSTKIE params z request.GET.
-        Test PADA przed R-04: inline szablony hardkodują ?q=&status=&type=
-        i nie uwzględniają obcych parametrów takich jak extra_param=testval.
-        """
+        """Tag sort_th dynamicznie zachowuje WSZYSTKIE params z request.GET."""
         self.selenium.get(
             self.live_server_url
             + '/szkp/sprawy/?q=&status=&type=&extra_param=testval'
@@ -140,7 +122,6 @@ class SortThCaseListTest(SzkpSeleniumTestCase):
             'Tag sort_th musi dynamicznie czytać request.GET.'
         )
 
-    # TC-R04-07
     def test_link_na_kolumnie_case_number_sortuje_po_case_number(self):
         """Kliknięcie nagłówka Sygnatura przechodzi do URL z sort=case_number."""
         self.selenium.get(self.live_server_url + '/szkp/sprawy/?sort=client&dir=asc')
@@ -154,7 +135,6 @@ class SortThCaseListTest(SzkpSeleniumTestCase):
         WebDriverWait(self.selenium, 5).until(EC.url_contains('sort=case_number'))
         self.assertIn('sort=case_number', self.selenium.current_url)
 
-    # TC-R04-08
     def test_kolumna_prawnicy_nie_jest_sortowalna(self):
         """Kolumna 'Prawnicy' nie ma linku <a> — nie jest obsługiwana przez sort_th."""
         self.selenium.get(self.live_server_url + '/szkp/sprawy/')
@@ -165,7 +145,6 @@ class SortThCaseListTest(SzkpSeleniumTestCase):
         self.assertEqual(len(links_in_th), 0,
                          "Kolumna 'Prawnicy' nie powinna być sortowalna (brak <a>)")
 
-    # TC-R04-09
     def test_sort_link_zachowuje_q_i_status(self):
         """Link sortowania w case_list zachowuje parametry q i status."""
         self.selenium.get(
@@ -181,7 +160,6 @@ class SortThCaseListTest(SzkpSeleniumTestCase):
         self.assertIn('q=alfa', href)
         self.assertIn('status=nowa', href)
 
-    # TC-R04-10
     def test_sort_link_nie_zawiera_parametru_page(self):
         """Link sortowania nie propaguje parametru page — kliknięcie wraca do strony 1."""
         self.selenium.get(
@@ -193,7 +171,7 @@ class SortThCaseListTest(SzkpSeleniumTestCase):
 
 
 # ===========================================================================
-# TC-R04-11 – TC-R04-16: Tabela klientów (client_list)
+# Tabela klientów (client_list)
 # ===========================================================================
 
 @tag('functional')
@@ -210,14 +188,12 @@ class SortThClientListTest(SzkpSeleniumTestCase):
         _klient('Zeta', '89010112344', 'Zygmunt')
         self._zaloguj_przez_orm(self.user)
 
-    # TC-R04-11
     def test_aktywna_kolumna_last_name_ma_klase_sort_active(self):
         """Kolumna 'last_name' ma klasę szkp-sort-active gdy posortowana."""
         self.selenium.get(self.live_server_url + '/szkp/klienci/?sort=last_name&dir=asc')
         active_ths = self.selenium.find_elements(By.CSS_SELECTOR, 'th.szkp-sort-active')
         self.assertEqual(len(active_ths), 1)
 
-    # TC-R04-12
     def test_klikniecie_naglowka_typ_sortuje_po_type(self):
         """Kliknięcie nagłówka 'Typ' przechodzi do URL z sort=type."""
         self.selenium.get(self.live_server_url + '/szkp/klienci/')
@@ -231,13 +207,8 @@ class SortThClientListTest(SzkpSeleniumTestCase):
         WebDriverWait(self.selenium, 5).until(EC.url_contains('sort=type'))
         self.assertIn('sort=type', self.selenium.current_url)
 
-    # TC-R04-13 — PADA TERAZ (inline templates nie zachowują nieznanych params)
     def test_sort_link_zachowuje_nieznane_parametry_get(self):
-        """
-        Tag sort_th dynamicznie zachowuje WSZYSTKIE params z request.GET.
-        Test PADA przed R-04: inline client_list.html hardkoduje ?q={{ q }}&sort=...
-        i nie uwzględnia obcych parametrów.
-        """
+        """Tag sort_th dynamicznie zachowuje WSZYSTKIE params z request.GET."""
         self.selenium.get(
             self.live_server_url + '/szkp/klienci/?q=&extra_param=abc'
         )
@@ -249,7 +220,6 @@ class SortThClientListTest(SzkpSeleniumTestCase):
             'Tag sort_th musi dynamicznie czytać request.GET.'
         )
 
-    # TC-R04-14
     def test_kolumna_pesel_nip_nie_jest_sortowalna(self):
         """Kolumna 'PESEL / NIP' nie ma linku sortowania."""
         self.selenium.get(self.live_server_url + '/szkp/klienci/')
@@ -259,7 +229,6 @@ class SortThClientListTest(SzkpSeleniumTestCase):
         links = pesel_th.find_elements(By.TAG_NAME, 'a')
         self.assertEqual(len(links), 0, "Kolumna PESEL/NIP nie powinna być sortowalna")
 
-    # TC-R04-15
     def test_ikona_asc_na_aktywnej_kolumnie_klientow(self):
         """Ikona ASC pojawia się na aktywnej kolumnie klientów."""
         self.selenium.get(self.live_server_url + '/szkp/klienci/?sort=last_name&dir=asc')
@@ -268,7 +237,6 @@ class SortThClientListTest(SzkpSeleniumTestCase):
         )
         self.assertIsNotNone(icon)
 
-    # TC-R04-16
     def test_sort_link_klientow_zachowuje_q(self):
         """Sort link w client_list zachowuje parametr q wyszukiwania."""
         self.selenium.get(
@@ -285,7 +253,7 @@ class SortThClientListTest(SzkpSeleniumTestCase):
 
 
 # ===========================================================================
-# TC-R04-17 – TC-R04-22: Tabela faktur (invoice_list)
+# Tabela faktur (invoice_list)
 # ===========================================================================
 
 @tag('functional')
@@ -304,7 +272,6 @@ class SortThInvoiceListTest(SzkpSeleniumTestCase):
         _faktura(s, 'FV/2025/002', days_offset=5)
         self._zaloguj_przez_orm(self.user)
 
-    # TC-R04-17
     def test_aktywna_kolumna_invoice_number_ma_klase_sort_active(self):
         """Kolumna 'invoice_number' ma klasę szkp-sort-active gdy posortowana."""
         self.selenium.get(
@@ -313,7 +280,6 @@ class SortThInvoiceListTest(SzkpSeleniumTestCase):
         active_ths = self.selenium.find_elements(By.CSS_SELECTOR, 'th.szkp-sort-active')
         self.assertEqual(len(active_ths), 1)
 
-    # TC-R04-18
     def test_klikniecie_naglowka_gross_amount_sortuje_po_kwocie(self):
         """Kliknięcie nagłówka 'Kwota brutto' przechodzi do URL z sort=gross_amount."""
         self.selenium.get(self.live_server_url + '/szkp/faktury/')
@@ -327,7 +293,6 @@ class SortThInvoiceListTest(SzkpSeleniumTestCase):
         WebDriverWait(self.selenium, 5).until(EC.url_contains('sort=gross_amount'))
         self.assertIn('sort=gross_amount', self.selenium.current_url)
 
-    # TC-R04-19
     def test_ikona_desc_na_aktywnej_kolumnie_faktur(self):
         """Ikona DESC pojawia się na aktywnej kolumnie faktur."""
         self.selenium.get(
@@ -338,13 +303,8 @@ class SortThInvoiceListTest(SzkpSeleniumTestCase):
         )
         self.assertIsNotNone(icon)
 
-    # TC-R04-20 — PADA TERAZ (inline templates nie zachowują nieznanych params)
     def test_sort_link_zachowuje_nieznane_parametry_get(self):
-        """
-        Tag sort_th dynamicznie zachowuje WSZYSTKIE params z request.GET.
-        Test PADA przed R-04: inline invoice_list.html hardkoduje ?status={{ current_status }}
-        i nie uwzględnia obcych parametrów.
-        """
+        """Tag sort_th dynamicznie zachowuje WSZYSTKIE params z request.GET."""
         self.selenium.get(
             self.live_server_url + '/szkp/faktury/?status=&extra_param=xyz'
         )
@@ -356,7 +316,6 @@ class SortThInvoiceListTest(SzkpSeleniumTestCase):
             'Tag sort_th musi dynamicznie czytać request.GET.'
         )
 
-    # TC-R04-21
     def test_sort_link_faktur_zachowuje_status_i_q(self):
         """Sort link w invoice_list zachowuje parametry status i q."""
         self.selenium.get(
@@ -373,7 +332,6 @@ class SortThInvoiceListTest(SzkpSeleniumTestCase):
         self.assertIn('status=wystawiona', href)
         self.assertIn('q=FV', href)
 
-    # TC-R04-22
     def test_szesc_kolumn_sortowalnych_w_fakturach(self):
         """Tabela faktur ma dokładnie 6 sortowalnych nagłówków (kolumna akcji nie jest)."""
         self.selenium.get(self.live_server_url + '/szkp/faktury/')

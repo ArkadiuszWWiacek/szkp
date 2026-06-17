@@ -1,6 +1,5 @@
 """
 R-05 — Paginacja listy faktur.
-Testy integracyjne — faza RED.
 
 Uwaga o testach jednostkowych:
     R-05 nie wprowadza żadnej wydzielonej, czystej funkcji (jak sort_th w R-04).
@@ -10,9 +9,7 @@ Uwaga o testach jednostkowych:
 
 Podział klas:
     InvoiceListPaginatorContractTest — kontrakt widoku (klucze kontekstu, typy).
-        Minimalne dane testowe (0 faktur lub 1), padają przez KeyError.
     InvoiceListPaginationBehaviourTest — zachowanie przy 25 fakturach.
-        Padają przez KeyError lub błąd asercji (25 != 20 itp.).
 """
 import datetime
 from decimal import Decimal

@@ -12,6 +12,7 @@ from Functional_tests.base import SzkpSeleniumTestCase
 
 @tag('functional')
 class US05CasesTest(SzkpSeleniumTestCase):
+    """US-05: Sprawy — lista, wyszukiwanie, filtry, tworzenie, edycja, przypisywanie prawników."""
 
     def setUp(self):
         self.selenium.get(self.live_server_url)
@@ -29,14 +30,18 @@ class US05CasesTest(SzkpSeleniumTestCase):
         )
         self._zaloguj_przez_orm(self.user)
 
-    # --- lista i wyszukiwanie ---
+# ===========================================================================
+# lista i wyszukiwanie
+# ===========================================================================
 
     @tag('smoke')
     def test_lista_spraw_wyswietla_sie(self):
+        """Strona /szkp/sprawy/ jest dostępna i zawiera nagłówek 'Sprawy'."""
         self.selenium.get(self.live_server_url + '/szkp/sprawy/')
         self.assertIn('Sprawy', self.selenium.page_source)
 
     def test_wyszukiwanie_po_numerze_sprawy(self):
+        """Wyszukiwanie po numerze sprawy zwraca pasującą sprawę."""
         Case.objects.create(
             client=self.klient, case_number='TST-SZUKAJ-001',
             title='Szukana sprawa', case_type=CaseType.CYWILNA,
@@ -45,6 +50,7 @@ class US05CasesTest(SzkpSeleniumTestCase):
         self.assertIn('TST-SZUKAJ-001', self.selenium.page_source)
 
     def test_filtrowanie_po_statusie(self):
+        """Filtr statusu 'nowa' wyświetla tylko sprawy z tym statusem i ukrywa zakończone."""
         Case.objects.create(
             client=self.klient, case_number='TST-NOWA-001',
             title='Sprawa nowa', case_type=CaseType.CYWILNA,
@@ -60,9 +66,12 @@ class US05CasesTest(SzkpSeleniumTestCase):
         self.assertIn('TST-NOWA-001', src)
         self.assertNotIn('TST-ZAKONCZONA-001', src)
 
-    # --- zmiana statusu przez case_detail ---
+# ===========================================================================
+# zmiana statusu przez case_detail
+# ===========================================================================
 
     def test_zmiana_statusu_na_zakonczona(self):
+        """Formularz zmiany statusu na 'zakończona' na stronie szczegółów sprawy aktualizuje rekord."""
         sprawa = Case.objects.create(
             client=self.klient, case_number='TST-STATUS-001',
             title='Sprawa do zamknięcia', case_type=CaseType.CYWILNA,
@@ -77,10 +86,13 @@ class US05CasesTest(SzkpSeleniumTestCase):
         )
         self.assertIn('Zakończona', self.selenium.page_source)
 
-    # --- tworzenie ---
+# ===========================================================================
+# tworzenie
+# ===========================================================================
 
     @tag('smoke')
     def test_dodaj_sprawe(self):
+        """Formularz tworzenia sprawy z wymaganymi danymi zapisuje rekord i wyświetla go na liście."""
         self.selenium.get(self.live_server_url + '/szkp/sprawy/')
         self.selenium.find_element(By.CSS_SELECTOR, 'a[href*="nowy"]').click()
         WebDriverWait(self.selenium, 5).until(
@@ -97,6 +109,7 @@ class US05CasesTest(SzkpSeleniumTestCase):
         self.assertIn('TST-NOWA-999', self.selenium.page_source)
 
     def test_walidacja_wymaga_numeru_sprawy(self):
+        """Formularz bez numeru sprawy pozostaje na stronie formularza (błąd walidacji)."""
         self.selenium.get(self.live_server_url + '/szkp/sprawy/nowy/')
         WebDriverWait(self.selenium, 5).until(
             EC.presence_of_element_located((By.NAME, 'title'))
@@ -108,6 +121,7 @@ class US05CasesTest(SzkpSeleniumTestCase):
         self.assertIn('/szkp/sprawy/nowy/', self.selenium.current_url)
 
     def test_nowa_sprawa_przypisuje_prowadzacego(self):
+        """Tworzenie sprawy automatycznie tworzy rekord CaseLawyer z rolą PROWADZĄCY dla zalogowanego prawnika."""
         self.selenium.get(self.live_server_url + '/szkp/sprawy/nowy/')
         WebDriverWait(self.selenium, 5).until(
             EC.presence_of_element_located((By.NAME, 'case_number'))
@@ -127,7 +141,9 @@ class US05CasesTest(SzkpSeleniumTestCase):
             ).exists()
         )
 
-    # --- zakładka prawnicy: przypisywanie ---
+    # ===========================================================================
+    # zakładka prawnicy: przypisywanie
+    # ===========================================================================
 
     def _url_prawnicy(self, sprawa):
         return self.live_server_url + f'/szkp/sprawy/{sprawa.pk}/?tab=prawnicy'
@@ -146,11 +162,13 @@ class US05CasesTest(SzkpSeleniumTestCase):
         return sprawa
 
     def test_zakladka_prawnicy_wyswietla_button_przypisz(self):
+        """Zakładka 'Prawnicy' sprawy zawiera link do formularza przypisania prawnika."""
         sprawa = self._sprawa_z_prowadzacym()
         self.selenium.get(self._url_prawnicy(sprawa))
         self.selenium.find_element(By.CSS_SELECTOR, 'a[href*="prawnicy/dodaj"]')
 
     def test_klik_przycisku_otwiera_formularz(self):
+        """Kliknięcie 'Przypisz prawnika' otwiera formularz pod URL prawnicy/dodaj."""
         sprawa = self._sprawa_z_prowadzacym()
         self.selenium.get(self._url_prawnicy(sprawa))
         self.selenium.find_element(By.CSS_SELECTOR, 'a[href*="prawnicy/dodaj"]').click()
@@ -160,6 +178,7 @@ class US05CasesTest(SzkpSeleniumTestCase):
         self.assertIn('prawnicy/dodaj', self.selenium.current_url)
 
     def test_dodaj_prawnika_asystenta(self):
+        """Formularz przypisania prawnika z rolą 'asystent' zapisuje rekord widoczny na zakładce."""
         sprawa = self._sprawa_z_prowadzacym()
         lawyer2 = Lawyer.objects.create(
             first_name='Maria', last_name='Asystentka', bar_number='PL002',
@@ -175,6 +194,7 @@ class US05CasesTest(SzkpSeleniumTestCase):
         self.assertIn('Asystentka', self.selenium.page_source)
 
     def test_walidacja_brak_prawnika_blokuje_zapis(self):
+        """Formularz bez wybranego prawnika pozostaje na stronie formularza."""
         sprawa = self._sprawa_z_prowadzacym()
         self.selenium.get(self._url_dodaj_prawnika(sprawa))
         WebDriverWait(self.selenium, 5).until(
@@ -184,6 +204,7 @@ class US05CasesTest(SzkpSeleniumTestCase):
         self.assertIn('prawnicy/dodaj', self.selenium.current_url)
 
     def test_prowadzacy_nie_jest_dostepna_opcja_roli(self):
+        """Rola 'prowadzacy' nie jest dostępna w select 'role' formularza przypisania."""
         sprawa = self._sprawa_z_prowadzacym()
         self.selenium.get(self._url_dodaj_prawnika(sprawa))
         WebDriverWait(self.selenium, 5).until(
@@ -193,9 +214,12 @@ class US05CasesTest(SzkpSeleniumTestCase):
         wartosci = [o.get_attribute('value') for o in opcje]
         self.assertNotIn('prowadzacy', wartosci)
 
-    # --- edycja ---
+# ===========================================================================
+# edycja
+# ===========================================================================
 
     def test_edycja_tytulu_sprawy(self):
+        """Formularz edycji sprawy z nowym tytułem zapisuje zmianę i wyświetla ją na liście."""
         sprawa = Case.objects.create(
             client=self.klient, case_number='TST-EDYCJA-001',
             title='Stary tytuł', case_type=CaseType.CYWILNA,
@@ -246,6 +270,7 @@ class US05CaseLawyerAddAccessTest(SzkpSeleniumTestCase):
         )
 
     def test_formularz_dodaj_prawnika_wymaga_zalogowania(self):
+        """Niezalogowany użytkownik jest przekierowywany na stronę logowania."""
         self.selenium.get(self._url())
         WebDriverWait(self.selenium, 5).until(
             lambda d: '/accounts/' in d.current_url or 'login' in d.current_url.lower()
@@ -253,6 +278,7 @@ class US05CaseLawyerAddAccessTest(SzkpSeleniumTestCase):
         self.assertIn('/accounts/', self.selenium.current_url)
 
     def test_nieprzypisany_prawnik_nie_ma_dostepu_do_dodania_prawnika(self):
+        """Prawnik nieprzypisany do sprawy otrzymuje błąd 403 przy próbie dodania kolejnego prawnika."""
         inny_user = User.objects.create_user(
             username='obcy_us05', password='testpass123', is_staff=False,
         )

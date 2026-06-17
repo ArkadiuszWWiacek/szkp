@@ -1,6 +1,5 @@
 """
 R-04 — Testy jednostkowe funkcji sort_th z szkp.templatetags.szkp_tags.
-Faza RED — wszystkie testy padają, bo moduł szkp.templatetags.szkp_tags nie istnieje.
 
 Testowana jednostka: sort_th(context, key, label)
 Odpowiedzialność: na podstawie kontekstu szablonu i argumentów

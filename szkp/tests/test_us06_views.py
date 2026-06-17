@@ -36,14 +36,17 @@ class CourtHearingCreateViewTest(StaffLawyerTestCase):
         return data
 
     def test_get_formularz_zwraca_200(self):
+        """GET formularza nowego terminu zwraca kod 200."""
         r = self.client.get(self._url_new())
         self.assertEqual(r.status_code, 200)
 
     def test_domyslne_przypomnienie_w_formularzu(self):
+        """Formularz nowego terminu ma domyślną wartość reminder_minutes_before = 1440."""
         r = self.client.get(self._url_new())
         self.assertEqual(r.context['form']['reminder_minutes_before'].value(), 1440)
 
     def test_post_z_data_przyszla_tworzy_termin(self):
+        """Poprawny POST z datą w przyszłości tworzy nowy rekord CourtHearing."""
         self.client.post(self._url_new(), self._valid_data())
         self.assertTrue(
             CourtHearing.objects.filter(
@@ -52,17 +55,20 @@ class CourtHearingCreateViewTest(StaffLawyerTestCase):
         )
 
     def test_nowy_termin_ma_status_planowany(self):
+        """Nowo utworzony termin ma domyślnie status PLANOWANY."""
         self.client.post(self._url_new(), self._valid_data(court_name='Sąd Okręgowy w Łodzi'))
         termin = CourtHearing.objects.get(court_name='Sąd Okręgowy w Łodzi')
         self.assertEqual(termin.status, HearingStatus.PLANOWANY)
 
     def test_post_z_data_przeszla_zwraca_blad(self):
+        """POST z datą w przeszłości zwraca błąd walidacji."""
         przeszla = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M')
         r = self.client.post(self._url_new(), self._valid_data(scheduled_at=przeszla))
         self.assertEqual(r.status_code, 200)
         self.assertIn('scheduled_at', r.context['form'].errors)
 
     def test_po_zapisie_redirect_do_szczegolów_sprawy(self):
+        """Po zapisaniu terminu widok przekierowuje na stronę szczegółów sprawy."""
         r = self.client.post(self._url_new(), self._valid_data())
         self.assertRedirects(
             r,
@@ -70,12 +76,14 @@ class CourtHearingCreateViewTest(StaffLawyerTestCase):
         )
 
     def test_wymaga_zalogowania(self):
+        """Widok tworzenia terminu wymaga zalogowania."""
         self.client.logout()
         r = self.client.get(self._url_new())
         self.assertEqual(r.status_code, 302)
         self.assertIn('/accounts/', r['Location'])
 
     def test_nieprzypisany_prawnik_dostaje_403(self):
+        """Prawnik nieprzypisany do sprawy otrzymuje 403."""
         user2 = User.objects.create_user('obcy_us06', password='pass', is_staff=False)
         self.client.force_login(user2)
         r = self.client.get(self._url_new())
@@ -119,24 +127,29 @@ class CourtHearingEditViewTest(StaffLawyerTestCase):
         return data
 
     def test_get_formularz_edycji_zwraca_200(self):
+        """GET formularza edycji terminu zwraca kod 200."""
         r = self.client.get(self._url_edit())
         self.assertEqual(r.status_code, 200)
 
     def test_get_formularz_zawiera_dane_terminu(self):
+        """Formularz edycji jest wstępnie wypełniony danymi terminu."""
         r = self.client.get(self._url_edit())
         self.assertEqual(r.context['form']['court_name'].value(), self.termin.court_name)
 
     def test_post_zmienia_status_na_odbyty(self):
+        """POST edycji ze zmianą statusu na 'odbyty' aktualizuje rekord."""
         self.client.post(self._url_edit(), self._valid_edit_data(status='odbyty'))
         self.termin.refresh_from_db()
         self.assertEqual(self.termin.status, HearingStatus.ODBYTY)
 
     def test_edycja_pozwala_na_date_w_przeszlosci(self):
+        """Edycja terminu (is_new=False) nie blokuje daty w przeszłości."""
         przeszla = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M')
         r = self.client.post(self._url_edit(), self._valid_edit_data(scheduled_at=przeszla))
         self.assertEqual(r.status_code, 302)
 
     def test_po_edycji_redirect_do_szczegolów_sprawy(self):
+        """Po edycji widok przekierowuje na stronę szczegółów sprawy."""
         r = self.client.post(self._url_edit(), self._valid_edit_data())
         self.assertRedirects(
             r,
@@ -144,12 +157,14 @@ class CourtHearingEditViewTest(StaffLawyerTestCase):
         )
 
     def test_wymaga_zalogowania(self):
+        """Widok edycji terminu wymaga zalogowania."""
         self.client.logout()
         r = self.client.get(self._url_edit())
         self.assertEqual(r.status_code, 302)
         self.assertIn('/accounts/', r['Location'])
 
     def test_nieprzypisany_prawnik_dostaje_403(self):
+        """Prawnik nieprzypisany do sprawy otrzymuje 403 przy próbie edycji terminu."""
         user2 = User.objects.create_user('obcy_us06_edit', password='pass', is_staff=False)
         self.client.force_login(user2)
         r = self.client.get(self._url_edit())

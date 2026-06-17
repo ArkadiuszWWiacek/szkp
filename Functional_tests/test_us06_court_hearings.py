@@ -17,6 +17,7 @@ from Functional_tests.base import SzkpSeleniumTestCase
 
 @tag('functional')
 class US06CourtHearingsTest(SzkpSeleniumTestCase):
+    """US-06: Terminy sądowe — lista na zakładce sprawy, dodawanie, walidacja, zmiana statusu."""
 
     def setUp(self):
         self.selenium.get(self.live_server_url)
@@ -41,18 +42,23 @@ class US06CourtHearingsTest(SzkpSeleniumTestCase):
     def _url_terminy(self):
         return self.live_server_url + f'/szkp/sprawy/{self.sprawa.pk}/?tab=terminy'
 
-    # --- widoczność terminów na stronie sprawy ---
+# ===========================================================================
+# widoczność terminów na stronie sprawy
+# ===========================================================================
 
     @tag('smoke')
     def test_zakladka_terminy_wyswietla_sie(self):
+        """Zakładka 'Terminy sądowe' na stronie sprawy jest widoczna."""
         self.selenium.get(self._url_terminy())
         self.assertIn('Terminy sądowe', self.selenium.page_source)
 
     def test_brak_terminow_wyswietla_pusty_stan(self):
+        """Zakładka terminów bez rekordów wyświetla komunikat 'Brak terminów'."""
         self.selenium.get(self._url_terminy())
         self.assertIn('Brak terminów', self.selenium.page_source)
 
     def test_termin_widoczny_na_stronie_sprawy(self):
+        """Istniejący termin jest widoczny po nazwie sądu na zakładce terminów."""
         CourtHearing.objects.create(
             case=self.sprawa,
             court_name='Sąd Rejonowy w Krakowie',
@@ -62,10 +68,13 @@ class US06CourtHearingsTest(SzkpSeleniumTestCase):
         self.selenium.get(self._url_terminy())
         self.assertIn('Sąd Rejonowy w Krakowie', self.selenium.page_source)
 
-    # --- dodawanie terminu przez formularz ---
+# ===========================================================================
+# dodawanie terminu przez formularz
+# ===========================================================================
 
     @tag('smoke')
     def test_dodaj_termin_z_data_w_przyszlosci(self):
+        """Formularz nowego terminu z datą w przyszłości zapisuje rekord i przekierowuje na zakładkę terminów."""
         self.selenium.get(self._url_terminy())
         self.selenium.find_element(By.CSS_SELECTOR, 'a[href*="terminy/nowy"]').click()
         WebDriverWait(self.selenium, 5).until(
@@ -82,6 +91,7 @@ class US06CourtHearingsTest(SzkpSeleniumTestCase):
         self.assertIn('Sąd Okręgowy w Warszawie', self.selenium.page_source)
 
     def test_walidacja_data_w_przeszlosci_blokuje(self):
+        """Nowy termin z datą w przeszłości nie jest akceptowany — formularz pozostaje na stronie."""
         self.selenium.get(
             self.live_server_url + f'/szkp/sprawy/{self.sprawa.pk}/terminy/nowy/'
         )
@@ -104,6 +114,7 @@ class US06CourtHearingsTest(SzkpSeleniumTestCase):
         )
 
     def test_nowy_termin_ma_domyslny_status_planowany(self):
+        """Nowo dodany termin ma domyślnie status 'Planowany' widoczny na zakładce."""
         self.selenium.get(
             self.live_server_url + f'/szkp/sprawy/{self.sprawa.pk}/terminy/nowy/'
         )
@@ -121,6 +132,7 @@ class US06CourtHearingsTest(SzkpSeleniumTestCase):
         self.assertIn('Planowany', self.selenium.page_source)
 
     def test_nowy_termin_ma_domyslne_przypomnienie_1440(self):
+        """Pole 'reminder_minutes_before' ma domyślną wartość 1440 (24 godziny)."""
         self.selenium.get(
             self.live_server_url + f'/szkp/sprawy/{self.sprawa.pk}/terminy/nowy/'
         )
@@ -130,9 +142,12 @@ class US06CourtHearingsTest(SzkpSeleniumTestCase):
         pole = self.selenium.find_element(By.NAME, 'reminder_minutes_before')
         self.assertEqual(pole.get_attribute('value'), '1440')
 
-    # --- zmiana statusu terminu ---
+# ===========================================================================
+# zmiana statusu terminu
+# ===========================================================================
 
     def test_zmiana_statusu_terminu_na_odbyty(self):
+        """Edycja terminu ze zmianą statusu na 'odbyty' aktualizuje rekord i przekierowuje na zakładkę."""
         termin = CourtHearing.objects.create(
             case=self.sprawa,
             court_name='Sąd Rejonowy w Poznaniu',
@@ -187,6 +202,7 @@ class US06CourtHearingsAccessTest(SzkpSeleniumTestCase):
         )
 
     def test_formularz_terminu_wymaga_zalogowania(self):
+        """Niezalogowany użytkownik jest przekierowywany na stronę logowania."""
         self.selenium.get(self._url())
         WebDriverWait(self.selenium, 5).until(
             lambda d: '/accounts/' in d.current_url or 'login' in d.current_url.lower()
@@ -194,6 +210,7 @@ class US06CourtHearingsAccessTest(SzkpSeleniumTestCase):
         self.assertIn('/accounts/', self.selenium.current_url)
 
     def test_nieprzypisany_prawnik_nie_ma_dostepu_do_formularza_terminu(self):
+        """Prawnik nieprzypisany do sprawy otrzymuje błąd 403 przy próbie dodania terminu."""
         inny_user = User.objects.create_user(
             username='obcy_us06', password='testpass123', is_staff=False,
         )

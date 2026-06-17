@@ -29,6 +29,7 @@ class DashboardUpcomingTasksViewTest(TestCase):
         return self.client.get('/szkp/pulpit/')
 
     def test_upcoming_tasks_zawiera_zadania_1_7_dni(self):
+        """Zadanie z terminem od 1 do 7 dni naprzód pojawia się w upcoming_tasks."""
         task = Task.objects.create(
             title='Task w zakresie',
             assigned_lawyer=self.lawyer, created_by=self.lawyer,
@@ -48,6 +49,7 @@ class DashboardUpcomingTasksViewTest(TestCase):
         self.assertIn(task, response.context['upcoming_tasks'])
 
     def test_upcoming_tasks_wyklucza_dzisiejsze(self):
+        """Zadanie z terminem na dziś nie pojawia się w upcoming_tasks."""
         task = Task.objects.create(
             title='Task dzisiaj',
             assigned_lawyer=self.lawyer, created_by=self.lawyer,
@@ -57,6 +59,7 @@ class DashboardUpcomingTasksViewTest(TestCase):
         self.assertNotIn(task, response.context['upcoming_tasks'])
 
     def test_upcoming_tasks_wyklucza_po_7_dniach(self):
+        """Zadanie z terminem dłuższym niż 7 dni nie pojawia się w upcoming_tasks."""
         task = Task.objects.create(
             title='Task po 7 dniach',
             assigned_lawyer=self.lawyer, created_by=self.lawyer,
@@ -66,6 +69,7 @@ class DashboardUpcomingTasksViewTest(TestCase):
         self.assertNotIn(task, response.context['upcoming_tasks'])
 
     def test_upcoming_tasks_wyklucza_zakonczone(self):
+        """Zadanie ze statusem ZAKOŃCZONE nie pojawia się w upcoming_tasks nawet jeśli termin jest w zakresie."""
         task = Task.objects.create(
             title='Task zakończony',
             assigned_lawyer=self.lawyer, created_by=self.lawyer,
@@ -109,14 +113,17 @@ class DashboardIzolacjaPrawnikaTest(TestCase):
         return self.client.get('/szkp/pulpit/')
 
     def test_prawnik_widzi_swoje_zadanie(self):
+        """Zalogowany prawnik widzi własne zadanie w upcoming_tasks dashboardu."""
         response = self._get_dashboard(self.user_a)
         self.assertIn(self.task_a, response.context['upcoming_tasks'])
 
     def test_prawnik_nie_widzi_cudzego_zadania(self):
+        """Zalogowany prawnik nie widzi zadań przypisanych do innego prawnika."""
         response = self._get_dashboard(self.user_a)
         self.assertNotIn(self.task_b, response.context['upcoming_tasks'])
 
     def test_staff_widzi_zadania_wszystkich(self):
+        """Użytkownik staff widzi upcoming_tasks wszystkich prawników na dashboardzie."""
         response = self._get_dashboard(self.staff_user)
         self.assertIn(self.task_a, response.context['upcoming_tasks'])
         self.assertIn(self.task_b, response.context['upcoming_tasks'])
@@ -139,11 +146,13 @@ class DashboardBezProfiluPrawnikaTest(TestCase):
         )
 
     def test_brak_profilu_prawnika_daje_puste_upcoming_tasks(self):
+        """Użytkownik bez profilu prawnika widzi pustą listę upcoming_tasks na dashboardzie."""
         self.client.force_login(self.user)
         response = self.client.get('/szkp/pulpit/')
         self.assertEqual(list(response.context['upcoming_tasks']), [])
 
     def test_brak_profilu_prawnika_daje_zerowe_liczniki_spraw(self):
+        """Użytkownik bez profilu prawnika widzi zerowe liczniki spraw na dashboardzie."""
         self.client.force_login(self.user)
         response = self.client.get('/szkp/pulpit/')
         self.assertEqual(response.context['total_cases'], 0)

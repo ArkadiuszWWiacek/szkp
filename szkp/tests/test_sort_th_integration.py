@@ -1,9 +1,5 @@
 """
 R-04 — Testy integracyjne: renderowanie tagu sort_th w szablonach Django.
-Faza RED — testy padają bo:
-  1. Moduł szkp.templatetags.szkp_tags nie istnieje → TemplateSyntaxError przy {% load %}
-  2. Partial sort_th.html nie istnieje → TemplateDoesNotExist
-  3. Szablony list (case_list, client_list, invoice_list) jeszcze nie używają {% sort_th %}
 
 Tagi: @tag('integration')
 """

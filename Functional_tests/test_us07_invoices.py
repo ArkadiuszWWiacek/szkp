@@ -18,6 +18,7 @@ from Functional_tests.base import SzkpSeleniumTestCase
 
 @tag('functional')
 class US07InvoicesTest(SzkpSeleniumTestCase):
+    """US-07: Faktury — CRUD, widok zakładki sprawy, lista faktur, filtry statusu, zmiana statusu."""
 
     def setUp(self):
         self.selenium.get(self.live_server_url)
@@ -48,7 +49,9 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
     def _za_30_dni(self):
         return (date.today() + timedelta(days=30)).strftime('%Y-%m-%d')
 
-    # --- wyszukiwanie na liście faktur ---
+# ===========================================================================
+# wyszukiwanie na liście faktur
+# ===========================================================================
 
     def test_wyszukiwanie_po_numerze_faktury(self):
         """Wyszukiwanie po numerze faktury zwraca pasującą fakturę."""
@@ -78,17 +81,22 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
         self.selenium.get(self.live_server_url + '/szkp/faktury/?q=TST-FNK-002')
         self.assertIn('FV/TEST/2025/002', self.selenium.page_source)
 
-    # --- widoczność faktur na stronie sprawy ---
+# ===========================================================================
+# widoczność faktur na stronie sprawy
+# ===========================================================================
 
     def test_zakladka_faktury_jest_widoczna(self):
+        """Zakładka 'Faktury' na stronie sprawy jest widoczna i zawiera napis 'Faktury'."""
         self.selenium.get(self._url_faktury())
         self.assertIn('Faktury', self.selenium.page_source)
 
     def test_brak_faktur_wyswietla_pusty_stan(self):
+        """Zakładka faktur bez rekordów wyświetla komunikat 'Brak faktur'."""
         self.selenium.get(self._url_faktury())
         self.assertIn('Brak faktur', self.selenium.page_source)
 
     def test_faktura_widoczna_na_stronie_sprawy(self):
+        """Istniejąca faktura jest widoczna na zakładce faktur sprawy."""
         Invoice.objects.create(
             case=self.sprawa,
             invoice_number='FV/2025/001',
@@ -99,9 +107,12 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
         self.selenium.get(self._url_faktury())
         self.assertIn('FV/2025/001', self.selenium.page_source)
 
-    # --- dodawanie faktury przez formularz ---
+# ===========================================================================
+# dodawanie faktury przez formularz
+# ===========================================================================
 
     def test_link_wystaw_fakture_przenosi_do_formularza(self):
+        """Link 'Wystaw fakturę' przenosi do formularza wystawiania faktury."""
         self.selenium.get(self._url_faktury())
         self.selenium.find_element(By.CSS_SELECTOR, 'a[href*="faktury/nowa"]').click()
         WebDriverWait(self.selenium, 5).until(
@@ -110,6 +121,7 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
 
     @tag('smoke')
     def test_dodaj_fakture_z_poprawnymi_danymi(self):
+        """Formularz wystawienia faktury z poprawnymi danymi zapisuje rekord i przekierowuje na zakładkę."""
         self.selenium.get(
             self.live_server_url + f'/szkp/sprawy/{self.sprawa.pk}/faktury/nowa/'
         )
@@ -133,6 +145,7 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
         self.assertIn('FV/2025/100', self.selenium.page_source)
 
     def test_nowa_faktura_ma_domyslny_status_wystawiona(self):
+        """Nowa faktura ma domyślnie status 'Wystawiona' widoczny na zakładce faktur."""
         self.selenium.get(
             self.live_server_url + f'/szkp/sprawy/{self.sprawa.pk}/faktury/nowa/'
         )
@@ -156,6 +169,7 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
         self.assertIn('Wystawiona', self.selenium.page_source)
 
     def test_nowa_faktura_ma_domyslna_walute_PLN(self):
+        """Nowa faktura ma domyślnie walutę PLN widoczną na zakładce faktur."""
         self.selenium.get(
             self.live_server_url + f'/szkp/sprawy/{self.sprawa.pk}/faktury/nowa/'
         )
@@ -179,6 +193,7 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
         self.assertIn('PLN', self.selenium.page_source)
 
     def test_kwota_brutto_wyliczana_automatycznie(self):
+        """Kwota brutto (netto × 1,23) jest obliczana automatycznie przez Invoice.save() i widoczna po zapisie."""
         self.selenium.get(
             self.live_server_url + f'/szkp/sprawy/{self.sprawa.pk}/faktury/nowa/'
         )
@@ -201,9 +216,12 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
         )
         self.assertIn('1230,00', self.selenium.page_source)
 
-    # --- walidacja formularza ---
+# ===========================================================================
+# walidacja formularza
+# ===========================================================================
 
     def test_duplikat_numeru_faktury_blokuje_zapis(self):
+        """Formularz odrzuca zapis gdy invoice_number już istnieje — pozostaje na stronie formularza."""
         Invoice.objects.create(
             case=self.sprawa,
             invoice_number='FV/2025/DUP',
@@ -233,9 +251,12 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
             self.selenium.current_url,
         )
 
-    # --- zmiana statusu faktury ---
+# ===========================================================================
+# zmiana statusu faktury
+# ===========================================================================
 
     def test_zmiana_statusu_faktury_na_oplacona(self):
+        """Edycja faktury ze zmianą statusu na 'opłacona' aktualizuje rekord i przekierowuje na zakładkę."""
         faktura = Invoice.objects.create(
             case=self.sprawa,
             invoice_number='FV/2025/EDIT',
@@ -258,7 +279,9 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
         )
         self.assertIn('Opłacona', self.selenium.page_source)
 
-    # --- lista faktur ---
+# ===========================================================================
+# lista faktur
+# ===========================================================================
 
     def _url_lista(self, status=None):
         url = self.live_server_url + '/szkp/faktury/'
@@ -279,6 +302,7 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
 
     @tag('smoke')
     def test_lista_faktur_dostepna(self):
+        """Strona /szkp/faktury/ jest dostępna i zawiera tytuł 'Faktury'."""
         self.selenium.get(self._url_lista())
         WebDriverWait(self.selenium, 5).until(
             EC.presence_of_element_located((By.TAG_NAME, 'body'))
@@ -286,15 +310,18 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
         self.assertIn('Faktury', self.selenium.page_source)
 
     def test_lista_faktur_wyswietla_faktury(self):
+        """Istniejąca faktura jest widoczna na liście /szkp/faktury/."""
         self._make_invoice('FV/US07-L/001')
         self.selenium.get(self._url_lista())
         self.assertIn('FV/US07-L/001', self.selenium.page_source)
 
     def test_lista_faktur_brak_wyswietla_pusty_stan(self):
+        """Lista faktur bez rekordów wyświetla komunikat 'Brak faktur'."""
         self.selenium.get(self._url_lista())
         self.assertIn('Brak faktur', self.selenium.page_source)
 
     def test_filtr_listy_po_statusie_oplacona(self):
+        """Filtr statusu 'opłacona' wyświetla tylko opłacone faktury i ukrywa wystawione."""
         self._make_invoice('FV/US07-L/WYS', status=InvoiceStatus.WYSTAWIONA)
         self._make_invoice('FV/US07-L/OPL', status=InvoiceStatus.OPŁACONA)
         self.selenium.get(self._url_lista(status='opłacona'))
@@ -302,6 +329,7 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
         self.assertNotIn('FV/US07-L/WYS', self.selenium.page_source)
 
     def test_filtr_listy_po_statusie_przeterminowana(self):
+        """Filtr statusu 'przeterminowana' wyświetla tylko przeterminowane faktury."""
         self._make_invoice('FV/US07-L/WYS2', status=InvoiceStatus.WYSTAWIONA)
         self._make_invoice('FV/US07-L/PRZ', status=InvoiceStatus.PRZETERMINOWANA)
         self.selenium.get(self._url_lista(status='przeterminowana'))
@@ -309,6 +337,7 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
         self.assertNotIn('FV/US07-L/WYS2', self.selenium.page_source)
 
     def test_filtr_listy_wszystkie_pokazuje_wszystkie(self):
+        """Link 'Wszystkie' wyświetla faktury wszystkich statusów."""
         self._make_invoice('FV/US07-L/A', status=InvoiceStatus.WYSTAWIONA)
         self._make_invoice('FV/US07-L/B', status=InvoiceStatus.OPŁACONA)
         self.selenium.get(self._url_lista())
@@ -320,6 +349,7 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
         self.assertIn('FV/US07-L/B', self.selenium.page_source)
 
     def test_lista_faktura_ma_link_do_sprawy(self):
+        """Faktura na liście ma link do zakładki faktur powiązanej sprawy."""
         self._make_invoice('FV/US07-L/LINK')
         self.selenium.get(self._url_lista())
         self.selenium.find_element(
@@ -331,6 +361,7 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
         self.assertIn('tab=faktury', self.selenium.current_url)
 
     def test_przycisk_oplacona_widoczny_przy_wystawionej(self):
+        """Przycisk 'Opłacona' jest widoczny przy fakturze o statusie 'wystawiona'."""
         self._make_invoice('FV/US07-L/BTN')
         self.selenium.get(self._url_lista())
         btn = self.selenium.find_element(
@@ -339,6 +370,7 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
         self.assertIsNotNone(btn)
 
     def test_przycisk_oplacona_niewidoczny_przy_oplaconej(self):
+        """Przycisk 'Opłacona' nie jest wyświetlany dla już opłaconej faktury."""
         self._make_invoice('FV/US07-L/NOBTN', status=InvoiceStatus.OPŁACONA)
         self.selenium.get(self._url_lista())
         btns = self.selenium.find_elements(
@@ -347,6 +379,7 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
         self.assertEqual(len(btns), 0)
 
     def test_klik_oplacona_na_liscie_zmienia_status(self):
+        """Kliknięcie przycisku 'Opłacona' zmienia status faktury i chowa przycisk."""
         self._make_invoice('FV/US07-L/KLIK')
         self.selenium.get(self._url_lista())
         self.selenium.find_element(
@@ -361,9 +394,12 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
         )
         self.assertEqual(len(btns), 0)
 
-    # --- kliknięcie pozycji faktury na zakładce faktury sprawy ---
+# ===========================================================================
+# kliknięcie pozycji faktury na zakładce faktury sprawy
+# ===========================================================================
 
     def test_klikniecie_pozycji_faktury_przenosi_na_liste_z_filtrem(self):
+        """Kliknięcie faktury na zakładce sprawy przekierowuje na listę /szkp/faktury/ z filtrem numeru."""
         self._make_invoice('FV/US07/LINK')
         self.selenium.get(self._url_faktury())
         element = self.selenium.find_element(By.CSS_SELECTOR, 'a.invoice-item')
@@ -407,6 +443,7 @@ class US07InvoicesAccessTest(SzkpSeleniumTestCase):
         )
 
     def test_formularz_faktury_wymaga_zalogowania(self):
+        """Niezalogowany użytkownik jest przekierowywany na stronę logowania."""
         self.selenium.get(self._url())
         WebDriverWait(self.selenium, 5).until(
             lambda d: '/accounts/' in d.current_url or 'login' in d.current_url.lower()
@@ -414,6 +451,7 @@ class US07InvoicesAccessTest(SzkpSeleniumTestCase):
         self.assertIn('/accounts/', self.selenium.current_url)
 
     def test_nieprzypisany_prawnik_nie_ma_dostepu_do_formularza_faktury(self):
+        """Prawnik nieprzypisany do sprawy otrzymuje błąd 403 przy próbie wystawienia faktury."""
         inny_user = User.objects.create_user(
             username='obcy_us07', password='testpass123', is_staff=False,
         )
