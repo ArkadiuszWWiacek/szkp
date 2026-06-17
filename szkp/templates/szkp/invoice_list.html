@@ -65,7 +65,7 @@
             </thead>
             <tbody>
                 {% for inv in invoices %}
-                <tr onclick="window.location='{% url 'szkp:case_detail' inv.case.pk %}?tab=faktury'" style="cursor:pointer">
+                <tr onclick="window.location='{% url 'szkp:case_detail' inv.case.pk %}?tab=faktury'">
                     <td class="font-mono">{{ inv.invoice_number }}</td>
                     <td>
                         <a href="{% url 'szkp:case_detail' inv.case.pk %}?tab=faktury"
