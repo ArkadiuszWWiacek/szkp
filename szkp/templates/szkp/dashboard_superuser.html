@@ -1,0 +1,584 @@
+{% extends "base_dash.html" %}
+
+{% block title %}
+  Pulpit administracyjny
+{% endblock title %}
+{% block topbar_title %}
+  Pulpit administracyjny
+{% endblock topbar_title %}
+{% block nav_dashboard %}
+  active
+{% endblock nav_dashboard %}
+
+{% block content %}
+
+  <!-- PAGE HEADER -->
+  <div class="dash-page-header">
+    <div>
+      <h1>
+        Pulpit administracyjny
+      </h1>
+      <div class="dash-subtitle">
+        {{ today|date:"l, j E Y" }} — widok superusera
+      </div>
+    </div>
+    <div class="dash-page-header-actions">
+      {% if request.user.is_superuser %}
+        <a href="{% url 'admin:index' %}" class="dash-btn dash-btn--ghost">
+          <svg fill="none"
+               viewBox="0 0 24 24"
+               stroke="currentColor"
+               stroke-width="1.8">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+          Panel Django /admin/
+        </a>
+      {% endif %}
+      <a href="{% url 'szkp:case_new' %}" class="dash-btn dash-btn--primary">
+        <svg fill="none"
+             viewBox="0 0 24 24"
+             stroke="currentColor"
+             stroke-width="1.8">
+          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        Nowa sprawa
+      </a>
+    </div>
+  </div>
+
+  <!-- METRIC STRIP -->
+  <div class="dash-metric-strip">
+
+    <div class="dash-metric-card m-brass">
+      <div class="dash-metric-label">
+        Sprawy aktywne
+      </div>
+      <div class="dash-metric-value">
+        {{ active_cases_count }}
+      </div>
+      <div class="dash-metric-delta">
+        Nowe i w toku
+      </div>
+    </div>
+
+    <div class="dash-metric-card m-red">
+      <div class="dash-metric-label">
+        Terminy (7 dni)
+      </div>
+      <div class="dash-metric-value">
+        {{ hearings_7d_count }}
+      </div>
+      <div class="dash-metric-delta {% if hearings_unassigned %}warn{% endif %}">
+        {{ hearings_unassigned }} bez przypisanego prawnika
+      </div>
+    </div>
+
+    <div class="dash-metric-card m-blue">
+      <div class="dash-metric-label">
+        Użytkownicy
+      </div>
+      <div class="dash-metric-value">
+        {{ users_count }}
+      </div>
+      <div class="dash-metric-delta">
+        Aktywne konta
+      </div>
+    </div>
+
+    <div class="dash-metric-card m-green">
+      <div class="dash-metric-label">
+        Faktury wymagające uwagi
+      </div>
+      <div class="dash-metric-value">
+        {{ invoices_overdue_count }}
+      </div>
+      <div class="dash-metric-delta
+                  {% if invoices_overdue_count %}
+                    down
+                  {% endif %}">
+        {{ invoices_overdue_count }} przeterminowane
+      </div>
+    </div>
+
+    <div class="dash-metric-card m-gray">
+      <div class="dash-metric-label">
+        Zadania otwarte
+      </div>
+      <div class="dash-metric-value">
+        {{ tasks_open_count }}
+      </div>
+      <div class="dash-metric-delta">
+        {{ tasks_urgent_count }} pilnych
+      </div>
+    </div>
+
+  </div>
+
+  <!-- OPS GRID -->
+  <div class="dash-ops-grid">
+
+    <!-- Ostatnie sprawy -->
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <div class="dash-panel-title">
+          <svg fill="none"
+               viewBox="0 0 24 24"
+               stroke="currentColor"
+               stroke-width="1.8">
+            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          Ostatnie sprawy
+        </div>
+        <a href="{% url 'szkp:case_list' %}" class="dash-panel-action">Wszystkie →</a>
+      </div>
+      <table class="dash-data-table">
+        <thead>
+          <tr>
+            <th>
+              Nr sprawy
+            </th>
+            <th>
+              Tytuł
+            </th>
+            <th>
+              Status
+            </th>
+            <th>
+              Priorytet
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for case in recent_cases %}
+            <tr>
+              <td>
+                <span class="dash-mono">{{ case.case_number }}</span>
+              </td>
+              <td>
+                {{ case.title }}
+              </td>
+              <td>
+                {% if case.status == 'nowa' %}
+                  <span class="db-badge db-badge--nowa">nowa</span>
+                {% elif case.status == 'w_toku' %}
+                  <span class="db-badge db-badge--w_toku">w toku</span>
+                {% elif case.status == 'zakończona' %}
+                  <span class="db-badge db-badge--zakonczona">zakończona</span>
+                {% elif case.status == 'zawieszona' %}
+                  <span class="db-badge db-badge--zawieszona">zawieszona</span>
+                {% else %}
+                  <span class="db-badge db-badge--archiwalna">{{ case.status }}</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if case.priority == 'pilna' %}
+                  <span class="db-badge db-badge--pilna">pilna</span>
+                {% elif case.priority == 'wysoka' %}
+                  <span class="db-badge db-badge--wysoka">wysoka</span>
+                {% else %}
+                  <span class="db-badge">{{ case.get_priority_display|default:"—" }}</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="4" class="dash-table-empty">
+                Brak spraw
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Faktury -->
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <div class="dash-panel-title">
+          <svg fill="none"
+               viewBox="0 0 24 24"
+               stroke="currentColor"
+               stroke-width="1.8">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>
+          Faktury
+        </div>
+        <a href="{% url 'szkp:invoice_list' %}" class="dash-panel-action">Wszystkie →</a>
+      </div>
+      <table class="dash-data-table">
+        <thead>
+          <tr>
+            <th>
+              Nr faktury
+            </th>
+            <th>
+              Kwota brutto
+            </th>
+            <th>
+              Status
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for invoice in recent_invoices %}
+            <tr>
+              <td>
+                <span class="dash-mono">{{ invoice.invoice_number }}</span>
+              </td>
+              <td>
+                {{ invoice.gross_amount|floatformat:2 }} zł
+              </td>
+              <td>
+                {% if invoice.status == 'przeterminowana' %}
+                  <span class="db-badge db-badge--przeterminowana">przeterminowana</span>
+                {% elif invoice.status == 'opłacona' %}
+                  <span class="db-badge db-badge--oplac">opłacona</span>
+                {% else %}
+                  <span class="db-badge db-badge--wystawiona">wystawiona</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="3" class="dash-table-empty">
+                Brak faktur
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Użytkownicy systemu -->
+    {% if request.user.is_superuser %}
+      <div class="dash-panel">
+        <div class="dash-panel-header">
+          <div class="dash-panel-title">
+            <svg fill="none"
+                 viewBox="0 0 24 24"
+                 stroke="currentColor"
+                 stroke-width="1.8">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75" />
+            </svg>
+            Użytkownicy systemu
+          </div>
+          <a href="{% url 'admin:auth_user_changelist' %}" class="dash-panel-action">Zarządzaj →</a>
+        </div>
+        {% for u in users %}
+          <div class="dash-user-row">
+            <div class="dash-user-ava
+                        {% if u.is_active %}
+                          dash-user-ava--active
+                        {% else %}
+                          dash-user-ava--inactive
+                        {% endif %}">
+              {{ u.username|slice:":2"|upper }}
+            </div>
+            <div class="dash-user-info">
+              <div class="dash-user-name">
+                {{ u.username }}
+              </div>
+              <div class="dash-user-email">
+                {{ u.email|default:"—" }}
+              </div>
+            </div>
+            {% if u.is_superuser %}
+              <span class="db-badge db-badge--admin">admin</span>
+            {% elif u.is_staff %}
+              <span class="db-badge db-badge--prawnik">prawnik</span>
+            {% else %}
+              <span class="db-badge">użytkownik</span>
+            {% endif %}
+            <div class="dash-online-dot
+                        {% if u.is_active %}
+                          dash-online-dot--on
+                        {% else %}
+                          dash-online-dot--off
+                        {% endif %}">
+            </div>
+          </div>
+        {% empty %}
+          <div class="dash-panel-body">
+            Brak użytkowników
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+  </div>
+
+  <!-- WIDE GRID -->
+  <div class="dash-wide-grid">
+
+    <!-- ACTIVITY FEED -->
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <div class="dash-panel-title">
+          <svg fill="none"
+               viewBox="0 0 24 24"
+               stroke="currentColor"
+               stroke-width="1.8">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>
+          Dziennik aktywności
+        </div>
+      </div>
+      <div class="dash-feed-list">
+        {% for item in feed_items %}
+          <div class="dash-feed-item">
+            <div class="dash-feed-dot
+                        {% if item.kind == 'case' %}
+                          fd-create
+                        {% elif item.kind == 'invoice' %}
+                          fd-update
+                        {% else %}
+                          fd-system
+                        {% endif %}">
+            </div>
+            <div class="dash-feed-text">
+              {% if item.kind == 'case' %}
+                Sprawa <span class="dash-mono">{{ item.obj.case_number }}</span>: {{ item.obj.title }}
+              {% elif item.kind == 'invoice' %}
+                Faktura <span class="dash-mono">{{ item.obj.invoice_number }}</span>
+                {% if item.obj.case %}
+                  — sprawa <span class="dash-mono">{{ item.obj.case.case_number }}</span>
+                {% endif %}
+              {% else %}
+                Zadanie: {{ item.obj.title }}
+              {% endif %}
+            </div>
+            <div class="dash-feed-time">
+              {{ item.ts|date:"d M H:i" }}
+            </div>
+          </div>
+        {% empty %}
+          <div class="dash-panel-body">
+            Brak aktywności
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Prawa kolumna -->
+    <div class="dash-col-stack">
+
+      <!-- SZYBKIE AKCJE -->
+      <div class="dash-panel">
+        <div class="dash-panel-header">
+          <div class="dash-panel-title">
+            Szybkie akcje
+          </div>
+        </div>
+        <div class="dash-quick-actions">
+          <a href="{% url 'szkp:case_new' %}" class="dash-quick-action">
+            <div class="dash-qa-icon dash-qa-icon--ox">
+              <svg fill="none"
+                   viewBox="0 0 24 24"
+                   stroke="currentColor"
+                   stroke-width="1.8">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+            </div>
+            Nowa sprawa
+          </a>
+          <a href="{% url 'szkp:client_new' %}" class="dash-quick-action">
+            <div class="dash-qa-icon dash-qa-icon--bl">
+              <svg fill="none"
+                   viewBox="0 0 24 24"
+                   stroke="currentColor"
+                   stroke-width="1.8">
+                <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+                <circle cx="9" cy="7" r="4" /><line x1="19" y1="8" x2="19" y2="14" /><line x1="22" y1="11" x2="16" y2="11" />
+              </svg>
+            </div>
+            Nowy klient
+          </a>
+          <a href="{% url 'szkp:my_tasks' %}" class="dash-quick-action">
+            <div class="dash-qa-icon dash-qa-icon--gr">
+              <svg fill="none"
+                   viewBox="0 0 24 24"
+                   stroke="currentColor"
+                   stroke-width="1.8">
+                <path d="M9 11l3 3L22 4" />
+                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+              </svg>
+            </div>
+            Zadania
+          </a>
+          <a href="{% url 'szkp:invoice_list' %}" class="dash-quick-action">
+            <div class="dash-qa-icon dash-qa-icon--br">
+              <svg fill="none"
+                   viewBox="0 0 24 24"
+                   stroke="currentColor"
+                   stroke-width="1.8">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                <polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" />
+              </svg>
+            </div>
+            Faktury
+          </a>
+          {% if request.user.is_superuser %}
+            <a href="{% url 'admin:index' %}" class="dash-quick-action">
+              <div class="dash-qa-icon dash-qa-icon--ox">
+                <svg fill="none"
+                     viewBox="0 0 24 24"
+                     stroke="currentColor"
+                     stroke-width="1.8">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+              </div>
+              /admin/ Django
+            </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- STAN SYSTEMU -->
+      {% if request.user.is_superuser %}
+        <div class="dash-panel">
+          <div class="dash-panel-header">
+            <div class="dash-panel-title">
+              <svg fill="none"
+                   viewBox="0 0 24 24"
+                   stroke="currentColor"
+                   stroke-width="1.8">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+              </svg>
+              Stan systemu
+            </div>
+          </div>
+          <div class="dash-status-list">
+            <div class="dash-status-row">
+              <span class="dash-status-label">Sesje aktywne</span>
+              <span class="dash-status-indicator si-ok">
+                <span class="dash-si-dot"></span>{{ active_sessions }} zalogowanych
+              </span>
+            </div>
+            <div class="dash-status-row">
+              <span class="dash-status-label">Faktury przeterminowane</span>
+              <span class="dash-status-indicator
+                           {% if invoices_overdue_count %}
+                             si-err
+                           {% else %}
+                             si-ok
+                           {% endif %}">
+                <span class="dash-si-dot"></span>{{ invoices_overdue_count }} wymagają uwagi
+              </span>
+            </div>
+            <div class="dash-status-row">
+              <span class="dash-status-label">Terminy bez prawnika</span>
+              <span class="dash-status-indicator
+                           {% if hearings_unassigned %}
+                             si-warn
+                           {% else %}
+                             si-ok
+                           {% endif %}">
+                <span class="dash-si-dot"></span>{{ hearings_unassigned }} nieprzypisanych
+              </span>
+            </div>
+            <div class="dash-status-row">
+              <span class="dash-status-label">Wersja Django / Python</span>
+              <span class="dash-status-indicator">
+                <span class="dash-mono">{{ django_version }} / {{ python_version }}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- ROZKŁAD SPRAW -->
+      <div class="dash-panel">
+        <div class="dash-panel-header">
+          <div class="dash-panel-title">
+            Rozkład spraw wg statusu
+          </div>
+        </div>
+        <div class="dash-stat-bar-row">
+          {% with cases_total as total %}
+            {% with cases_by_status.w_toku|default:0 as n_wtoku %}
+              <div>
+                <div class="dash-stat-bar-top">
+                  <span class="dash-stat-bar-label">W toku</span>
+                  <span class="dash-stat-bar-val">{{ n_wtoku }} / {{ total }}</span>
+                </div>
+                <div class="dash-stat-bar-track">
+                  <div class="dash-stat-bar-fill dash-sbf-brass"
+                       data-bar-pct="{% if total %}
+                                       {% widthratio n_wtoku total 100 %}
+                                     {% else %}
+                                       0
+                                     {% endif %}">
+                  </div>
+                </div>
+              </div>
+            {% endwith %}
+            {% with cases_by_status.nowa|default:0 as n_nowa %}
+              <div>
+                <div class="dash-stat-bar-top">
+                  <span class="dash-stat-bar-label">Nowe</span>
+                  <span class="dash-stat-bar-val">{{ n_nowa }} / {{ total }}</span>
+                </div>
+                <div class="dash-stat-bar-track">
+                  <div class="dash-stat-bar-fill dash-sbf-blue"
+                       data-bar-pct="{% if total %}
+                                       {% widthratio n_nowa total 100 %}
+                                     {% else %}
+                                       0
+                                     {% endif %}">
+                  </div>
+                </div>
+              </div>
+            {% endwith %}
+            {% with cases_by_status.zawieszona|default:0 as n_zaw %}
+              <div>
+                <div class="dash-stat-bar-top">
+                  <span class="dash-stat-bar-label">Zawieszone</span>
+                  <span class="dash-stat-bar-val">{{ n_zaw }} / {{ total }}</span>
+                </div>
+                <div class="dash-stat-bar-track">
+                  <div class="dash-stat-bar-fill dash-sbf-gray"
+                       data-bar-pct="{% if total %}
+                                       {% widthratio n_zaw total 100 %}
+                                     {% else %}
+                                       0
+                                     {% endif %}">
+                  </div>
+                </div>
+              </div>
+            {% endwith %}
+            {% with cases_by_status.zakończona|default:0 as n_zak %}
+              <div>
+                <div class="dash-stat-bar-top">
+                  <span class="dash-stat-bar-label">Zakończone</span>
+                  <span class="dash-stat-bar-val">{{ n_zak }} / {{ total }}</span>
+                </div>
+                <div class="dash-stat-bar-track">
+                  <div class="dash-stat-bar-fill dash-sbf-green"
+                       data-bar-pct="{% if total %}
+                                       {% widthratio n_zak total 100 %}
+                                     {% else %}
+                                       0
+                                     {% endif %}">
+                  </div>
+                </div>
+              </div>
+            {% endwith %}
+          {% endwith %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+{% endblock content %}
+
+{% block scripts %}
+  <script>
+  document.querySelectorAll('[data-bar-pct]').forEach(function(el) {
+    el.style.width = el.dataset.barPct + '%';
+  });
+  </script>
+{% endblock scripts %}

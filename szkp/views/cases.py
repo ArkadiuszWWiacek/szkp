@@ -67,6 +67,8 @@ def case_list(request):
         'status_choices': CaseStatus.choices,
         'type_choices': CaseType.choices,
     }
+    if request.user.is_superuser:
+        return render(request, 'szkp/case_list_su.html', context)
     return render(request, 'szkp/case_list.html', context)
 
 

@@ -1,0 +1,98 @@
+{% extends "base_dash.html" %}
+{% load szkp_tags %}
+
+{% block title %}Faktury{% endblock title %}
+{% block topbar_title %}Faktury{% endblock topbar_title %}
+{% block nav_invoices %}active{% endblock nav_invoices %}
+
+{% block content %}
+
+  <div class="dash-page-header">
+    <div>
+      <h1>Faktury</h1>
+      <div class="dash-subtitle">Wszystkie faktury w systemie</div>
+    </div>
+  </div>
+
+  <form method="get" action="">
+    <div class="dash-toolbar">
+      <input type="text"
+             name="q"
+             value="{{ q }}"
+             placeholder="Szukaj po numerze faktury lub sygnaturze sprawy…"
+             class="dash-search-input">
+      <select name="status" class="dash-filter-select">
+        <option value="">Wszystkie statusy</option>
+        {% for val, label in status_choices %}
+          <option value="{{ val }}"{% if current_status == val %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="dash-toolbar-submit">Szukaj</button>
+    </div>
+  </form>
+
+  <div class="dash-panel">
+    <table class="dash-data-table">
+      <thead>
+        <tr>
+          <th>{% sort_th "invoice_number" "Nr faktury" %}</th>
+          <th>{% sort_th "case" "Sprawa" %}</th>
+          <th>{% sort_th "issue_date" "Data wystawienia" %}</th>
+          <th>{% sort_th "due_date" "Termin" %}</th>
+          <th>{% sort_th "gross_amount" "Kwota brutto" %}</th>
+          <th>{% sort_th "status" "Status" %}</th>
+          <th>Akcje</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for invoice in page_obj %}
+          <tr>
+            <td><span class="dash-mono">{{ invoice.invoice_number }}</span></td>
+            <td>
+              {% if invoice.case %}
+                <span class="dash-mono">{{ invoice.case.case_number }}</span>
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td>{{ invoice.issue_date|date:"d.m.Y" }}</td>
+            <td>{{ invoice.due_date|date:"d.m.Y" }}</td>
+            <td>{{ invoice.gross_amount|floatformat:2 }} zł</td>
+            <td>{{ invoice.get_status_display }}</td>
+            <td>
+              {% if invoice.case %}
+                <a href="{% url 'szkp:invoice_edit' invoice.case.pk invoice.pk %}">Edytuj</a>
+              {% endif %}
+              {% if invoice.status != 'opłacona' %}
+                ·
+                <form method="post"
+                      action="{% url 'szkp:invoice_mark_paid' invoice.pk %}"
+                      class="dash-toggle-form">
+                  {% csrf_token %}
+                  <button type="submit" class="dash-toolbar-submit dash-btn--sm">Opłacona</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7" class="dash-table-empty">Brak faktur</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+    <div class="dash-pagination">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&status={{ current_status }}&sort={{ sort }}&dir={{ direction }}">‹</a>
+      {% endif %}
+      <span class="dash-page-current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&q={{ q }}&status={{ current_status }}&sort={{ sort }}&dir={{ direction }}">›</a>
+      {% endif %}
+    </div>
+  {% endif %}
+
+{% endblock content %}

@@ -41,4 +41,6 @@ urlpatterns = [
     path('zadania/<int:pk>/edytuj/',      views.task_form,          name='task_edit'),
     path('zadania/<int:pk>/usun/',         views.task_delete,        name='task_delete'),
     path('zadania/<int:pk>/status/',      views.task_change_status, name='task_change_status'),
+    path('uzytkownicy/',                  views.user_list,          name='user_list'),
+    path('uzytkownicy/<int:pk>/aktywuj/', views.user_toggle_active, name='user_toggle_active'),
 ]

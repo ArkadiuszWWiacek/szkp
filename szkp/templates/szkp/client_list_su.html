@@ -1,0 +1,79 @@
+{% extends "base_dash.html" %}
+{% load szkp_tags %}
+
+{% block title %}Klienci{% endblock title %}
+{% block topbar_title %}Klienci{% endblock topbar_title %}
+{% block nav_clients %}active{% endblock nav_clients %}
+
+{% block content %}
+
+  <div class="dash-page-header">
+    <div>
+      <h1>Klienci</h1>
+      <div class="dash-subtitle">Wszyscy klienci kancelarii</div>
+    </div>
+    <div class="dash-page-header-actions">
+      <a href="{% url 'szkp:client_new' %}" class="dash-btn dash-btn--primary">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        Nowy klient
+      </a>
+    </div>
+  </div>
+
+  <form method="get" action="">
+    <div class="dash-toolbar">
+      <input type="text"
+             name="q"
+             value="{{ q }}"
+             placeholder="Szukaj po nazwisku, imieniu, firmie, PESEL, NIP…"
+             class="dash-search-input">
+      <button type="submit" class="dash-toolbar-submit">Szukaj</button>
+    </div>
+  </form>
+
+  <div class="dash-panel">
+    <table class="dash-data-table">
+      <thead>
+        <tr>
+          <th>{% sort_th "last_name" "Klient" %}</th>
+          <th>{% sort_th "type" "Typ" %}</th>
+          <th>{% sort_th "created_at" "Dodano" %}</th>
+          <th>Akcje</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for client in page_obj %}
+          <tr>
+            <td>{{ client }}</td>
+            <td>{{ client.get_type_display }}</td>
+            <td>{{ client.created_at|date:"d.m.Y" }}</td>
+            <td>
+              <a href="{% url 'szkp:client_edit' client.pk %}">Edytuj</a>
+              ·
+              <a href="{% url 'szkp:client_delete' client.pk %}">Usuń</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="4" class="dash-table-empty">Brak klientów</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+    <div class="dash-pagination">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&sort={{ sort }}&dir={{ direction }}">‹</a>
+      {% endif %}
+      <span class="dash-page-current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&q={{ q }}&sort={{ sort }}&dir={{ direction }}">›</a>
+      {% endif %}
+    </div>
+  {% endif %}
+
+{% endblock content %}

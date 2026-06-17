@@ -1,0 +1,211 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+      {% block title %}
+        SZKP
+      {% endblock title %}
+    — Panel administracyjny</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+          rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+  </head>
+  <body class="dash-wrapper">
+
+    <!-- ═══════════════════════════════════════ SIDEBAR ═══════════════════════════════════════ -->
+    <nav class="dash-sidebar">
+
+      <div class="dash-sidebar-logo">
+        <span>SK
+          <br>
+        ZP</span>
+      </div>
+
+      <div class="dash-sidebar-nav">
+
+        <a href="{% url 'szkp:dashboard' %}"
+           class="dash-nav-item
+                  {% block nav_dashboard %}
+                  {% endblock nav_dashboard %}">
+          <svg fill="none"
+               viewBox="0 0 24 24"
+               stroke="currentColor"
+               stroke-width="1.8">
+            <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>
+          <span class="dash-nav-tooltip">Pulpit</span>
+        </a>
+
+        <a href="{% url 'szkp:case_list' %}"
+           class="dash-nav-item
+                  {% block nav_cases %}
+                  {% endblock nav_cases %}">
+          <svg fill="none"
+               viewBox="0 0 24 24"
+               stroke="currentColor"
+               stroke-width="1.8">
+            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          <span class="dash-nav-tooltip">Sprawy</span>
+        </a>
+
+        <a href="{% url 'szkp:client_list' %}"
+           class="dash-nav-item
+                  {% block nav_clients %}
+                  {% endblock nav_clients %}">
+          <svg fill="none"
+               viewBox="0 0 24 24"
+               stroke="currentColor"
+               stroke-width="1.8">
+            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75" />
+          </svg>
+          <span class="dash-nav-tooltip">Klienci</span>
+        </a>
+
+        <a href="{% url 'szkp:my_tasks' %}"
+           class="dash-nav-item
+                  {% block nav_tasks %}
+                  {% endblock nav_tasks %}">
+          <svg fill="none"
+               viewBox="0 0 24 24"
+               stroke="currentColor"
+               stroke-width="1.8">
+            <path d="M9 11l3 3L22 4" />
+            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+          </svg>
+          <span class="dash-nav-tooltip">Zadania</span>
+        </a>
+
+        <a href="{% url 'szkp:invoice_list' %}"
+           class="dash-nav-item
+                  {% block nav_invoices %}
+                  {% endblock nav_invoices %}">
+          <svg fill="none"
+               viewBox="0 0 24 24"
+               stroke="currentColor"
+               stroke-width="1.8">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+            <polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
+          </svg>
+          <span class="dash-nav-tooltip">Faktury</span>
+        </a>
+
+        {% if request.user.is_superuser %}
+          <div class="dash-sidebar-divider">
+          </div>
+
+          <a href="{% url 'admin:index' %}" class="dash-nav-item">
+            <svg fill="none"
+                 viewBox="0 0 24 24"
+                 stroke="currentColor"
+                 stroke-width="1.8">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            <span class="dash-nav-tooltip">Panel /admin/</span>
+          </a>
+        {% endif %}
+
+      </div>
+
+      <div class="dash-sidebar-bottom">
+        <form method="post" action="{% url 'logout' %}" class="dash-logout-form">
+          {% csrf_token %}
+          <button type="submit" class="dash-nav-item dash-nav-btn">
+            <svg fill="none"
+                 viewBox="0 0 24 24"
+                 stroke="currentColor"
+                 stroke-width="1.8">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+              <polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            <span class="dash-nav-tooltip">Wyloguj</span>
+          </button>
+        </form>
+      </div>
+
+    </nav>
+
+    <!-- ═══════════════════════════════════════ MAIN ═══════════════════════════════════════ -->
+    <div class="dash-main">
+
+      <header class="dash-topbar">
+        <div class="dash-topbar-breadcrumb">
+          <span>SZKP</span>
+          <span class="sep">›</span>
+          <span class="current">
+            {% block topbar_title %}
+              Pulpit
+            {% endblock topbar_title %}
+          </span>
+        </div>
+
+        <div class="dash-topbar-spacer">
+        </div>
+
+        {% if request.user.is_superuser %}
+          <div class="dash-topbar-admin-badge">
+            <svg fill="none"
+                 viewBox="0 0 24 24"
+                 stroke="currentColor"
+                 stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            Superuser
+          </div>
+        {% endif %}
+
+        <div class="dash-topbar-user">
+          <div>
+            <div class="dash-topbar-username">
+              {{ request.user.username }}
+            </div>
+            <div class="dash-topbar-role">
+              {% if request.user.is_superuser %}
+                Pełny dostęp
+              {% else %}
+                Pracownik
+              {% endif %}
+            </div>
+          </div>
+          <div class="dash-topbar-avatar">
+            {{ request.user.username|slice:":2"|upper }}
+          </div>
+        </div>
+      </header>
+
+      <div class="dash-content">
+        {% if messages %}
+          {% for message in messages %}
+            <div class="dash-alert">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        {% block content %}
+        {% endblock content %}
+      </div>
+
+      <footer class="dash-footer">
+        <span>SZKP v1.0 · System Zarządzania Kancelarią Prawną</span>
+        <span>
+          {% if request.user.is_superuser %}
+            <a href="{% url 'admin:index' %}">Panel admina</a> ·
+          {% endif %}
+          <a href="{% url 'logout' %}">Wyloguj</a>
+        </span>
+      </footer>
+
+    </div>
+    <!-- /dash-main -->
+
+    {% block scripts %}
+    {% endblock scripts %}
+  </body>
+</html>
