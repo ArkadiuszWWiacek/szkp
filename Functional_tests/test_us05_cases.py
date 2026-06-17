@@ -31,6 +31,7 @@ class US05CasesTest(SzkpSeleniumTestCase):
 
     # --- lista i wyszukiwanie ---
 
+    @tag('smoke')
     def test_lista_spraw_wyswietla_sie(self):
         self.selenium.get(self.live_server_url + '/szkp/sprawy/')
         self.assertIn('Sprawy', self.selenium.page_source)
@@ -78,6 +79,7 @@ class US05CasesTest(SzkpSeleniumTestCase):
 
     # --- tworzenie ---
 
+    @tag('smoke')
     def test_dodaj_sprawe(self):
         self.selenium.get(self.live_server_url + '/szkp/sprawy/')
         self.selenium.find_element(By.CSS_SELECTOR, 'a[href*="nowy"]').click()

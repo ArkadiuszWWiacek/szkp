@@ -26,6 +26,7 @@ class US01LoginLogoutTest(SzkpSeleniumTestCase):
         )
         self.assertTrue(csrf.get_attribute("value"))
 
+    @tag('smoke')
     def test_poprawne_logowanie_przekierowuje_na_pulpit(self):
         """Zalogowanie poprawnymi danymi przekierowuje na /szkp/pulpit/."""
         self._zaloguj()
@@ -41,6 +42,7 @@ class US01LoginLogoutTest(SzkpSeleniumTestCase):
         error = self.selenium.find_element("css selector", ".alert-danger")
         self.assertIn("Nieprawidłowy login lub hasło", error.text)
 
+    @tag('smoke')
     def test_wylogowanie_przekierowuje_na_strone_logowania(self):
         """Kliknięcie 'Wyloguj się' przenosi na stronę logowania."""
         self._zaloguj()

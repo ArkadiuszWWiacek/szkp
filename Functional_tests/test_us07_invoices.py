@@ -108,6 +108,7 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
             EC.presence_of_element_located((By.NAME, 'invoice_number'))
         )
 
+    @tag('smoke')
     def test_dodaj_fakture_z_poprawnymi_danymi(self):
         self.selenium.get(
             self.live_server_url + f'/szkp/sprawy/{self.sprawa.pk}/faktury/nowa/'
@@ -276,6 +277,7 @@ class US07InvoicesTest(SzkpSeleniumTestCase):
             **kwargs,
         )
 
+    @tag('smoke')
     def test_lista_faktur_dostepna(self):
         self.selenium.get(self._url_lista())
         WebDriverWait(self.selenium, 5).until(

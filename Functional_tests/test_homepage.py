@@ -6,6 +6,7 @@ from .base import SzkpSeleniumTestCase
 @tag('functional')
 class NewVisitorTest(SzkpSeleniumTestCase):
 
+    @tag('smoke')
     def test_can_open_home_page(self):
         # Edyta dowiedziała się o nowej, wspaniałej aplikacji do prowadzenia kancelarii prawnej.
         # Postanowiła więc przejść na stronę główną tej aplikacji.

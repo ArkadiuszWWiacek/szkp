@@ -53,6 +53,7 @@ class DashboardUpcomingTasksTest(SzkpSeleniumTestCase):
         self._zaloguj_przez_orm(self.user)
         self.selenium.get(self.live_server_url + '/szkp/pulpit/')
 
+    @tag('smoke')
     def test_sekcja_nadchodzace_wyswietla_sie(self):
         """Na pulpicie widoczna jest podsekcja 'Nadchodzące'."""
         self.assertIn('Nadchodzące', self.selenium.page_source)

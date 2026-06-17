@@ -22,6 +22,7 @@ class US04ClientsTest(SzkpSeleniumTestCase):
 
     # ------------------------------------------------------------------ lista
 
+    @tag('smoke')
     def test_lista_klientow_wyswietla_sie(self):
         """Lista klientów jest dostępna po zalogowaniu."""
         self.selenium.get(self.live_server_url + '/szkp/klienci/')
@@ -73,6 +74,7 @@ class US04ClientsTest(SzkpSeleniumTestCase):
 
     # -------------------------------------------------------- formularz: osoba
 
+    @tag('smoke')
     def test_dodaj_klienta_osobafizyczna(self):
         """Wypełnienie formularza osoby fizycznej tworzy klienta."""
         self.selenium.get(self.live_server_url + '/szkp/klienci/nowy/')

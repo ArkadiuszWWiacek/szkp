@@ -22,6 +22,7 @@ class US02RoleAccessTest(SzkpSeleniumTestCase):
             is_superuser=True,
         )
 
+    @tag('smoke')
     def test_niezalogowany_nie_ma_dostepu_do_pulpitu(self):
         """Niezalogowany użytkownik próbujący wejść na pulpit trafia na stronę logowania."""
         self.selenium.get(self.live_server_url + "/szkp/pulpit/")
@@ -47,6 +48,7 @@ class US02RoleAccessTest(SzkpSeleniumTestCase):
         self.selenium.get(self.live_server_url + "/szkp/pulpit/")
         self.assertIn("next=", self.selenium.current_url)
 
+    @tag('smoke')
     def test_zalogowany_uzytkownik_ma_dostep_do_widokow(self):
         """Zalogowany użytkownik (bez specjalnej roli) ma dostęp do chronionych widoków."""
         self._zaloguj_przez_orm(self.user)

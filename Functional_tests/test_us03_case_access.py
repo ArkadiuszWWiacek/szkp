@@ -63,6 +63,7 @@ class US03CaseAccessTest(SzkpSeleniumTestCase):
             case=self.case_b, lawyer=self.lawyer_b, role=CaseLawyerRole.PROWADZACY
         )
 
+    @tag('smoke')
     def test_prawnik_widzi_tylko_swoje_sprawy_na_liscie(self):
         """Zalogowany prawnik widzi na liście tylko sprawy, do których jest przypisany."""
         self._zaloguj_przez_orm(self.user_a)
@@ -77,6 +78,7 @@ class US03CaseAccessTest(SzkpSeleniumTestCase):
         self.selenium.get(self.live_server_url + f'/szkp/sprawy/{self.case_b.pk}/')
         self.assertNotIn(self.case_b.title, self.selenium.page_source)
 
+    @tag('smoke')
     def test_administrator_widzi_wszystkie_sprawy_na_liscie(self):
         """Administrator (is_staff) widzi wszystkie sprawy bez ograniczeń."""
         self._zaloguj_przez_orm(self.admin)

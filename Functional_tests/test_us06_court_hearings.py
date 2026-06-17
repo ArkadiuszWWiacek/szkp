@@ -43,6 +43,7 @@ class US06CourtHearingsTest(SzkpSeleniumTestCase):
 
     # --- widoczność terminów na stronie sprawy ---
 
+    @tag('smoke')
     def test_zakladka_terminy_wyswietla_sie(self):
         self.selenium.get(self._url_terminy())
         self.assertIn('Terminy sądowe', self.selenium.page_source)
@@ -63,6 +64,7 @@ class US06CourtHearingsTest(SzkpSeleniumTestCase):
 
     # --- dodawanie terminu przez formularz ---
 
+    @tag('smoke')
     def test_dodaj_termin_z_data_w_przyszlosci(self):
         self.selenium.get(self._url_terminy())
         self.selenium.find_element(By.CSS_SELECTOR, 'a[href*="terminy/nowy"]').click()

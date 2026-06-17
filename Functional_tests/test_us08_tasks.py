@@ -61,6 +61,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
 
     # --- widok Moje zadania ---
 
+    @tag('smoke')
     def test_strona_moje_zadania_jest_dostepna(self):
         self.selenium.get(self._url_zadania())
         self.assertIn('Moje zadania', self.selenium.page_source)
@@ -190,6 +191,7 @@ class US08TasksTest(SzkpSeleniumTestCase):
             EC.presence_of_element_located((By.NAME, 'title'))
         )
 
+    @tag('smoke')
     def test_dodaj_zadanie_z_poprawnymi_danymi(self):
         self.selenium.get(self.live_server_url + '/szkp/zadania/nowe/')
         WebDriverWait(self.selenium, 5).until(

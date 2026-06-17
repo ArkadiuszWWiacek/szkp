@@ -46,6 +46,7 @@ class US09DocumentDisplayTest(SzkpSeleniumTestCase):
     def _url_dokumenty(self):
         return self.live_server_url + f'/szkp/sprawy/{self.sprawa.pk}/?tab=dokumenty'
 
+    @tag('smoke')
     def test_zakladka_dokumenty_wyswietla_sie(self):
         self.selenium.get(self._url_dokumenty())
         self.assertIn('Dokumenty', self.selenium.page_source)
@@ -94,6 +95,7 @@ class US09DocumentAddTest(SzkpSeleniumTestCase):
         self.addCleanup(os.unlink, tmp.name)
         return tmp.name
 
+    @tag('smoke')
     def test_dodaje_nowy_dokument_z_plikiem(self):
         self.selenium.get(self._url_dokumenty())
         self.selenium.find_element(By.CSS_SELECTOR, 'a[href*="dokumenty/nowy"]').click()
