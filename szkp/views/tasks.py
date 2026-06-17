@@ -13,6 +13,13 @@ from szkp.models import Case, CaseLawyer, Lawyer, Task, TaskPriority, TaskStatus
 
 @login_required
 def my_tasks(request):
+    if request.user.is_superuser:
+        tasks = (Task.objects
+                 .filter(parent_task__isnull=True)
+                 .select_related('case', 'assigned_lawyer')
+                 .order_by('status', 'due_date'))
+        return render(request, 'szkp/task_list_su.html', {'tasks': tasks})
+
     today = timezone.localdate()
     status_filter = request.GET.get('status', '')
     period_filter = request.GET.get('period', '')

@@ -95,7 +95,7 @@ def invoice_list(request):
         )
     paginator = Paginator(qs, 20)
     page_obj = paginator.get_page(request.GET.get('page', 1))
-    return render(request, 'szkp/invoice_list.html', {
+    ctx = {
         'page_obj':       page_obj,
         'invoices':       page_obj,
         'status_choices': InvoiceStatus.choices,
@@ -103,7 +103,10 @@ def invoice_list(request):
         'sort':           sort,
         'direction':      direction,
         'q':              q,
-    })
+    }
+    if request.user.is_superuser:
+        return render(request, 'szkp/invoice_list_su.html', ctx)
+    return render(request, 'szkp/invoice_list.html', ctx)
 
 
 @login_required

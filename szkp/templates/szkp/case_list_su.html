@@ -1,0 +1,132 @@
+{% extends "base_dash.html" %}
+{% load szkp_tags %}
+
+{% block title %}
+  Sprawy
+{% endblock title %}
+{% block topbar_title %}
+  Sprawy
+{% endblock topbar_title %}
+{% block nav_cases %}
+  active
+{% endblock nav_cases %}
+
+{% block content %}
+
+  <div class="dash-page-header">
+    <div>
+      <h1>
+        Sprawy
+      </h1>
+      <div class="dash-subtitle">
+        Wszystkie sprawy w systemie
+      </div>
+    </div>
+    <div class="dash-page-header-actions">
+      <a href="{% url 'szkp:case_new' %}" class="dash-btn dash-btn--primary">
+        <svg fill="none"
+             viewBox="0 0 24 24"
+             stroke="currentColor"
+             stroke-width="1.8">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        Nowa sprawa
+      </a>
+    </div>
+  </div>
+
+  <form method="get" action="">
+    <div class="dash-toolbar">
+      <input type="text"
+             name="q"
+             value="{{ q }}"
+             placeholder="Szukaj po sygnaturze, kliencie, tytule…"
+             class="dash-search-input">
+      <select name="status" class="dash-filter-select">
+        <option value="">
+          Wszystkie statusy
+        </option>
+        {% for val, label in status_choices %}
+          <option value="{{ val }}"{% if status == val %} selected{% endif %}>
+            {{ label }}
+          </option>
+        {% endfor %}
+      </select>
+      <select name="type" class="dash-filter-select">
+        <option value="">
+          Wszystkie typy
+        </option>
+        {% for val, label in type_choices %}
+          <option value="{{ val }}"{% if case_type == val %} selected{% endif %}>
+            {{ label }}
+          </option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="dash-toolbar-submit">
+        Szukaj
+      </button>
+    </div>
+  </form>
+
+  <div class="dash-panel">
+    <table class="dash-data-table">
+      <thead>
+        <tr>
+          {% sort_th "case_number" "Sygnatura" %}
+          {% sort_th "client" "Klient" %}
+          {% sort_th "case_type" "Typ" %}
+          {% sort_th "status" "Status" %}
+          {% sort_th "case_priority" "Priorytet" %}
+          <th>
+            Akcje
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for case in page_obj %}
+          <tr>
+            <td>
+              <span class="dash-mono">{{ case.case_number }}</span>
+            </td>
+            <td>
+              {{ case.client }}
+            </td>
+            <td>
+              {{ case.get_case_type_display }}
+            </td>
+            <td>
+              {{ case.get_status_display }}
+            </td>
+            <td>
+              {{ case.get_case_priority_display|default:"—" }}
+            </td>
+            <td>
+              <a href="{% url 'szkp:case_detail' case.pk %}">Podgląd</a>
+              ·
+              <a href="{% url 'szkp:case_edit' case.pk %}">Edytuj</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6" class="dash-table-empty">
+              Brak spraw
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+    <div class="dash-pagination">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&status={{ status }}&type={{ case_type }}&sort={{ sort }}&dir={{ direction }}">‹</a>
+      {% endif %}
+      <span class="dash-page-current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&q={{ q }}&status={{ status }}&type={{ case_type }}&sort={{ sort }}&dir={{ direction }}">›</a>
+      {% endif %}
+    </div>
+  {% endif %}
+
+{% endblock content %}

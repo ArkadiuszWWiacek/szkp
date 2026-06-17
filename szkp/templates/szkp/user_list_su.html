@@ -1,0 +1,79 @@
+{% extends "base_dash.html" %}
+
+{% block title %}Użytkownicy{% endblock title %}
+{% block topbar_title %}Użytkownicy{% endblock topbar_title %}
+
+{% block content %}
+
+  <div class="dash-page-header">
+    <div>
+      <h1>Użytkownicy</h1>
+      <div class="dash-subtitle">Konta użytkowników systemu</div>
+    </div>
+    <div class="dash-page-header-actions">
+      <a href="{% url 'admin:auth_user_add' %}" class="dash-btn dash-btn--primary">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        Nowy użytkownik
+      </a>
+    </div>
+  </div>
+
+  <div class="dash-panel">
+    <table class="dash-data-table">
+      <thead>
+        <tr>
+          <th>Login</th>
+          <th>E-mail</th>
+          <th>Rola</th>
+          <th>Aktywny</th>
+          <th>Akcje</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+          <tr>
+            <td><span class="dash-mono">{{ u.username }}</span></td>
+            <td>{{ u.email|default:"—" }}</td>
+            <td>
+              {% if u.is_superuser %}
+                <span class="db-badge db-badge--admin">superuser</span>
+              {% elif u.is_staff %}
+                <span class="db-badge db-badge--prawnik">pracownik</span>
+              {% else %}
+                <span class="db-badge">użytkownik</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if u.is_active %}
+                <span class="db-badge db-badge--oplac">Tak</span>
+              {% else %}
+                <span class="db-badge db-badge--przeterminowana">Nie</span>
+              {% endif %}
+            </td>
+            <td>
+              <a href="{% url 'admin:auth_user_change' u.pk %}">Edytuj</a>
+              ·
+              <form method="post"
+                    action="{% url 'szkp:user_toggle_active' u.pk %}"
+                    class="dash-toggle-form">
+                {% csrf_token %}
+                {% if u.is_active %}
+                  <button type="submit" class="dash-toolbar-submit dash-btn--sm">Dezaktywuj</button>
+                {% else %}
+                  <button type="submit" class="dash-toolbar-submit dash-btn--sm">Aktywuj</button>
+                {% endif %}
+              </form>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5" class="dash-table-empty">Brak użytkowników</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+{% endblock content %}

@@ -33,12 +33,15 @@ def client_list(request):
     qs = qs.order_by(sort_field)
     paginator = Paginator(qs, 20)
     page_obj = paginator.get_page(request.GET.get('page', 1))
-    return render(request, 'szkp/client_list.html', {
+    ctx = {
         'page_obj':  page_obj,
         'q':         q,
         'sort':      sort,
         'direction': direction,
-    })
+    }
+    if request.user.is_superuser:
+        return render(request, 'szkp/client_list_su.html', ctx)
+    return render(request, 'szkp/client_list.html', ctx)
 
 
 @login_required

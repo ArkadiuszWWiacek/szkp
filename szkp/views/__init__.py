@@ -6,6 +6,7 @@ from .court_hearings import court_hearing_form
 from .invoice import invoice_form, invoice_list, invoice_mark_paid
 from .documents import document_detail, document_form, document_version_upload
 from .tasks import my_tasks, task_detail, task_form, task_delete, task_change_status
+from .users import user_list, user_toggle_active
 
 __all__ = [
     'home',
@@ -16,4 +17,5 @@ __all__ = [
     'document_detail', 'document_form', 'document_version_upload',
     'invoice_form', 'invoice_list', 'invoice_mark_paid',
     'my_tasks', 'task_detail', 'task_form', 'task_delete', 'task_change_status',
+    'user_list', 'user_toggle_active',
 ]
