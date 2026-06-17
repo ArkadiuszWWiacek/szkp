@@ -41,7 +41,7 @@ class CourtHearingCreateViewTest(StaffLawyerTestCase):
 
     def test_domyslne_przypomnienie_w_formularzu(self):
         r = self.client.get(self._url_new())
-        self.assertEqual(r.context['form_data'].get('reminder_minutes_before'), 1440)
+        self.assertEqual(r.context['form']['reminder_minutes_before'].value(), 1440)
 
     def test_post_z_data_przyszla_tworzy_termin(self):
         self.client.post(self._url_new(), self._valid_data())
@@ -60,7 +60,7 @@ class CourtHearingCreateViewTest(StaffLawyerTestCase):
         przeszla = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%dT%H:%M')
         r = self.client.post(self._url_new(), self._valid_data(scheduled_at=przeszla))
         self.assertEqual(r.status_code, 200)
-        self.assertIn('scheduled_at', r.context['errors'])
+        self.assertIn('scheduled_at', r.context['form'].errors)
 
     def test_po_zapisie_redirect_do_szczegolów_sprawy(self):
         r = self.client.post(self._url_new(), self._valid_data())
@@ -124,7 +124,7 @@ class CourtHearingEditViewTest(StaffLawyerTestCase):
 
     def test_get_formularz_zawiera_dane_terminu(self):
         r = self.client.get(self._url_edit())
-        self.assertEqual(r.context['form_data']['court_name'], self.termin.court_name)
+        self.assertEqual(r.context['form']['court_name'].value(), self.termin.court_name)
 
     def test_post_zmienia_status_na_odbyty(self):
         self.client.post(self._url_edit(), self._valid_edit_data(status='odbyty'))

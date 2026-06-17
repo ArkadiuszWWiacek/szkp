@@ -84,41 +84,41 @@ class ClientFormValidationTest(TestCase):
     def test_brak_pesel_zwraca_blad_w_kontekscie(self):
         r = self._post_new({'type': 'osobafizyczna', 'first_name': 'Jan', 'last_name': 'Test'})
         self.assertEqual(r.status_code, 200)
-        self.assertIn('pesel', r.context['errors'])
+        self.assertIn('pesel', r.context['form'].errors)
 
     def test_niepoprawny_pesel_zwraca_blad(self):
         r = self._post_new({
             'type': 'osobafizyczna', 'first_name': 'Jan',
             'last_name': 'Test', 'pesel': '123',
         })
-        self.assertIn('pesel', r.context['errors'])
+        self.assertIn('pesel', r.context['form'].errors)
 
     def test_brak_imienia_zwraca_blad(self):
         r = self._post_new({
             'type': 'osobafizyczna', 'last_name': 'Test', 'pesel': '89010112345',
         })
-        self.assertIn('first_name', r.context['errors'])
+        self.assertIn('first_name', r.context['form'].errors)
 
     def test_brak_nazwiska_zwraca_blad(self):
         r = self._post_new({
             'type': 'osobafizyczna', 'first_name': 'Jan', 'pesel': '89010112345',
         })
-        self.assertIn('last_name', r.context['errors'])
+        self.assertIn('last_name', r.context['form'].errors)
 
     # --- walidacja: firma
 
     def test_brak_nip_zwraca_blad_w_kontekscie(self):
         r = self._post_new({'type': 'firma', 'company_name': 'Test Sp. z o.o.'})
         self.assertEqual(r.status_code, 200)
-        self.assertIn('nip', r.context['errors'])
+        self.assertIn('nip', r.context['form'].errors)
 
     def test_brak_nazwy_firmy_zwraca_blad(self):
         r = self._post_new({'type': 'firma', 'nip': '5250012345'})
-        self.assertIn('company_name', r.context['errors'])
+        self.assertIn('company_name', r.context['form'].errors)
 
     def test_brak_typu_zwraca_blad(self):
         r = self._post_new({'first_name': 'Jan'})
-        self.assertIn('type', r.context['errors'])
+        self.assertIn('type', r.context['form'].errors)
 
     # --- poprawne tworzenie
 
@@ -167,7 +167,7 @@ class ClientFormValidationTest(TestCase):
             {'type': 'osobafizyczna', 'first_name': '', 'last_name': 'Test'},
         )
         self.assertEqual(r.status_code, 200)
-        self.assertIn('first_name', r.context['errors'])
+        self.assertIn('first_name', r.context['form'].errors)
 
 
 @tag('integration')

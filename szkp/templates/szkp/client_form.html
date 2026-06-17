@@ -21,20 +21,20 @@
 
                 <!-- Typ klienta -->
                 <div class="mb-4">
-                    {% if errors.type %}
-                    <div class="szkp-error mb-2">{{ errors.type }}</div>
+                    {% if form.type.errors %}
+                    <div class="szkp-error mb-2">{{ form.type.errors }}</div>
                     {% endif %}
                     <div class="label-brass mb-2">Typ klienta</div>
                     <div class="szkp-type-toggle" id="typeToggle">
                         <label class="szkp-type-toggle__option">
                             <input type="radio" name="type" value="osobafizyczna"
-                                   {% if form_data.type == 'osobafizyczna' or not form_data.type %}checked{% endif %}
+                                   {% if form.type.value == 'osobafizyczna' or not form.type.value %}checked{% endif %}
                                    onchange="toggleClientType(this.value)">
                             Osoba fizyczna
                         </label>
                         <label class="szkp-type-toggle__option">
                             <input type="radio" name="type" value="firma"
-                                   {% if form_data.type == 'firma' %}checked{% endif %}
+                                   {% if form.type.value == 'firma' %}checked{% endif %}
                                    onchange="toggleClientType(this.value)">
                             Firma
                         </label>
@@ -43,38 +43,38 @@
                 </div>
 
                 <!-- Pola osoby fizycznej -->
-                <div id="fields-person" class="{% if form_data.type == 'firma' %}d-none{% endif %}">
+                <div id="fields-person" class="{% if form.type.value == 'firma' %}d-none{% endif %}">
                     <div class="row g-3 mb-3">
                         <div class="col-sm-6">
                             <label for="id_first_name" class="szkp-label">Imię</label>
                             <input type="text" id="id_first_name" name="first_name"
-                                   class="szkp-input{% if errors.first_name %} is-invalid{% endif %}"
-                                   value="{{ form_data.first_name|default:'' }}"
+                                   class="szkp-input{% if form.first_name.errors %} is-invalid{% endif %}"
+                                   value="{{ form.first_name.value|default:'' }}"
                                    autocomplete="given-name">
-                            {% if errors.first_name %}
-                            <span class="szkp-error">{{ errors.first_name }}</span>
+                            {% if form.first_name.errors %}
+                            <span class="szkp-error">{{ form.first_name.errors }}</span>
                             {% endif %}
                         </div>
                         <div class="col-sm-6">
                             <label for="id_last_name" class="szkp-label">Nazwisko</label>
                             <input type="text" id="id_last_name" name="last_name"
-                                   class="szkp-input{% if errors.last_name %} is-invalid{% endif %}"
-                                   value="{{ form_data.last_name|default:'' }}"
+                                   class="szkp-input{% if form.last_name.errors %} is-invalid{% endif %}"
+                                   value="{{ form.last_name.value|default:'' }}"
                                    autocomplete="family-name">
-                            {% if errors.last_name %}
-                            <span class="szkp-error">{{ errors.last_name }}</span>
+                            {% if form.last_name.errors %}
+                            <span class="szkp-error">{{ form.last_name.errors }}</span>
                             {% endif %}
                         </div>
                     </div>
                     <div class="mb-3">
                         <label for="id_pesel" class="szkp-label">PESEL</label>
                         <input type="text" id="id_pesel" name="pesel"
-                               class="szkp-input font-mono{% if errors.pesel %} is-invalid{% endif %}"
-                               value="{{ form_data.pesel|default:'' }}"
+                               class="szkp-input font-mono{% if form.pesel.errors %} is-invalid{% endif %}"
+                               value="{{ form.pesel.value|default:'' }}"
                                maxlength="11" placeholder="89010112345"
                                inputmode="numeric">
-                        {% if errors.pesel %}
-                        <span class="szkp-error">{{ errors.pesel }}</span>
+                        {% if form.pesel.errors %}
+                        <span class="szkp-error">{{ form.pesel.errors }}</span>
                         {% else %}
                         <span class="label-caps mt-1 d-block">11 cyfr · wymagany</span>
                         {% endif %}
@@ -82,26 +82,26 @@
                 </div>
 
                 <!-- Pola firmy -->
-                <div id="fields-company" class="{% if form_data.type != 'firma' %}d-none{% endif %}">
+                <div id="fields-company" class="{% if form.type.value != 'firma' %}d-none{% endif %}">
                     <div class="mb-3">
                         <label for="id_company_name" class="szkp-label">Nazwa firmy</label>
                         <input type="text" id="id_company_name" name="company_name"
-                               class="szkp-input{% if errors.company_name %} is-invalid{% endif %}"
-                               value="{{ form_data.company_name|default:'' }}"
+                               class="szkp-input{% if form.company_name.errors %} is-invalid{% endif %}"
+                               value="{{ form.company_name.value|default:'' }}"
                                autocomplete="organization">
-                        {% if errors.company_name %}
-                        <span class="szkp-error">{{ errors.company_name }}</span>
+                        {% if form.company_name.errors %}
+                        <span class="szkp-error">{{ form.company_name.errors }}</span>
                         {% endif %}
                     </div>
                     <div class="mb-3">
                         <label for="id_nip" class="szkp-label">NIP</label>
                         <input type="text" id="id_nip" name="nip"
-                               class="szkp-input font-mono{% if errors.nip %} is-invalid{% endif %}"
-                               value="{{ form_data.nip|default:'' }}"
+                               class="szkp-input font-mono{% if form.nip.errors %} is-invalid{% endif %}"
+                               value="{{ form.nip.value|default:'' }}"
                                placeholder="5250012345"
                                inputmode="numeric">
-                        {% if errors.nip %}
-                        <span class="szkp-error">{{ errors.nip }}</span>
+                        {% if form.nip.errors %}
+                        <span class="szkp-error">{{ form.nip.errors }}</span>
                         {% endif %}
                     </div>
                 </div>
@@ -115,14 +115,14 @@
                         <label for="id_email" class="szkp-label">E-mail</label>
                         <input type="email" id="id_email" name="email"
                                class="szkp-input"
-                               value="{{ form_data.email|default:'' }}"
+                               value="{{ form.email.value|default:'' }}"
                                autocomplete="email">
                     </div>
                     <div class="col-sm-6">
                         <label for="id_phone" class="szkp-label">Telefon</label>
                         <input type="tel" id="id_phone" name="phone"
                                class="szkp-input"
-                               value="{{ form_data.phone|default:'' }}"
+                               value="{{ form.phone.value|default:'' }}"
                                autocomplete="tel">
                     </div>
                 </div>
@@ -131,21 +131,21 @@
                     <label for="id_address_street" class="szkp-label">Adres</label>
                     <input type="text" id="id_address_street" name="address_street"
                            class="szkp-input mb-2"
-                           value="{{ form_data.address_street|default:'' }}"
+                           value="{{ form.address_street.value|default:'' }}"
                            placeholder="Ulica i numer"
                            autocomplete="street-address">
                     <div class="row g-2">
                         <div class="col-4">
                             <input type="text" name="address_zip"
                                    class="szkp-input font-mono"
-                                   value="{{ form_data.address_zip|default:'' }}"
+                                   value="{{ form.address_zip.value|default:'' }}"
                                    placeholder="00-000"
                                    autocomplete="postal-code">
                         </div>
                         <div class="col-8">
                             <input type="text" name="address_city"
                                    class="szkp-input"
-                                   value="{{ form_data.address_city|default:'' }}"
+                                   value="{{ form.address_city.value|default:'' }}"
                                    placeholder="Miasto"
                                    autocomplete="address-level2">
                         </div>

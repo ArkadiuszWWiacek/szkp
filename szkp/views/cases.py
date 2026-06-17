@@ -193,11 +193,10 @@ def case_lawyer_add(request, case_pk):
     })
 
 
-def _case_form_context(case, form_data, errors):
+def _case_form_context(case, form):
     return {
         'case': case,
-        'form_data': form_data,
-        'errors': errors,
+        'form': form,
         'clients': Client.objects.order_by('last_name', 'company_name'),
         'type_choices': CaseType.choices,
         'status_choices': CaseStatus.choices,
@@ -210,20 +209,10 @@ def case_form(request, pk=None):
     case = get_object_or_404(Case, pk=pk) if pk else None
 
     if request.method == 'POST':
-        form = CaseForm(request.POST)
+        form = CaseForm(request.POST, instance=case)
         if form.is_valid():
-            cd = form.cleaned_data
-            obj = case or Case()
-            obj.case_number      = cd['case_number']
-            obj.title            = cd['title']
-            obj.client           = cd['client']
-            obj.case_type        = cd['case_type']
-            obj.court_case_number = cd.get('court_case_number') or None
-            obj.description      = cd.get('description') or ''
-            obj.case_priority    = cd.get('case_priority') or CasePriority.NORMALNA
-            status = cd.get('status') or CaseStatus.NOWA
-            obj.status = status
-            if status == CaseStatus.ZAKOŃCZONA and not obj.closed_at:
+            obj = form.save(commit=False)
+            if obj.status == CaseStatus.ZAKOŃCZONA and not obj.closed_at:
                 obj.closed_at = timezone.now()
             obj.save()
 
@@ -237,19 +226,8 @@ def case_form(request, pk=None):
             return redirect('szkp:case_detail', pk=obj.pk)
 
         return render(request, 'szkp/case_form.html',
-                      _case_form_context(case, request.POST, form.errors))
+                      _case_form_context(case, form))
 
-    form_data = {}
-    if case:
-        form_data = {
-            'case_number':       case.case_number,
-            'title':             case.title,
-            'client':            str(case.client_id),
-            'case_type':         case.case_type,
-            'status':            case.status,
-            'case_priority':     case.case_priority,
-            'court_case_number': case.court_case_number or '',
-            'description':       case.description or '',
-        }
+    form = CaseForm(instance=case)
     return render(request, 'szkp/case_form.html',
-                  _case_form_context(case, form_data, {}))
+                  _case_form_context(case, form))

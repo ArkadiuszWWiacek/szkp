@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load szkp_tags %}
 {% block title %}{% if hearing %}Edytuj termin{% else %}Nowy termin{% endif %} — SZKP{% endblock title %}
 
 {% block content %}
@@ -25,17 +26,17 @@
                     <div class="col-sm-8">
                         <label for="id_court_name" class="szkp-label">Nazwa sądu</label>
                         <input type="text" id="id_court_name" name="court_name"
-                               class="szkp-input{% if errors.court_name %} is-invalid{% endif %}"
-                               value="{{ form_data.court_name|default:'' }}">
-                        {% if errors.court_name %}
-                        <span class="szkp-error">{{ errors.court_name.0 }}</span>
+                               class="szkp-input{% if form.court_name.errors %} is-invalid{% endif %}"
+                               value="{{ form.court_name.value|default:'' }}">
+                        {% if form.court_name.errors %}
+                        <span class="szkp-error">{{ form.court_name.errors.0 }}</span>
                         {% endif %}
                     </div>
                     <div class="col-sm-4">
                         <label for="id_courtroom" class="szkp-label">Sala</label>
                         <input type="text" id="id_courtroom" name="courtroom"
                                class="szkp-input"
-                               value="{{ form_data.courtroom|default:'' }}">
+                               value="{{ form.courtroom.value|default:'' }}">
                     </div>
                 </div>
 
@@ -43,32 +44,32 @@
                     <label for="id_judge_name" class="szkp-label">Sędzia</label>
                     <input type="text" id="id_judge_name" name="judge_name"
                            class="szkp-input"
-                           value="{{ form_data.judge_name|default:'' }}">
+                           value="{{ form.judge_name.value|default:'' }}">
                 </div>
 
                 <div class="row g-3 mb-3">
                     <div class="col-sm-4">
                         <label for="id_hearing_type" class="szkp-label">Rodzaj</label>
                         <select id="id_hearing_type" name="hearing_type"
-                                class="szkp-select-full{% if errors.hearing_type %} is-invalid{% endif %}">
+                                class="szkp-select-full{% if form.hearing_type.errors %} is-invalid{% endif %}">
                             {% for val, label in hearing_type_choices %}
                             <option value="{{ val }}"
-                                {% if form_data.hearing_type == val %}selected{% endif %}>
+                                {% if form.hearing_type.value == val %}selected{% endif %}>
                                 {{ label }}
                             </option>
                             {% endfor %}
                         </select>
-                        {% if errors.hearing_type %}
-                        <span class="szkp-error">{{ errors.hearing_type.0 }}</span>
+                        {% if form.hearing_type.errors %}
+                        <span class="szkp-error">{{ form.hearing_type.errors.0 }}</span>
                         {% endif %}
                     </div>
                     <div class="col-sm-4">
                         <label for="id_scheduled_at" class="szkp-label">Data i godzina</label>
                         <input type="datetime-local" id="id_scheduled_at" name="scheduled_at"
-                               class="szkp-input{% if errors.scheduled_at %} is-invalid{% endif %}"
-                               value="{{ form_data.scheduled_at|default:'' }}">
-                        {% if errors.scheduled_at %}
-                        <span class="szkp-error">{{ errors.scheduled_at.0 }}</span>
+                               class="szkp-input{% if form.scheduled_at.errors %} is-invalid{% endif %}"
+                               value="{{ form.scheduled_at|widget_value|default:'' }}">
+                        {% if form.scheduled_at.errors %}
+                        <span class="szkp-error">{{ form.scheduled_at.errors.0 }}</span>
                         {% endif %}
                     </div>
                     <div class="col-sm-4">
@@ -76,7 +77,7 @@
                         <select id="id_status" name="status" class="szkp-select-full">
                             {% for val, label in status_choices %}
                             <option value="{{ val }}"
-                                {% if form_data.status == val %}selected{% endif %}>
+                                {% if form.status.value == val %}selected{% endif %}>
                                 {{ label }}
                             </option>
                             {% endfor %}
@@ -87,17 +88,17 @@
                 <div class="mb-3">
                     <label for="id_reminder_minutes_before" class="szkp-label">Przypomnienie (minut przed)</label>
                     <input type="number" id="id_reminder_minutes_before" name="reminder_minutes_before"
-                           class="szkp-input{% if errors.reminder_minutes_before %} is-invalid{% endif %}"
-                           value="{{ form_data.reminder_minutes_before|default:1440 }}" min="1">
-                    {% if errors.reminder_minutes_before %}
-                    <span class="szkp-error">{{ errors.reminder_minutes_before.0 }}</span>
+                           class="szkp-input{% if form.reminder_minutes_before.errors %} is-invalid{% endif %}"
+                           value="{{ form.reminder_minutes_before.value|default:1440 }}" min="1">
+                    {% if form.reminder_minutes_before.errors %}
+                    <span class="szkp-error">{{ form.reminder_minutes_before.errors.0 }}</span>
                     {% endif %}
                 </div>
 
                 <div class="mb-3">
                     <label for="id_notes" class="szkp-label">Notatki</label>
                     <textarea id="id_notes" name="notes"
-                              class="szkp-input" rows="3">{{ form_data.notes|default:'' }}</textarea>
+                              class="szkp-input" rows="3">{{ form.notes.value|default:'' }}</textarea>
                 </div>
 
                 <hr class="divider mb-4">

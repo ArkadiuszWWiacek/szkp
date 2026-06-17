@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load szkp_tags %}
 {% block title %}{% if task %}Edytuj zadanie{% else %}Nowe zadanie{% endif %} — SZKP{% endblock title %}
 
 {% block content %}
@@ -35,10 +36,10 @@
                 <div class="mb-3">
                     <label for="id_title" class="szkp-label">Tytuł</label>
                     <input type="text" id="id_title" name="title"
-                           class="szkp-input{% if errors.title %} is-invalid{% endif %}"
-                           value="{{ form_data.title|default:'' }}">
-                    {% if errors.title %}
-                    <span class="szkp-error">{{ errors.title.0 }}</span>
+                           class="szkp-input{% if form.title.errors %} is-invalid{% endif %}"
+                           value="{{ form.title.value|default:'' }}">
+                    {% if form.title.errors %}
+                    <span class="szkp-error">{{ form.title.errors.0 }}</span>
                     {% endif %}
                 </div>
 
@@ -47,17 +48,21 @@
                         <label for="id_priority" class="szkp-label">Priorytet</label>
                         <select id="id_priority" name="priority" class="szkp-select-full">
                             {% for val, label in priority_choices %}
-                            <option value="{{ val }}"{% if form_data.priority == val %} selected{% endif %}>{{ label }}</option>
+                            <option value="{{ val }}"{% if form.priority.value == val %} selected{% endif %}>{{ label }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="col-sm-6">
                         <label for="id_status" class="szkp-label">Status</label>
-                        <select id="id_status" name="status" class="szkp-select-full">
+                        <select id="id_status" name="status"
+                                class="szkp-select-full{% if form.status.errors %} is-invalid{% endif %}">
                             {% for val, label in status_choices %}
-                            <option value="{{ val }}"{% if form_data.status == val %} selected{% endif %}>{{ label }}</option>
+                            <option value="{{ val }}"{% if form.status.value == val %} selected{% endif %}>{{ label }}</option>
                             {% endfor %}
                         </select>
+                        {% if form.status.errors %}
+                        <span class="szkp-error">{{ form.status.errors.0 }}</span>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -65,20 +70,20 @@
                     <label for="id_due_date" class="szkp-label">Termin</label>
                     <input type="datetime-local" id="id_due_date" name="due_date"
                            class="szkp-input"
-                           value="{{ form_data.due_date|default:'' }}">
+                           value="{{ form.due_date|widget_value|default:'' }}">
                 </div>
 
                 {% if lawyer_choices %}
                 <div class="mb-3">
                     <label for="id_assigned_lawyer" class="szkp-label">Przypisz do</label>
                     <select id="id_assigned_lawyer" name="assigned_lawyer"
-                            class="szkp-select-full{% if errors.assigned_lawyer %} is-invalid{% endif %}">
+                            class="szkp-select-full{% if form.assigned_lawyer.errors %} is-invalid{% endif %}">
                         {% for pk, name in lawyer_choices %}
-                        <option value="{{ pk }}"{% if form_data.assigned_lawyer == pk|stringformat:"s" %} selected{% endif %}>{{ name }}</option>
+                        <option value="{{ pk }}"{% if form.assigned_lawyer.value|stringformat:"s" == pk|stringformat:"s" %} selected{% endif %}>{{ name }}</option>
                         {% endfor %}
                     </select>
-                    {% if errors.assigned_lawyer %}
-                    <span class="szkp-error">{{ errors.assigned_lawyer.0 }}</span>
+                    {% if form.assigned_lawyer.errors %}
+                    <span class="szkp-error">{{ form.assigned_lawyer.errors.0 }}</span>
                     {% endif %}
                 </div>
                 {% endif %}
@@ -86,7 +91,7 @@
                 <div class="mb-3">
                     <label for="id_description" class="szkp-label">Opis</label>
                     <textarea id="id_description" name="description"
-                              class="szkp-input" rows="3">{{ form_data.description|default:'' }}</textarea>
+                              class="szkp-input" rows="3">{{ form.description.value|default:'' }}</textarea>
                 </div>
 
                 <hr class="divider mb-4">

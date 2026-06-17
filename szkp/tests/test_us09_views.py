@@ -46,7 +46,7 @@ class DocumentFormCreateViewTest(StaffLawyerTestCase):
 
     def test_get_context_zawiera_form_data(self):
         r = self.client.get(self._url())
-        self.assertIn('form_data', r.context)
+        self.assertIn('form', r.context)
 
     def test_post_valid_tworzy_dokument(self):
         self.client.post(self._url(), self._valid_data())
@@ -74,18 +74,18 @@ class DocumentFormCreateViewTest(StaffLawyerTestCase):
     def test_post_brak_tytulu_zwraca_blad(self):
         r = self.client.post(self._url(), self._valid_data(title=''))
         self.assertEqual(r.status_code, 200)
-        self.assertIn('title', r.context['errors'])
+        self.assertIn('title', r.context['form'].errors)
 
     def test_post_brak_pliku_zwraca_blad(self):
         data = {'title': 'Pismo', 'document_type': DocumentType.PISMO_SADOWE}
         r = self.client.post(self._url(), data)
         self.assertEqual(r.status_code, 200)
-        self.assertIn('file', r.context['errors'])
+        self.assertIn('file', r.context['form'].errors)
 
     def test_post_brak_typu_dokumentu_zwraca_blad(self):
         r = self.client.post(self._url(), self._valid_data(document_type=''))
         self.assertEqual(r.status_code, 200)
-        self.assertIn('document_type', r.context['errors'])
+        self.assertIn('document_type', r.context['form'].errors)
 
     def test_wymaga_zalogowania(self):
         self.client.logout()
@@ -146,8 +146,8 @@ class DocumentFormEditViewTest(StaffLawyerTestCase):
 
     def test_get_form_data_wypelnione_danymi_dokumentu(self):
         r = self.client.get(self._url())
-        self.assertEqual(r.context['form_data']['title'], self.dokument.title)
-        self.assertEqual(r.context['form_data']['document_type'], self.dokument.document_type)
+        self.assertEqual(r.context['form']['title'].value(), self.dokument.title)
+        self.assertEqual(r.context['form']['document_type'].value(), self.dokument.document_type)
 
     def test_post_valid_aktualizuje_tytul(self):
         self.client.post(self._url(), self._valid_edit_data(title='Zmieniony tytuł'))

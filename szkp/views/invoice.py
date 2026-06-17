@@ -12,12 +12,11 @@ from szkp.models import Case, CaseLawyer, Invoice, InvoiceStatus
 from szkp.permissions import require_case_access
 
 
-def _form_context(case, invoice, form_data, errors):
+def _form_context(case, invoice, form):
     return {
         'case': case,
         'invoice': invoice,
-        'form_data': form_data,
-        'errors': errors,
+        'form': form,
         'status_choices': InvoiceStatus.choices,
     }
 
@@ -34,17 +33,15 @@ def invoice_form(request, case_pk, pk=None):
     )
 
     if request.method == 'POST':
-        form = InvoiceForm(request.POST, instance_pk=invoice.pk if invoice else None)
+        form = InvoiceForm(
+            request.POST,
+            instance=invoice,
+            instance_pk=invoice.pk if invoice else None,
+        )
         if form.is_valid():
-            cd = form.cleaned_data
-            obj = invoice or Invoice(case=case)
-            obj.invoice_number = cd['invoice_number']
-            obj.issue_date     = cd['issue_date']
-            obj.due_date       = cd['due_date']
-            obj.net_amount     = cd['net_amount']
-            obj.vat_rate       = cd.get('vat_rate') or obj.vat_rate
-            obj.currency       = cd.get('currency') or 'PLN'
-            obj.status         = cd.get('status') or InvoiceStatus.WYSTAWIONA
+            obj = form.save(commit=False)
+            if not invoice:
+                obj.case = case
             obj.save()
             messages.success(request, 'Faktura została zapisana.')
             return redirect(redirect_url)
@@ -52,30 +49,17 @@ def invoice_form(request, case_pk, pk=None):
         return render(
             request,
             'szkp/invoice_form.html',
-            _form_context(case, invoice, request.POST, form.errors),
+            _form_context(case, invoice, form),
         )
 
-    if invoice:
-        form_data = {
-            'invoice_number': invoice.invoice_number,
-            'issue_date':     invoice.issue_date.strftime('%Y-%m-%d'),
-            'due_date':       invoice.due_date.strftime('%Y-%m-%d'),
-            'net_amount':     str(invoice.net_amount),
-            'vat_rate':       str(invoice.vat_rate),
-            'currency':       invoice.currency,
-            'status':         invoice.status,
-        }
-    else:
-        form_data = {
-            'status':   InvoiceStatus.WYSTAWIONA,
-            'currency': 'PLN',
-            'vat_rate': '0.23',
-        }
-
+    form = InvoiceForm(
+        instance=invoice,
+        instance_pk=invoice.pk if invoice else None,
+    )
     return render(
         request,
         'szkp/invoice_form.html',
-        _form_context(case, invoice, form_data, {}),
+        _form_context(case, invoice, form),
     )
 
 

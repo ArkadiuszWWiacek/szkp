@@ -75,11 +75,10 @@ def task_detail(request, pk):
     })
 
 
-def _task_context(task, form_data, errors, parent_pk=None, case=None, lawyer_choices=None):
+def _task_context(task, form, parent_pk=None, case=None, lawyer_choices=None):
     return {
         'task': task,
-        'form_data': form_data,
-        'errors': errors,
+        'form': form,
         'priority_choices': TaskPriority.choices,
         'status_choices': TaskStatus.choices,
         'can_add_subtask': task is not None and task.parent_task_id is None,
@@ -123,30 +122,25 @@ def task_form(request, pk=None, case_pk=None):
     )
 
     if request.method == 'POST':
-        form = TaskForm(request.POST, case_lawyer_pks=case_lawyer_pks)
+        form = TaskForm(request.POST, instance=task, case_lawyer_pks=case_lawyer_pks)
         if form.is_valid():
-            cd = form.cleaned_data
-            obj = task or Task(created_by=lawyer)
-            obj.title       = cd['title']
-            obj.description = cd.get('description', '')
-            obj.priority    = cd.get('priority') or TaskPriority.NORMALNA
-            obj.due_date    = cd.get('due_date')
-            assigned_pk = cd.get('assigned_lawyer')
+            obj = form.save(commit=False)
+            assigned_pk = form.cleaned_data.get('assigned_lawyer')
             if case and assigned_pk:
                 obj.assigned_lawyer_id = assigned_pk
             elif not task:
                 obj.assigned_lawyer = lawyer
+            if not task:
+                obj.created_by = lawyer
             if pk:
-                new_status = cd.get('status') or TaskStatus.NOWE
-                if new_status == TaskStatus.ZAKOŃCZONE and obj.has_unfinished_subtasks:
-                    errors = {'status': ['Nie można zakończyć zadania — najpierw zakończ wszystkie podzadania.']}
+                if obj.status == TaskStatus.ZAKOŃCZONE and obj.has_unfinished_subtasks:
+                    form.add_error('status', 'Nie można zakończyć zadania — najpierw zakończ wszystkie podzadania.')
                     return render(request, 'szkp/task_form.html',
-                                  _task_context(task, request.POST, errors, case=case, lawyer_choices=lawyer_choices))
-                obj.status = new_status
+                                  _task_context(task, form, case=case, lawyer_choices=lawyer_choices))
             else:
-                parent_pk = request.POST.get('parent_task')
-                if parent_pk:
-                    obj.parent_task_id = int(parent_pk)
+                parent_pk_val = request.POST.get('parent_task')
+                if parent_pk_val:
+                    obj.parent_task_id = int(parent_pk_val)
                 if case:
                     obj.case = case
             obj.save()
@@ -157,30 +151,16 @@ def task_form(request, pk=None, case_pk=None):
         return render(
             request,
             'szkp/task_form.html',
-            _task_context(task, request.POST, form.errors, parent_pk=parent_pk, case=case, lawyer_choices=lawyer_choices),
+            _task_context(task, form, parent_pk=parent_pk, case=case, lawyer_choices=lawyer_choices),
         )
 
     parent_pk = request.GET.get('parent')
-    if task:
-        form_data = {
-            'title':            task.title,
-            'description':      task.description,
-            'priority':         task.priority,
-            'status':           task.status,
-            'due_date':         task.due_date.strftime('%Y-%m-%dT%H:%M') if task.due_date else '',
-            'assigned_lawyer':  str(task.assigned_lawyer_id),
-        }
-    else:
-        form_data = {
-            'priority':        TaskPriority.NORMALNA,
-            'status':          TaskStatus.NOWE,
-            'assigned_lawyer': str(lawyer.pk),
-        }
-
+    initial = {} if task else {'assigned_lawyer': lawyer.pk}
+    form = TaskForm(instance=task, case_lawyer_pks=case_lawyer_pks, initial=initial)
     return render(
         request,
         'szkp/task_form.html',
-        _task_context(task, form_data, {}, parent_pk=parent_pk, case=case, lawyer_choices=lawyer_choices),
+        _task_context(task, form, parent_pk=parent_pk, case=case, lawyer_choices=lawyer_choices),
     )
 
 

@@ -103,12 +103,12 @@ class CaseCreateViewTest(StaffLawyerTestCase):
     def test_post_brak_numeru_zwraca_blad(self):
         r = self._post_new(self._valid_data(case_number=''))
         self.assertEqual(r.status_code, 200)
-        self.assertIn('case_number', r.context['errors'])
+        self.assertIn('case_number', r.context['form'].errors)
 
     def test_post_brak_tytulu_zwraca_blad(self):
         r = self._post_new(self._valid_data(title=''))
         self.assertEqual(r.status_code, 200)
-        self.assertIn('title', r.context['errors'])
+        self.assertIn('title', r.context['form'].errors)
 
     def test_post_status_domyslnie_nowa(self):
         self._post_new(self._valid_data())
@@ -149,7 +149,7 @@ class CaseEditViewTest(StaffLawyerTestCase):
     def test_get_zwraca_200_z_danymi(self):
         r = self.client.get(reverse('szkp:case_edit', kwargs={'pk': self.sprawa.pk}))
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.context['form_data']['title'], 'Stary tytuł')
+        self.assertEqual(r.context['form']['title'].value(), 'Stary tytuł')
 
     def test_post_aktualizuje_tytul(self):
         self.client.post(

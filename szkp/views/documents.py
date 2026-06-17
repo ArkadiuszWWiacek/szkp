@@ -42,12 +42,11 @@ def _check_access(request, case):
             raise PermissionDenied
 
 
-def _form_context(case, document, form_data, errors):
+def _form_context(case, document, form):
     return {
         'case': case,
         'document': document,
-        'form_data': form_data,
-        'errors': errors,
+        'form': form,
         'document_type_choices': DocumentType.choices,
     }
 
@@ -99,16 +98,14 @@ def document_form(request, case_pk, pk=None):
     redirect_url = reverse('szkp:case_detail', kwargs={'pk': case_pk}) + '?tab=dokumenty'
 
     if request.method == 'POST':
-        form = DocumentForm(request.POST, request.FILES, is_new=(document is None))
+        form = DocumentForm(request.POST, request.FILES, instance=document, is_new=(document is None))
         if form.is_valid():
-            cd = form.cleaned_data
-            obj = document or Document(case=case)
-            obj.title         = cd['title']
-            obj.document_type = cd['document_type']
-            obj.is_internal   = cd.get('is_internal') or False
+            obj = form.save(commit=False)
+            if not document:
+                obj.case = case
             obj.save()
 
-            uploaded = cd.get('file')
+            uploaded = form.cleaned_data.get('file')
             if uploaded:
                 lawyer = get_object_or_404(Lawyer, user=request.user)
                 DocumentVersion.objects.create(
@@ -124,18 +121,14 @@ def document_form(request, case_pk, pk=None):
         return render(
             request,
             'szkp/document_form.html',
-            _form_context(case, document, request.POST, form.errors),
+            _form_context(case, document, form),
         )
 
-    form_data = {
-        'title':         document.title          if document else '',
-        'document_type': document.document_type  if document else '',
-        'is_internal':   document.is_internal    if document else False,
-    }
+    form = DocumentForm(instance=document, is_new=(document is None))
     return render(
         request,
         'szkp/document_form.html',
-        _form_context(case, document, form_data, {}),
+        _form_context(case, document, form),
     )
 
 

@@ -5,6 +5,12 @@ from django import template
 register = template.Library()
 
 
+@register.filter
+def widget_value(bound_field):
+    """Zwraca wartość pola sformatowaną przez widget (np. daty jako YYYY-MM-DD)."""
+    return bound_field.field.widget.format_value(bound_field.value())
+
+
 @register.inclusion_tag('szkp/partials/sort_th.html', takes_context=True)
 def sort_th(context, key, label):
     """Renderuje sortowalny nagłówek tabeli <th>.

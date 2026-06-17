@@ -51,11 +51,11 @@ class InvoiceCreateViewTest(StaffLawyerTestCase):
 
     def test_domyslny_status_w_formularzu(self):
         r = self.client.get(self._url_new())
-        self.assertEqual(r.context['form_data'].get('status'), InvoiceStatus.WYSTAWIONA)
+        self.assertEqual(r.context['form']['status'].value(), InvoiceStatus.WYSTAWIONA)
 
     def test_domyslna_waluta_w_formularzu(self):
         r = self.client.get(self._url_new())
-        self.assertEqual(r.context['form_data'].get('currency'), 'PLN')
+        self.assertEqual(r.context['form']['currency'].value(), 'PLN')
 
     def test_post_tworzy_fakture(self):
         self.client.post(self._url_new(), self._valid_data())
@@ -80,12 +80,12 @@ class InvoiceCreateViewTest(StaffLawyerTestCase):
         )
         r = self.client.post(self._url_new(), self._valid_data(invoice_number='FV/2025/DUP'))
         self.assertEqual(r.status_code, 200)
-        self.assertIn('invoice_number', r.context['errors'])
+        self.assertIn('invoice_number', r.context['form'].errors)
 
     def test_brak_wymaganych_pol_zwraca_blad(self):
         r = self.client.post(self._url_new(), {})
         self.assertEqual(r.status_code, 200)
-        self.assertTrue(r.context['errors'])
+        self.assertTrue(r.context['form'].errors)
 
     def test_po_zapisie_redirect_do_faktury_tab(self):
         r = self.client.post(self._url_new(), self._valid_data())
@@ -152,7 +152,7 @@ class InvoiceEditViewTest(StaffLawyerTestCase):
 
     def test_get_formularz_zawiera_dane_faktury(self):
         r = self.client.get(self._url_edit())
-        self.assertEqual(r.context['form_data']['invoice_number'], self.faktura.invoice_number)
+        self.assertEqual(r.context['form']['invoice_number'].value(), self.faktura.invoice_number)
 
     def test_post_zmienia_status_na_oplacona(self):
         self.client.post(self._url_edit(), self._valid_edit_data(status='opłacona'))

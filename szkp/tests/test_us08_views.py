@@ -153,7 +153,7 @@ class TaskCreateViewTest(StaffLawyerTestCase):
     def test_brak_tytulu_zwraca_blad(self):
         r = self.client.post(self._url_new(), {})
         self.assertEqual(r.status_code, 200)
-        self.assertTrue(r.context['errors'])
+        self.assertTrue(r.context['form'].errors)
 
     def test_po_zapisie_redirect_do_listy_zadan(self):
         r = self.client.post(self._url_new(), self._valid_data())
@@ -197,7 +197,7 @@ class TaskEditViewTest(StaffLawyerTestCase):
 
     def test_get_formularz_zawiera_dane_zadania(self):
         r = self.client.get(self._url_edit())
-        self.assertEqual(r.context['form_data']['title'], self.zadanie.title)
+        self.assertEqual(r.context['form']['title'].value(), self.zadanie.title)
 
     def test_post_zmienia_status_na_zakonczone(self):
         self.client.post(self._url_edit(), self._valid_edit_data(status='zakończone'))

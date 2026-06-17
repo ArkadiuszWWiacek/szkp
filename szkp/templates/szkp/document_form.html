@@ -24,10 +24,10 @@
                 <div class="mb-3">
                     <label for="id_title" class="szkp-label">Tytuł <span class="text-danger">*</span></label>
                     <input type="text" id="id_title" name="title"
-                           class="szkp-input{% if errors.title %} is-invalid{% endif %}"
-                           value="{{ form_data.title|default:'' }}">
-                    {% if errors.title %}
-                    <span class="szkp-error">{{ errors.title.0 }}</span>
+                           class="szkp-input{% if form.title.errors %} is-invalid{% endif %}"
+                           value="{{ form.title.value|default:'' }}">
+                    {% if form.title.errors %}
+                    <span class="szkp-error">{{ form.title.errors.0 }}</span>
                     {% endif %}
                 </div>
 
@@ -35,24 +35,24 @@
                     <div class="col-sm-6">
                         <label for="id_document_type" class="szkp-label">Typ dokumentu <span class="text-danger">*</span></label>
                         <select id="id_document_type" name="document_type"
-                                class="szkp-select-full{% if errors.document_type %} is-invalid{% endif %}">
+                                class="szkp-select-full{% if form.document_type.errors %} is-invalid{% endif %}">
                             <option value="">---------</option>
                             {% for val, label in document_type_choices %}
                             <option value="{{ val }}"
-                                {% if form_data.document_type == val %}selected{% endif %}>
+                                {% if form.document_type.value == val %}selected{% endif %}>
                                 {{ label }}
                             </option>
                             {% endfor %}
                         </select>
-                        {% if errors.document_type %}
-                        <span class="szkp-error">{{ errors.document_type.0 }}</span>
+                        {% if form.document_type.errors %}
+                        <span class="szkp-error">{{ form.document_type.errors.0 }}</span>
                         {% endif %}
                     </div>
                     <div class="col-sm-6 d-flex align-items-end">
                         <div class="form-check">
                             <input type="checkbox" id="id_is_internal" name="is_internal"
                                    class="form-check-input"
-                                   {% if form_data.is_internal %}checked{% endif %}>
+                                   {% if form.is_internal.value %}checked{% endif %}>
                             <label for="id_is_internal" class="form-check-label szkp-label mb-0">Dokument wewnętrzny</label>
                         </div>
                     </div>
@@ -64,9 +64,9 @@
                         {% if not document %}<span class="text-danger">*</span>{% else %}(opcjonalnie — dodaj nową wersję){% endif %}
                     </label>
                     <input type="file" id="id_file" name="file"
-                           class="szkp-input{% if errors.file %} is-invalid{% endif %}">
-                    {% if errors.file %}
-                    <span class="szkp-error">{{ errors.file.0 }}</span>
+                           class="szkp-input{% if form.file.errors %} is-invalid{% endif %}">
+                    {% if form.file.errors %}
+                    <span class="szkp-error">{{ form.file.errors.0 }}</span>
                     {% endif %}
                 </div>
 

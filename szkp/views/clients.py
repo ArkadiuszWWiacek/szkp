@@ -5,7 +5,7 @@ from django.db.models import Q, RestrictedError
 from django.shortcuts import get_object_or_404, redirect, render
 
 from szkp.forms import ClientForm
-from szkp.models import Client, ClientType
+from szkp.models import Client
 
 
 @login_required
@@ -46,50 +46,21 @@ def client_form(request, pk=None):
     client = get_object_or_404(Client, pk=pk) if pk else None
 
     if request.method == 'POST':
-        form = ClientForm(request.POST)
+        form = ClientForm(request.POST, instance=client)
         if form.is_valid():
-            cd = form.cleaned_data
-            obj = client or Client()
-            obj.type         = cd['type']
-            obj.first_name   = cd.get('first_name') or None
-            obj.last_name    = cd.get('last_name') or None
-            obj.company_name = cd.get('company_name') or None
-            obj.pesel        = cd.get('pesel') if cd['type'] == ClientType.OSOBA_FIZYCZNA else None
-            obj.nip          = cd.get('nip') if cd['type'] == ClientType.FIRMA else None
-            obj.phone        = cd.get('phone') or None
-            obj.email        = cd.get('email') or None
-            obj.address_street = cd.get('address_street') or None
-            obj.address_city   = cd.get('address_city') or None
-            obj.address_zip    = cd.get('address_zip') or None
-            obj.save()
+            form.save()
             verb = 'zaktualizowany' if client else 'dodany'
             messages.success(request, f'Klient został {verb}.')
             return redirect('szkp:client_list')
         return render(request, 'szkp/client_form.html', {
             'client': client,
-            'form_data': request.POST,
-            'errors': form.errors,
+            'form': form,
         })
 
-    form_data = {}
-    if client:
-        form_data = {
-            'type':           client.type,
-            'first_name':     client.first_name or '',
-            'last_name':      client.last_name or '',
-            'company_name':   client.company_name or '',
-            'pesel':          client.pesel or '',
-            'nip':            client.nip or '',
-            'phone':          client.phone or '',
-            'email':          client.email or '',
-            'address_street': client.address_street or '',
-            'address_city':   client.address_city or '',
-            'address_zip':    client.address_zip or '',
-        }
+    form = ClientForm(instance=client)
     return render(request, 'szkp/client_form.html', {
         'client': client,
-        'form_data': form_data,
-        'errors': {},
+        'form': form,
     })
 
 
