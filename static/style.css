@@ -2085,7 +2085,10 @@ a.invoice-item:hover {
 }
 
 .dash-data-table td {
+<<<<<<< HEAD
   text-align: left;
+=======
+>>>>>>> 906bcce68c86bf4e16a532133724ddfe1cb2b45e
   padding: 11px 18px;
   border-bottom: 1px solid rgba(232,228,220,0.6);
   color: var(--dash-ink);
