@@ -1,32 +1,56 @@
 {% extends "base_dash.html" %}
 
-{% block title %}{% if client %}Edytuj klienta{% else %}Nowy klient{% endif %}{% endblock title %}
-{% block topbar_title %}{% if client %}Edytuj klienta{% else %}Nowy klient{% endif %}{% endblock topbar_title %}
-{% block nav_clients %}active{% endblock nav_clients %}
+{% block title %}
+  {% if client %}
+    Edytuj klienta
+  {% else %}
+    Nowy klient
+  {% endif %}
+{% endblock title %}
+{% block topbar_title %}
+  {% if client %}
+    Edytuj klienta
+  {% else %}
+    Nowy klient
+  {% endif %}
+{% endblock topbar_title %}
+{% block nav_clients %}
+  active
+{% endblock nav_clients %}
 
 {% block content %}
-<div class="dash-page-header">
-  <div>
-    <h1>{% if client %}Edytuj klienta{% else %}Nowy klient{% endif %}</h1>
-    <div class="dash-subtitle">Widok administratora — pełny dostęp do pól modelu</div>
+  <div class="dash-page-header">
+    <div>
+      <h1>
+        {% if client %}
+          Edytuj klienta
+        {% else %}
+          Nowy klient
+        {% endif %}
+      </h1>
+      <div class="dash-subtitle">
+        Widok administratora — pełny dostęp do pól modelu
+      </div>
+    </div>
   </div>
-  <div class="dash-page-header-actions">
-    <a href="{% url 'szkp:client_list' %}" class="dash-btn dash-btn--ghost">Anuluj</a>
-  </div>
-</div>
 
-<form method="post" novalidate>
-  {% csrf_token %}
-  <div class="dash-panel">
-    <div class="dash-panel-header">
-      <span class="dash-panel-title">Dane klienta</span>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Dane klienta</span>
+      </div>
+      <div class="dash-panel-body">
+        <div class="dash-form">
+          {{ form.as_div }}
+        </div>
+      </div>
     </div>
-    <div class="dash-panel-body">
-      {{ form.as_div }}
+    <div class="dash-page-header-actions">
+      <button type="submit" class="dash-btn dash-btn--primary">
+        Zapisz
+      </button>
+      <a href="{% url 'szkp:client_list' %}" class="dash-btn dash-btn--ghost">Anuluj</a>
     </div>
-  </div>
-  <div class="dash-page-header-actions">
-    <button type="submit" class="dash-btn dash-btn--primary">Zapisz</button>
-  </div>
-</form>
+  </form>
 {% endblock content %}

@@ -23,27 +23,29 @@
     </div>
     <div class="dash-panel-body">
       {% if form.errors %}
-        <p>{{ form.errors }}</p>
+        <p class="dash-form-errors">{{ form.errors }}</p>
       {% endif %}
-      <div>
-        <label for="id_lawyer">Prawnik</label>
-        <select name="lawyer" id="id_lawyer">
-          {% for lawyer in available_lawyers %}
-            <option value="{{ lawyer.pk }}">{{ lawyer.first_name }} {{ lawyer.last_name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div>
-        <label for="id_role">Rola</label>
-        {{ form.role }}
-      </div>
-      <div>
-        <label for="id_responsible_flag">Odpowiedzialny</label>
-        {{ form.responsible_flag }}
-      </div>
-      <div>
-        <label for="id_unassigned_at">Data odejścia</label>
-        {{ form.unassigned_at }}
+      <div class="dash-form">
+        <div>
+          <label for="id_lawyer">Prawnik</label>
+          <select name="lawyer" id="id_lawyer">
+            {% for lawyer in available_lawyers %}
+              <option value="{{ lawyer.pk }}">{{ lawyer.first_name }} {{ lawyer.last_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="id_role">Rola</label>
+          {{ form.role }}
+        </div>
+        <div>
+          <label for="id_unassigned_at">Data odejścia</label>
+          {{ form.unassigned_at }}
+        </div>
+        <div>
+          <label for="id_responsible_flag">Odpowiedzialny</label>
+          {{ form.responsible_flag }}
+        </div>
       </div>
     </div>
   </div>

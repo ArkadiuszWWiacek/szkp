@@ -2456,3 +2456,150 @@ a.invoice-item:hover {
   font-size: 11px;
   padding: 4px 10px;
 }
+
+/* ── FORM (superuser) ── */
+.dash-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 24px;
+}
+
+.dash-form > div {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Full-width rows for textarea and file fields */
+.dash-form div:has(> textarea),
+.dash-form div:has(> input[type="file"]) {
+  grid-column: 1 / -1;
+}
+
+/* Labels */
+.dash-form label {
+  font-family: 'Spectral', serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--dash-ink-soft);
+  display: block;
+  margin-bottom: 5px;
+}
+
+/* Text inputs, select, textarea */
+.dash-form input:not([type="checkbox"]):not([type="radio"]),
+.dash-form select,
+.dash-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--dash-parchment);
+  border: 1px solid var(--dash-parch-dk);
+  border-radius: 6px;
+  padding: 8px 11px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  color: var(--dash-ink);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.dash-form input:not([type="checkbox"]):not([type="radio"]):focus,
+.dash-form select:focus,
+.dash-form textarea:focus {
+  border-color: var(--dash-brass);
+  box-shadow: 0 0 0 3px rgba(184,150,12,0.12);
+}
+
+.dash-form textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+/* Select — custom caret arrow */
+.dash-form select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239999AA' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+  cursor: pointer;
+}
+
+/* Checkbox row */
+.dash-form div:has(> input[type="checkbox"]) {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.dash-form div:has(> input[type="checkbox"]) label {
+  margin-bottom: 0;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 13px;
+  cursor: pointer;
+  order: 2;
+}
+
+.dash-form input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--dash-oxblood);
+  margin: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  order: 1;
+}
+
+/* Error list */
+.dash-form ul.errorlist {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+}
+
+.dash-form ul.errorlist li {
+  font-size: 11px;
+  color: var(--dash-oxblood);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dash-form ul.errorlist li::before {
+  content: '▸';
+  font-size: 9px;
+}
+
+/* Invalid field highlight */
+.dash-form input[aria-invalid="true"]:not([type="checkbox"]),
+.dash-form select[aria-invalid="true"],
+.dash-form textarea[aria-invalid="true"] {
+  border-color: var(--dash-oxblood);
+}
+
+.dash-form input[aria-invalid="true"]:not([type="checkbox"]):focus,
+.dash-form select[aria-invalid="true"]:focus,
+.dash-form textarea[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 3px rgba(139,26,26,0.12);
+}
+
+/* Help text */
+.dash-form .helptext {
+  font-size: 11px;
+  color: #9999AA;
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+/* Form-level error banner (above the grid) */
+.dash-form-errors {
+  font-size: 12px;
+  color: var(--dash-oxblood);
+  background: rgba(139,26,26,0.06);
+  border: 1px solid rgba(139,26,26,0.2);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+}
