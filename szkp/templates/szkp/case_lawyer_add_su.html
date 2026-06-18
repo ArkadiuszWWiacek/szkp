@@ -1,0 +1,54 @@
+{% extends "base_dash.html" %}
+
+{% block title %}Dodaj prawnika{% endblock title %}
+{% block topbar_title %}Dodaj prawnika do sprawy{% endblock topbar_title %}
+{% block nav_cases %}active{% endblock nav_cases %}
+
+{% block content %}
+<div class="dash-page-header">
+  <div>
+    <h1>Dodaj prawnika</h1>
+    <div class="dash-subtitle">Sprawa: {{ case.case_number }} — widok administratora</div>
+  </div>
+  <div class="dash-page-header-actions">
+    <a href="{% url 'szkp:case_detail' case.pk %}?tab=prawnicy" class="dash-btn dash-btn--ghost">Anuluj</a>
+  </div>
+</div>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  <div class="dash-panel">
+    <div class="dash-panel-header">
+      <span class="dash-panel-title">Przypisanie prawnika</span>
+    </div>
+    <div class="dash-panel-body">
+      {% if form.errors %}
+        <p>{{ form.errors }}</p>
+      {% endif %}
+      <div>
+        <label for="id_lawyer">Prawnik</label>
+        <select name="lawyer" id="id_lawyer">
+          {% for lawyer in available_lawyers %}
+            <option value="{{ lawyer.pk }}">{{ lawyer.first_name }} {{ lawyer.last_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="id_role">Rola</label>
+        {{ form.role }}
+      </div>
+      <div>
+        <label for="id_responsible_flag">Odpowiedzialny</label>
+        {{ form.responsible_flag }}
+      </div>
+      <div>
+        <label for="id_unassigned_at">Data odejścia</label>
+        {{ form.unassigned_at }}
+      </div>
+    </div>
+  </div>
+  <div class="dash-page-header-actions">
+    <button type="submit" class="dash-btn dash-btn--primary">Przypisz</button>
+  </div>
+</form>
+{% endblock content %}

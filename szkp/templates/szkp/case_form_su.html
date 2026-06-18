@@ -1,0 +1,33 @@
+{% extends "base_dash.html" %}
+
+{% block title %}{% if case %}Edytuj sprawę{% else %}Nowa sprawa{% endif %}{% endblock title %}
+{% block topbar_title %}{% if case %}Edytuj sprawę{% else %}Nowa sprawa{% endif %}{% endblock topbar_title %}
+{% block nav_cases %}active{% endblock nav_cases %}
+
+{% block content %}
+<div class="dash-page-header">
+  <div>
+    <h1>{% if case %}Edytuj sprawę{% else %}Nowa sprawa{% endif %}</h1>
+    <div class="dash-subtitle">Widok administratora — pełny dostęp do pól modelu</div>
+  </div>
+  <div class="dash-page-header-actions">
+    <a href="{% if case %}{% url 'szkp:case_detail' case.pk %}{% else %}{% url 'szkp:case_list' %}{% endif %}"
+       class="dash-btn dash-btn--ghost">Anuluj</a>
+  </div>
+</div>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  <div class="dash-panel">
+    <div class="dash-panel-header">
+      <span class="dash-panel-title">Dane sprawy</span>
+    </div>
+    <div class="dash-panel-body">
+      {{ form.as_div }}
+    </div>
+  </div>
+  <div class="dash-page-header-actions">
+    <button type="submit" class="dash-btn dash-btn--primary">Zapisz</button>
+  </div>
+</form>
+{% endblock content %}

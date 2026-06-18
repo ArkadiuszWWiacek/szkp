@@ -232,3 +232,96 @@ class CaseLawyerForm(forms.Form):
                 'Nie można przypisać roli Prowadzący przez ten formularz.'
             )
         return role
+
+
+# ─── Formularze dla superużytkownika (pełny dostęp do pól modelu) ───────────
+
+class CaseFormSU(CaseForm):
+    class Meta(CaseForm.Meta):
+        fields = CaseForm.Meta.fields + ['opened_at', 'closed_at']
+        widgets = {
+            'opened_at': forms.DateTimeInput(
+                attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M',
+            ),
+            'closed_at': forms.DateTimeInput(
+                attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M',
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['opened_at'].required = False
+        self.fields['closed_at'].required = False
+        if self.instance.pk:
+            if self.instance.opened_at:
+                self.initial['opened_at'] = timezone.localtime(self.instance.opened_at)
+            if self.instance.closed_at:
+                self.initial['closed_at'] = timezone.localtime(self.instance.closed_at)
+
+
+class ClientFormSU(ClientForm):
+    class Meta(ClientForm.Meta):
+        fields = ClientForm.Meta.fields + ['country']
+        widgets = {
+            'type': forms.RadioSelect,
+        }
+
+
+class CourtHearingFormSU(CourtHearingForm):
+    class Meta(CourtHearingForm.Meta):
+        fields = CourtHearingForm.Meta.fields + ['responsible_lawyer', 'reminder_sent_at']
+        widgets = {
+            **CourtHearingForm.Meta.widgets,
+            'reminder_sent_at': forms.DateTimeInput(
+                attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M',
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['responsible_lawyer'].required = False
+        self.fields['reminder_sent_at'].required = False
+        self.fields['reminder_minutes_before'].required = False
+        if self.instance.pk and self.instance.reminder_sent_at:
+            self.initial['reminder_sent_at'] = timezone.localtime(self.instance.reminder_sent_at)
+
+    def clean_reminder_minutes_before(self):
+        val = self.cleaned_data.get('reminder_minutes_before')
+        return val if val is not None else 1440
+
+
+class InvoiceFormSU(InvoiceForm):
+    class Meta(InvoiceForm.Meta):
+        fields = InvoiceForm.Meta.fields + ['paid_at']
+        widgets = {
+            **InvoiceForm.Meta.widgets,
+            'paid_at': forms.DateTimeInput(
+                attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M',
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['paid_at'].required = False
+        if self.instance.pk and self.instance.paid_at:
+            self.initial['paid_at'] = timezone.localtime(self.instance.paid_at)
+
+
+class TaskFormSU(TaskForm):
+    created_by  = forms.IntegerField(required=False)
+    case        = forms.IntegerField(required=False)
+    parent_task = forms.IntegerField(required=False)
+
+
+class CaseLawyerFormSU(CaseLawyerForm):
+    role = forms.ChoiceField(choices=CaseLawyerRole.choices)
+    responsible_flag = forms.BooleanField(required=False)
+    unassigned_at = forms.DateTimeField(
+        required=False,
+        widget=forms.DateTimeInput(
+            attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M',
+        ),
+    )
+
+    def clean_role(self):
+        return self.cleaned_data.get('role')

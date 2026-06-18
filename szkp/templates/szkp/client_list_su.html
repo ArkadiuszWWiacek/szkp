@@ -1,20 +1,33 @@
 {% extends "base_dash.html" %}
 {% load szkp_tags %}
 
-{% block title %}Klienci{% endblock title %}
-{% block topbar_title %}Klienci{% endblock topbar_title %}
-{% block nav_clients %}active{% endblock nav_clients %}
+{% block title %}
+  Klienci
+{% endblock title %}
+{% block topbar_title %}
+  Klienci
+{% endblock topbar_title %}
+{% block nav_clients %}
+  active
+{% endblock nav_clients %}
 
 {% block content %}
 
   <div class="dash-page-header">
     <div>
-      <h1>Klienci</h1>
-      <div class="dash-subtitle">Wszyscy klienci kancelarii</div>
+      <h1>
+        Klienci
+      </h1>
+      <div class="dash-subtitle">
+        Wszyscy klienci kancelarii
+      </div>
     </div>
     <div class="dash-page-header-actions">
       <a href="{% url 'szkp:client_new' %}" class="dash-btn dash-btn--primary">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+        <svg fill="none"
+             viewBox="0 0 24 24"
+             stroke="currentColor"
+             stroke-width="1.8">
           <path d="M12 5v14M5 12h14" />
         </svg>
         Nowy klient
@@ -29,7 +42,9 @@
              value="{{ q }}"
              placeholder="Szukaj po nazwisku, imieniu, firmie, PESEL, NIP…"
              class="dash-search-input">
-      <button type="submit" class="dash-toolbar-submit">Szukaj</button>
+      <button type="submit" class="dash-toolbar-submit">
+        Szukaj
+      </button>
     </div>
   </form>
 
@@ -37,18 +52,26 @@
     <table class="dash-data-table">
       <thead>
         <tr>
-          <th>{% sort_th "last_name" "Klient" %}</th>
-          <th>{% sort_th "type" "Typ" %}</th>
-          <th>{% sort_th "created_at" "Dodano" %}</th>
-          <th>Akcje</th>
+          {% sort_th "last_name" "Klient" %}
+          {% sort_th "type" "Typ" %}
+          {% sort_th "created_at" "Dodano" %}
+          <th>
+            Akcje
+          </th>
         </tr>
       </thead>
       <tbody>
         {% for client in page_obj %}
           <tr>
-            <td>{{ client }}</td>
-            <td>{{ client.get_type_display }}</td>
-            <td>{{ client.created_at|date:"d.m.Y" }}</td>
+            <td>
+              {{ client }}
+            </td>
+            <td>
+              {{ client.get_type_display }}
+            </td>
+            <td>
+              {{ client.created_at|date:"d.m.Y" }}
+            </td>
             <td>
               <a href="{% url 'szkp:client_edit' client.pk %}">Edytuj</a>
               ·
@@ -57,7 +80,9 @@
           </tr>
         {% empty %}
           <tr>
-            <td colspan="4" class="dash-table-empty">Brak klientów</td>
+            <td colspan="4" class="dash-table-empty">
+              Brak klientów
+            </td>
           </tr>
         {% endfor %}
       </tbody>

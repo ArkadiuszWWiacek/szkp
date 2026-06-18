@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from szkp.forms import InvoiceForm
+from szkp.forms import InvoiceForm, InvoiceFormSU
 from szkp.models import Case, CaseLawyer, Invoice, InvoiceStatus
 from szkp.permissions import require_case_access
 
@@ -28,12 +28,15 @@ def invoice_form(request, case_pk, pk=None):
 
     require_case_access(request, case)
 
+    is_su = request.user.is_superuser
+    FormClass = InvoiceFormSU if is_su else InvoiceForm
+    template = 'szkp/invoice_form_su.html' if is_su else 'szkp/invoice_form.html'
     redirect_url = (
         reverse('szkp:case_detail', kwargs={'pk': case_pk}) + '?tab=faktury'
     )
 
     if request.method == 'POST':
-        form = InvoiceForm(
+        form = FormClass(
             request.POST,
             instance=invoice,
             instance_pk=invoice.pk if invoice else None,
@@ -46,21 +49,13 @@ def invoice_form(request, case_pk, pk=None):
             messages.success(request, 'Faktura została zapisana.')
             return redirect(redirect_url)
 
-        return render(
-            request,
-            'szkp/invoice_form.html',
-            _form_context(case, invoice, form),
-        )
+        return render(request, template, _form_context(case, invoice, form))
 
-    form = InvoiceForm(
+    form = FormClass(
         instance=invoice,
         instance_pk=invoice.pk if invoice else None,
     )
-    return render(
-        request,
-        'szkp/invoice_form.html',
-        _form_context(case, invoice, form),
-    )
+    return render(request, template, _form_context(case, invoice, form))
 
 
 @login_required

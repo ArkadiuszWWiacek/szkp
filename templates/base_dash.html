@@ -116,7 +116,8 @@
       <div class="dash-sidebar-bottom">
         <form method="post" action="{% url 'logout' %}" class="dash-logout-form">
           {% csrf_token %}
-          <button type="submit" class="dash-nav-item dash-nav-btn">
+          <button type="button" class="dash-nav-item dash-nav-btn"
+                  onclick="this.closest('.dash-logout-form').submit()">
             <svg fill="none"
                  viewBox="0 0 24 24"
                  stroke="currentColor"

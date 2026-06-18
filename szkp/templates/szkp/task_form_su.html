@@ -1,0 +1,36 @@
+{% extends "base_dash.html" %}
+
+{% block title %}{% if task %}Edytuj zadanie{% else %}Nowe zadanie{% endif %}{% endblock title %}
+{% block topbar_title %}{% if task %}Edytuj zadanie{% else %}Nowe zadanie{% endif %}{% endblock topbar_title %}
+{% block nav_tasks %}active{% endblock nav_tasks %}
+
+{% block content %}
+<div class="dash-page-header">
+  <div>
+    <h1>{% if task %}Edytuj zadanie{% else %}Nowe zadanie{% endif %}</h1>
+    <div class="dash-subtitle">Widok administratora — pełny dostęp do pól modelu</div>
+  </div>
+  <div class="dash-page-header-actions">
+    <a href="{% if case %}{% url 'szkp:case_detail' case.pk %}?tab=zadania{% else %}{% url 'szkp:my_tasks' %}{% endif %}"
+       class="dash-btn dash-btn--ghost">Anuluj</a>
+  </div>
+</div>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  {% if parent_pk %}
+    <input type="hidden" name="parent_task" value="{{ parent_pk }}">
+  {% endif %}
+  <div class="dash-panel">
+    <div class="dash-panel-header">
+      <span class="dash-panel-title">Dane zadania</span>
+    </div>
+    <div class="dash-panel-body">
+      {{ form.as_div }}
+    </div>
+  </div>
+  <div class="dash-page-header-actions">
+    <button type="submit" class="dash-btn dash-btn--primary">Zapisz</button>
+  </div>
+</form>
+{% endblock content %}

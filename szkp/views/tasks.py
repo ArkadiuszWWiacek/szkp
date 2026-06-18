@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from szkp.forms import TaskForm
+from szkp.forms import TaskForm, TaskFormSU
 from szkp.models import Case, CaseLawyer, Lawyer, Task, TaskPriority, TaskStatus
 
 
@@ -128,8 +128,12 @@ def task_form(request, pk=None, case_pk=None):
         if case else reverse('szkp:my_tasks')
     )
 
+    is_su = request.user.is_superuser
+    FormClass = TaskFormSU if is_su else TaskForm
+    template = 'szkp/task_form_su.html' if is_su else 'szkp/task_form.html'
+
     if request.method == 'POST':
-        form = TaskForm(request.POST, instance=task, case_lawyer_pks=case_lawyer_pks)
+        form = FormClass(request.POST, instance=task, case_lawyer_pks=case_lawyer_pks)
         if form.is_valid():
             obj = form.save(commit=False)
             assigned_pk = form.cleaned_data.get('assigned_lawyer')
@@ -142,7 +146,7 @@ def task_form(request, pk=None, case_pk=None):
             if pk:
                 if obj.status == TaskStatus.ZAKOŃCZONE and obj.has_unfinished_subtasks:
                     form.add_error('status', 'Nie można zakończyć zadania — najpierw zakończ wszystkie podzadania.')
-                    return render(request, 'szkp/task_form.html',
+                    return render(request, template,
                                   _task_context(task, form, case=case, lawyer_choices=lawyer_choices))
             else:
                 parent_pk_val = request.POST.get('parent_task')
@@ -157,16 +161,16 @@ def task_form(request, pk=None, case_pk=None):
         parent_pk = request.POST.get('parent_task')
         return render(
             request,
-            'szkp/task_form.html',
+            template,
             _task_context(task, form, parent_pk=parent_pk, case=case, lawyer_choices=lawyer_choices),
         )
 
     parent_pk = request.GET.get('parent')
     initial = {} if task else {'assigned_lawyer': lawyer.pk}
-    form = TaskForm(instance=task, case_lawyer_pks=case_lawyer_pks, initial=initial)
+    form = FormClass(instance=task, case_lawyer_pks=case_lawyer_pks, initial=initial)
     return render(
         request,
-        'szkp/task_form.html',
+        template,
         _task_context(task, form, parent_pk=parent_pk, case=case, lawyer_choices=lawyer_choices),
     )
 

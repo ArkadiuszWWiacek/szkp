@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
-from szkp.forms import CourtHearingForm
+from szkp.forms import CourtHearingForm, CourtHearingFormSU
 from szkp.models import Case, CourtHearing, HearingStatus, HearingType
 from szkp.permissions import require_case_access
 
@@ -25,12 +25,18 @@ def court_hearing_form(request, case_pk, pk=None):
 
     require_case_access(request, case)
 
+    is_su = request.user.is_superuser
+    FormClass = CourtHearingFormSU if is_su else CourtHearingForm
+    template = (
+        'szkp/court_hearing_form_su.html' if is_su
+        else 'szkp/court_hearing_form.html'
+    )
     redirect_url = (
         reverse('szkp:case_detail', kwargs={'pk': case_pk}) + '?tab=terminy'
     )
 
     if request.method == 'POST':
-        form = CourtHearingForm(request.POST, instance=hearing, is_new=(hearing is None))
+        form = FormClass(request.POST, instance=hearing, is_new=(hearing is None))
         if form.is_valid():
             obj = form.save(commit=False)
             if not hearing:
@@ -40,15 +46,7 @@ def court_hearing_form(request, case_pk, pk=None):
             messages.success(request, 'Termin został zapisany.')
             return redirect(redirect_url)
 
-        return render(
-            request,
-            'szkp/court_hearing_form.html',
-            _form_context(case, hearing, form),
-        )
+        return render(request, template, _form_context(case, hearing, form))
 
-    form = CourtHearingForm(instance=hearing, is_new=(hearing is None))
-    return render(
-        request,
-        'szkp/court_hearing_form.html',
-        _form_context(case, hearing, form),
-    )
+    form = FormClass(instance=hearing, is_new=(hearing is None))
+    return render(request, template, _form_context(case, hearing, form))

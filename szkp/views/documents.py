@@ -97,6 +97,9 @@ def document_form(request, case_pk, pk=None):
 
     redirect_url = reverse('szkp:case_detail', kwargs={'pk': case_pk}) + '?tab=dokumenty'
 
+    is_su = request.user.is_superuser
+    template = 'szkp/document_form_su.html' if is_su else 'szkp/document_form.html'
+
     if request.method == 'POST':
         form = DocumentForm(request.POST, request.FILES, instance=document, is_new=(document is None))
         if form.is_valid():
@@ -118,18 +121,10 @@ def document_form(request, case_pk, pk=None):
             messages.success(request, 'Dokument został zapisany.')
             return redirect(redirect_url)
 
-        return render(
-            request,
-            'szkp/document_form.html',
-            _form_context(case, document, form),
-        )
+        return render(request, template, _form_context(case, document, form))
 
     form = DocumentForm(instance=document, is_new=(document is None))
-    return render(
-        request,
-        'szkp/document_form.html',
-        _form_context(case, document, form),
-    )
+    return render(request, template, _form_context(case, document, form))
 
 
 @login_required

@@ -4,7 +4,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q, RestrictedError
 from django.shortcuts import get_object_or_404, redirect, render
 
-from szkp.forms import ClientForm
+from szkp.forms import ClientForm, ClientFormSU
 from szkp.models import Client
 
 
@@ -47,24 +47,21 @@ def client_list(request):
 @login_required
 def client_form(request, pk=None):
     client = get_object_or_404(Client, pk=pk) if pk else None
+    is_su = request.user.is_superuser
+    FormClass = ClientFormSU if is_su else ClientForm
+    template = 'szkp/client_form_su.html' if is_su else 'szkp/client_form.html'
 
     if request.method == 'POST':
-        form = ClientForm(request.POST, instance=client)
+        form = FormClass(request.POST, instance=client)
         if form.is_valid():
             form.save()
             verb = 'zaktualizowany' if client else 'dodany'
             messages.success(request, f'Klient został {verb}.')
             return redirect('szkp:client_list')
-        return render(request, 'szkp/client_form.html', {
-            'client': client,
-            'form': form,
-        })
+        return render(request, template, {'client': client, 'form': form})
 
-    form = ClientForm(instance=client)
-    return render(request, 'szkp/client_form.html', {
-        'client': client,
-        'form': form,
-    })
+    form = FormClass(instance=client)
+    return render(request, template, {'client': client, 'form': form})
 
 
 @login_required

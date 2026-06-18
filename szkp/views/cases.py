@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
-from szkp.forms import CaseForm, CaseLawyerForm
+from szkp.forms import CaseForm, CaseLawyerForm, CaseFormSU, CaseLawyerFormSU
 from szkp.permissions import require_case_access, require_case_access_by_pk
 from szkp.models import (
     Case, CaseLawyer, CaseLawyerRole, CasePriority, CaseStatus, CaseType,
@@ -153,6 +153,7 @@ def case_lawyer_add(request, case_pk):
 
     require_case_access(request, case)
 
+    is_su = request.user.is_superuser
     already_assigned_pks = list(
         CaseLawyer.objects.filter(case=case).values_list('lawyer_id', flat=True)
     )
@@ -168,7 +169,10 @@ def case_lawyer_add(request, case_pk):
     redirect_url = reverse('szkp:case_detail', args=[case_pk]) + '?tab=prawnicy'
 
     if request.method == 'POST':
-        form = CaseLawyerForm(request.POST, available_lawyer_pks=available_lawyer_pks)
+        if is_su:
+            form = CaseLawyerFormSU(request.POST, available_lawyer_pks=available_lawyer_pks)
+        else:
+            form = CaseLawyerForm(request.POST, available_lawyer_pks=available_lawyer_pks)
         if form.is_valid():
             cd = form.cleaned_data
             CaseLawyer.objects.create(
@@ -178,6 +182,12 @@ def case_lawyer_add(request, case_pk):
             )
             messages.success(request, 'Prawnik został przypisany do sprawy.')
             return redirect(redirect_url)
+        if is_su:
+            return render(request, 'szkp/case_lawyer_add_su.html', {
+                'case': case,
+                'form': form,
+                'available_lawyers': available_lawyers,
+            })
         return render(request, 'szkp/case_lawyer_add.html', {
             'case': case,
             'form_data': request.POST,
@@ -186,6 +196,13 @@ def case_lawyer_add(request, case_pk):
             'role_choices': role_choices,
         })
 
+    if is_su:
+        form = CaseLawyerFormSU(available_lawyer_pks=available_lawyer_pks)
+        return render(request, 'szkp/case_lawyer_add_su.html', {
+            'case': case,
+            'form': form,
+            'available_lawyers': available_lawyers,
+        })
     return render(request, 'szkp/case_lawyer_add.html', {
         'case': case,
         'form_data': {},
@@ -209,9 +226,12 @@ def _case_form_context(case, form):
 @login_required
 def case_form(request, pk=None):
     case = get_object_or_404(Case, pk=pk) if pk else None
+    is_su = request.user.is_superuser
+    FormClass = CaseFormSU if is_su else CaseForm
+    template = 'szkp/case_form_su.html' if is_su else 'szkp/case_form.html'
 
     if request.method == 'POST':
-        form = CaseForm(request.POST, instance=case)
+        form = FormClass(request.POST, instance=case)
         if form.is_valid():
             obj = form.save(commit=False)
             if obj.status == CaseStatus.ZAKOŃCZONA and not obj.closed_at:
@@ -227,9 +247,7 @@ def case_form(request, pk=None):
             messages.success(request, 'Sprawa została zapisana.')
             return redirect('szkp:case_detail', pk=obj.pk)
 
-        return render(request, 'szkp/case_form.html',
-                      _case_form_context(case, form))
+        return render(request, template, _case_form_context(case, form))
 
-    form = CaseForm(instance=case)
-    return render(request, 'szkp/case_form.html',
-                  _case_form_context(case, form))
+    form = FormClass(instance=case)
+    return render(request, template, _case_form_context(case, form))
