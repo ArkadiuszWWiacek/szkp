@@ -1,7 +1,6 @@
 {% extends "base_dash.html" %}
 {% load szkp_tags %}
 
-<<<<<<< HEAD
 {% block title %}
   Sprawy
 {% endblock title %}
@@ -11,17 +10,11 @@
 {% block nav_cases %}
   active
 {% endblock nav_cases %}
-=======
-{% block title %}Sprawy{% endblock title %}
-{% block topbar_title %}Sprawy{% endblock topbar_title %}
-{% block nav_cases %}active{% endblock nav_cases %}
->>>>>>> 906bcce68c86bf4e16a532133724ddfe1cb2b45e
 
 {% block content %}
 
   <div class="dash-page-header">
     <div>
-<<<<<<< HEAD
       <h1>
         Sprawy
       </h1>
@@ -35,18 +28,9 @@
              viewBox="0 0 24 24"
              stroke="currentColor"
              stroke-width="1.8">
-=======
-      <h1>Sprawy</h1>
-      <div class="dash-subtitle">Wszystkie sprawy w systemie</div>
-    </div>
-    <div class="dash-page-header-actions">
-      <a href="{% url 'szkp:case_new' %}" class="dash-btn dash-btn--primary">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
->>>>>>> 906bcce68c86bf4e16a532133724ddfe1cb2b45e
           <path d="M12 5v14M5 12h14" />
         </svg>
-        Nowa sprawa
-      </a>
+      Nowa sprawa</a>
     </div>
   </div>
 
@@ -58,7 +42,6 @@
              placeholder="Szukaj po sygnaturze, kliencie, tytule…"
              class="dash-search-input">
       <select name="status" class="dash-filter-select">
-<<<<<<< HEAD
         <option value="">
           Wszystkie statusy
         </option>
@@ -81,20 +64,6 @@
       <button type="submit" class="dash-toolbar-submit">
         Szukaj
       </button>
-=======
-        <option value="">Wszystkie statusy</option>
-        {% for val, label in status_choices %}
-          <option value="{{ val }}"{% if status == val %} selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-      <select name="type" class="dash-filter-select">
-        <option value="">Wszystkie typy</option>
-        {% for val, label in type_choices %}
-          <option value="{{ val }}"{% if case_type == val %} selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-      <button type="submit" class="dash-toolbar-submit">Szukaj</button>
->>>>>>> 906bcce68c86bf4e16a532133724ddfe1cb2b45e
     </div>
   </form>
 
@@ -102,7 +71,6 @@
     <table class="dash-data-table">
       <thead>
         <tr>
-<<<<<<< HEAD
           {% sort_th "case_number" "Sygnatura" %}
           {% sort_th "client" "Klient" %}
           {% sort_th "case_type" "Typ" %}
@@ -111,20 +79,11 @@
           <th>
             Akcje
           </th>
-=======
-          <th>{% sort_th "case_number" "Sygnatura" %}</th>
-          <th>Klient</th>
-          <th>{% sort_th "case_type" "Typ" %}</th>
-          <th>{% sort_th "status" "Status" %}</th>
-          <th>{% sort_th "case_priority" "Priorytet" %}</th>
-          <th>Akcje</th>
->>>>>>> 906bcce68c86bf4e16a532133724ddfe1cb2b45e
         </tr>
       </thead>
       <tbody>
         {% for case in page_obj %}
           <tr>
-<<<<<<< HEAD
             <td>
               <span class="dash-mono">{{ case.case_number }}</span>
             </td>
@@ -140,13 +99,6 @@
             <td>
               {{ case.get_case_priority_display|default:"—" }}
             </td>
-=======
-            <td><span class="dash-mono">{{ case.case_number }}</span></td>
-            <td>{{ case.client }}</td>
-            <td>{{ case.get_case_type_display }}</td>
-            <td>{{ case.get_status_display }}</td>
-            <td>{{ case.get_case_priority_display|default:"—" }}</td>
->>>>>>> 906bcce68c86bf4e16a532133724ddfe1cb2b45e
             <td>
               <a href="{% url 'szkp:case_detail' case.pk %}">Podgląd</a>
               ·
@@ -155,13 +107,9 @@
           </tr>
         {% empty %}
           <tr>
-<<<<<<< HEAD
             <td colspan="6" class="dash-table-empty">
               Brak spraw
             </td>
-=======
-            <td colspan="6" class="dash-table-empty">Brak spraw</td>
->>>>>>> 906bcce68c86bf4e16a532133724ddfe1cb2b45e
           </tr>
         {% endfor %}
       </tbody>
