@@ -50,8 +50,7 @@
       <button type="submit" class="dash-btn dash-btn--primary">
         Zapisz
       </button>
-      <a href="{% if case %}{% url 'szkp:case_detail' case.pk %}{% else %}{% url 'szkp:case_list' %}{% endif %}"
-         class="dash-btn dash-btn--ghost">Anuluj</a>
+      <a href="{% url 'szkp:case_list' %}" class="dash-btn dash-btn--ghost">Anuluj</a>
     </div>
   </form>
 {% endblock content %}

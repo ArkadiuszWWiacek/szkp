@@ -1,34 +1,56 @@
 {% extends "base_dash.html" %}
 
-{% block title %}{% if invoice %}Edytuj fakturę{% else %}Nowa faktura{% endif %}{% endblock title %}
-{% block topbar_title %}{% if invoice %}Edytuj fakturę{% else %}Nowa faktura{% endif %}{% endblock topbar_title %}
-{% block nav_invoices %}active{% endblock nav_invoices %}
+{% block title %}
+  {% if invoice %}
+    Edytuj fakturę
+  {% else %}
+    Nowa faktura
+  {% endif %}
+{% endblock title %}
+{% block topbar_title %}
+  {% if invoice %}
+    Edytuj fakturę
+  {% else %}
+    Nowa faktura
+  {% endif %}
+{% endblock topbar_title %}
+{% block nav_invoices %}
+  active
+{% endblock nav_invoices %}
 
 {% block content %}
-<div class="dash-page-header">
-  <div>
-    <h1>{% if invoice %}Edytuj fakturę{% else %}Nowa faktura{% endif %}</h1>
-    <div class="dash-subtitle">Sprawa: {{ case.case_number }} — widok administratora</div>
-  </div>
-  <div class="dash-page-header-actions">
-    <a href="{% url 'szkp:case_detail' case.pk %}?tab=faktury" class="dash-btn dash-btn--ghost">Anuluj</a>
-  </div>
-</div>
-
-<form method="post" novalidate>
-  {% csrf_token %}
-  <div class="dash-panel">
-    <div class="dash-panel-header">
-      <span class="dash-panel-title">Dane faktury</span>
-    </div>
-    <div class="dash-panel-body">
-      <div class="dash-form">
-        {{ form.as_div }}
+  <div class="dash-page-header">
+    <div>
+      <h1>
+        {% if invoice %}
+          Edytuj fakturę
+        {% else %}
+          Nowa faktura
+        {% endif %}
+      </h1>
+      <div class="dash-subtitle">
+        Sprawa: {{ case.case_number }} — widok administratora
       </div>
     </div>
   </div>
-  <div class="dash-page-header-actions">
-    <button type="submit" class="dash-btn dash-btn--primary">Zapisz</button>
-  </div>
-</form>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Dane faktury</span>
+      </div>
+      <div class="dash-panel-body">
+        <div class="dash-form">
+          {{ form.as_div }}
+        </div>
+      </div>
+    </div>
+    <div class="dash-page-header-actions">
+      <button type="submit" class="dash-btn dash-btn--primary">
+        Zapisz
+      </button>
+      <a href="{% url 'szkp:invoice_list' %}" class="dash-btn dash-btn--ghost">Anuluj</a>
+    </div>
+  </form>
 {% endblock content %}

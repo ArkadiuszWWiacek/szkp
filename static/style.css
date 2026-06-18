@@ -1906,6 +1906,7 @@ a.invoice-item:hover {
 }
 
 .dash-page-header-actions {
+  padding-top: 8px;
   display: flex;
   gap: 8px;
 }
