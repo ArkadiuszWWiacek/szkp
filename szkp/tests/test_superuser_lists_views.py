@@ -3,7 +3,8 @@ from django.contrib.auth.models import User
 from django.test import TestCase, tag
 from django.urls import reverse
 
-from szkp.models import Lawyer
+from szkp.models import Lawyer, Task, TaskStatus
+from szkp.tests.utils import make_due
 
 SPRAWY      = '/szkp/sprawy/'
 KLIENCI     = '/szkp/klienci/'
@@ -142,6 +143,64 @@ class SuperuserTaskListViewTest(TestCase):
         response = self.client.get(reverse('szkp:my_tasks'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateNotUsed(response, 'szkp/task_list_su.html')
+
+    def test_ti_sul19_queryset_su_prefetchuje_task_set(self):
+        """TI-SUL19: Queryset SU używa prefetch_related — dostęp do task_set.all() nie powoduje extra SQL.
+
+        W RED: brak prefetch_related → każde task.task_set.all() generuje query → assertNumQueries(0) fail.
+        W GREEN: prefetch_related w my_tasks → cache zapełniony → 0 dodatkowych zapytań.
+        """
+        helper = Lawyer.objects.create(
+            first_name='Helper', last_name='Prefetch', bar_number='TST/TI/HLP/001',
+        )
+        parent = Task.objects.create(
+            title='Zadanie do prefetch testu',
+            assigned_lawyer=helper, created_by=helper,
+            due_date=make_due(3), status=TaskStatus.NOWE,
+        )
+        Task.objects.create(
+            title='Podzadanie do prefetch testu',
+            assigned_lawyer=helper, created_by=helper,
+            parent_task=parent,
+            due_date=make_due(5), status=TaskStatus.NOWE,
+        )
+        self.client.force_login(self.superuser)
+        response = self.client.get(reverse('szkp:my_tasks'))
+        self.assertEqual(response.status_code, 200)
+        tasks = list(response.context['tasks'])
+        self.assertGreater(len(tasks), 0, 'Brak zadań w kontekście — nie można zweryfikować prefetch')
+        with self.assertNumQueries(0):
+            for task in tasks:
+                list(task.task_set.all())
+
+    def test_ti_sul20_podzadanie_wyswietlane_w_html_odpowiedzi(self):
+        """TI-SUL20: HTML odpowiedzi dla SU zawiera tytuł podzadania (template iteruje task_set.all).
+
+        W RED: szablon iteruje tylko zadania nadrzędne → podzadanie niewidoczne w HTML.
+        W GREEN: szablon iteruje task.task_set.all → podzadanie renderowane w wierszu subtask.
+        """
+        helper = Lawyer.objects.create(
+            first_name='Helper2', last_name='Render', bar_number='TST/TI/HLP/002',
+        )
+        parent = Task.objects.create(
+            title='Zadanie nadrzędne render test',
+            assigned_lawyer=helper, created_by=helper,
+            due_date=make_due(3), status=TaskStatus.NOWE,
+        )
+        Task.objects.create(
+            title='UNIKALNE_PODZADANIE_RENDER_TI_SUL20',
+            assigned_lawyer=helper, created_by=helper,
+            parent_task=parent,
+            due_date=make_due(5), status=TaskStatus.NOWE,
+        )
+        self.client.force_login(self.superuser)
+        response = self.client.get(reverse('szkp:my_tasks'))
+        self.assertContains(
+            response,
+            'UNIKALNE_PODZADANIE_RENDER_TI_SUL20',
+            msg_prefix='Tytuł podzadania niewidoczny w HTML — '
+                        'task_list_su.html nie iteruje task.task_set.all',
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════════════

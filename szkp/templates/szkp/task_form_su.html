@@ -36,19 +36,106 @@
 
   <form method="post" novalidate>
     {% csrf_token %}
-    {% if parent_pk %}
-      <input type="hidden" name="parent_task" value="{{ parent_pk }}">
-    {% endif %}
+
     <div class="dash-panel">
       <div class="dash-panel-header">
         <span class="dash-panel-title">Dane zadania</span>
       </div>
       <div class="dash-panel-body">
         <div class="dash-form">
-          {{ form.as_div }}
+          <div>
+            {{ form.title.label_tag }}
+            {{ form.title }}
+            {% if form.title.errors %}<p class="dash-form-error">{{ form.title.errors }}</p>{% endif %}
+          </div>
+          <div>
+            {{ form.description.label_tag }}
+            {{ form.description }}
+          </div>
+          <div>
+            {{ form.priority.label_tag }}
+            {{ form.priority }}
+          </div>
+          <div>
+            {{ form.status.label_tag }}
+            {{ form.status }}
+            {% if form.status.errors %}<p class="dash-form-error">{{ form.status.errors }}</p>{% endif %}
+          </div>
+          <div>
+            {{ form.due_date.label_tag }}
+            {{ form.due_date }}
+          </div>
+          <div>
+            {{ form.assigned_lawyer.label_tag }}
+            {{ form.assigned_lawyer }}
+          </div>
+          <div>
+            {{ form.created_by.label_tag }}
+            {{ form.created_by }}
+          </div>
+          <div>
+            {{ form.case.label_tag }}
+            {{ form.case }}
+          </div>
+          {% if not task %}
+            <div>
+              {{ form.parent_task.label_tag }}
+              {{ form.parent_task }}
+            </div>
+          {% endif %}
         </div>
       </div>
     </div>
+
+    {% if task and formset %}
+      <div class="dash-panel">
+        <div class="dash-panel-header">
+          <span class="dash-panel-title">Podzadania</span>
+        </div>
+        <div class="dash-panel-body">
+          {{ formset.management_form }}
+          {% for subform in formset %}
+            <div class="dash-subtask-form">
+              <div class="dash-form">
+                <div>
+                  {{ subform.title.label_tag }}
+                  {{ subform.title }}
+                  {% if subform.title.errors %}<p class="dash-form-error">{{ subform.title.errors }}</p>{% endif %}
+                </div>
+                <div>
+                  {{ subform.description.label_tag }}
+                  {{ subform.description }}
+                </div>
+                <div>
+                  {{ subform.priority.label_tag }}
+                  {{ subform.priority }}
+                </div>
+                <div>
+                  {{ subform.status.label_tag }}
+                  {{ subform.status }}
+                </div>
+                <div>
+                  {{ subform.due_date.label_tag }}
+                  {{ subform.due_date }}
+                </div>
+                <div>
+                  {{ subform.assigned_lawyer.label_tag }}
+                  {{ subform.assigned_lawyer }}
+                </div>
+                {{ subform.id }}
+                {% if formset.can_delete %}
+                  <div class="dash-form-delete">
+                    {{ subform.DELETE }}
+                    <label for="{{ subform.DELETE.id_for_label }}">Usuń podzadanie</label>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
     <div class="dash-page-header-actions">
       <button type="submit" class="dash-btn dash-btn--primary">
         Zapisz

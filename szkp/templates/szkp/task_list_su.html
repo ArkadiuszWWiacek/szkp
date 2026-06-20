@@ -35,9 +35,14 @@
       </thead>
       <tbody>
         {% for task in tasks %}
-          <tr>
+          <tr class="task-row--parent">
             <td>
               <a href="{% url 'szkp:task_detail' task.pk %}">{{ task.title }}</a>
+              {% with sub_count=task.task_set.count %}
+                {% if sub_count %}
+                  <span class="dash-badge">{{ sub_count }}</span>
+                {% endif %}
+              {% endwith %}
             </td>
             <td>{{ task.assigned_lawyer }}</td>
             <td>
@@ -47,7 +52,7 @@
                 —
               {% endif %}
             </td>
-            <td>{{ task.due_date|date:"d.m.Y H:i" }}</td>
+            <td>{{ task.due_date|date:"d.m.Y H:i"|default:"—" }}</td>
             <td>{{ task.get_status_display }}</td>
             <td>
               <a href="{% url 'szkp:task_edit' task.pk %}">Edytuj</a>
@@ -55,6 +60,24 @@
               <a href="{% url 'szkp:task_delete' task.pk %}">Usuń</a>
             </td>
           </tr>
+          {% for subtask in task.task_set.all %}
+            <tr class="task-row--subtask">
+              <td class="task-subtask-title">
+                <a href="{% url 'szkp:task_detail' subtask.pk %}">{{ subtask.title }}</a>
+              </td>
+              <td>{{ subtask.assigned_lawyer }}</td>
+              <td>
+                {% if subtask.case %}
+                  <span class="dash-mono">{{ subtask.case.case_number }}</span>
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+              <td>{{ subtask.due_date|date:"d.m.Y H:i"|default:"—" }}</td>
+              <td>{{ subtask.get_status_display }}</td>
+              <td>—</td>
+            </tr>
+          {% endfor %}
         {% empty %}
           <tr>
             <td colspan="6" class="dash-table-empty">Brak zadań</td>

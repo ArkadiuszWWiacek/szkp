@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django import forms
+from django.forms import inlineformset_factory
 from django.utils import timezone
 
 from szkp.models import (
@@ -8,6 +9,7 @@ from szkp.models import (
     Client, ClientType,
     CourtHearing, Document, DocumentType, HearingStatus, HearingType,
     Invoice, InvoiceStatus,
+    Lawyer,
     Task, TaskPriority, TaskStatus,
 )
 
@@ -308,9 +310,57 @@ class InvoiceFormSU(InvoiceForm):
 
 
 class TaskFormSU(TaskForm):
-    created_by  = forms.IntegerField(required=False)
-    case        = forms.IntegerField(required=False)
-    parent_task = forms.IntegerField(required=False)
+    assigned_lawyer = forms.ModelChoiceField(
+        queryset=Lawyer.objects.select_related('user').order_by('last_name', 'first_name'),
+        required=False,
+        empty_label='— brak —',
+    )
+    created_by = forms.ModelChoiceField(
+        queryset=Lawyer.objects.select_related('user').order_by('last_name', 'first_name'),
+        required=False,
+        empty_label='— brak —',
+    )
+    case = forms.ModelChoiceField(
+        queryset=Case.objects.order_by('case_number'),
+        required=False,
+        empty_label='— brak —',
+    )
+    parent_task = forms.ModelChoiceField(
+        queryset=Task.objects.filter(parent_task__isnull=True).order_by('title'),
+        required=False,
+        empty_label='— brak —',
+    )
+
+    def __init__(self, *args, exclude_pk=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if exclude_pk:
+            self.fields['parent_task'].queryset = (
+                Task.objects.filter(parent_task__isnull=True)
+                .exclude(pk=exclude_pk)
+                .order_by('title')
+            )
+        if self.instance.pk:
+            self.initial.setdefault('assigned_lawyer', self.instance.assigned_lawyer_id)
+            self.initial.setdefault('created_by', self.instance.created_by_id)
+            self.initial.setdefault('case', self.instance.case_id)
+
+    def clean_assigned_lawyer(self):
+        return self.cleaned_data.get('assigned_lawyer')
+
+
+SubtaskInlineFormSet = inlineformset_factory(
+    Task,
+    Task,
+    fk_name='parent_task',
+    fields=['title', 'description', 'priority', 'status', 'due_date', 'assigned_lawyer'],
+    extra=1,
+    can_delete=True,
+    widgets={
+        'due_date': forms.DateTimeInput(
+            attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M',
+        ),
+    },
+)
 
 
 class CaseLawyerFormSU(CaseLawyerForm):

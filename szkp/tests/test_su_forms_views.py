@@ -337,6 +337,173 @@ class TaskFormSUViewTest(TestCase):
         )
         self.assertTemplateNotUsed(response, 'szkp/task_form_su.html')
 
+    def test_ti_su_15_su_task_form_edit_kontekst_zawiera_formset(self):
+        """TI-SU-15: GET task_edit jako SU dla zadania nadrzędnego → context['formset'] nie jest None.
+
+        W RED: widok nie tworzy formset → 'formset' nie w context → AssertionError.
+        W GREEN: widok tworzy SubtaskInlineFormSet dla zadania nadrzędnego → formset w context.
+        """
+        lawyer = Lawyer.objects.get(user=self.superuser)
+        parent = Task.objects.create(
+            title='Zadanie nadrzędne do edycji TI15',
+            assigned_lawyer=lawyer, created_by=lawyer,
+            due_date=make_due(3), status=TaskStatus.NOWE,
+        )
+        self.client.force_login(self.superuser)
+        response = self.client.get(reverse('szkp:task_edit', kwargs={'pk': parent.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            'formset', response.context,
+            'Klucz "formset" nieobecny w kontekście edycji zadania nadrzędnego — '
+            'widok nie przekazuje SubtaskInlineFormSet do szablonu',
+        )
+        self.assertIsNotNone(
+            response.context['formset'],
+            'context["formset"] jest None — formset nie jest tworzony dla zadania nadrzędnego',
+        )
+
+    def test_ti_su_16_su_task_form_edit_brak_formset_dla_podzadania(self):
+        """TI-SU-16 (guard): GET task_edit jako SU dla podzadania → context['formset'] jest None.
+
+        Test zabezpiecza przed implementacją, która błędnie pokazuje formset podzadań
+        nawet przy edycji podzadania. Przechodzi zarówno w RED jak i GREEN (guard).
+        """
+        lawyer = Lawyer.objects.get(user=self.superuser)
+        parent = Task.objects.create(
+            title='Nadrzędne guard TI16',
+            assigned_lawyer=lawyer, created_by=lawyer,
+            due_date=make_due(3), status=TaskStatus.NOWE,
+        )
+        subtask = Task.objects.create(
+            title='Podzadanie guard TI16',
+            assigned_lawyer=lawyer, created_by=lawyer,
+            parent_task=parent,
+            due_date=make_due(5), status=TaskStatus.NOWE,
+        )
+        self.client.force_login(self.superuser)
+        response = self.client.get(reverse('szkp:task_edit', kwargs={'pk': subtask.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(
+            response.context.get('formset'),
+            'context["formset"] nie jest None dla podzadania — '
+            'widok błędnie pokazuje inline formset podzadań przy edycji podzadania',
+        )
+
+    def test_ti_su_17_su_task_form_post_zapisuje_nowe_podzadanie(self):
+        """TI-SU-17: POST task_edit z danymi formset → nowe podzadanie w bazie.
+
+        W RED: widok nie przetwarza formset → brak nowego podzadania → assertIsNotNone fail.
+        W GREEN: widok przetwarza SubtaskInlineFormSet → podzadanie zapisane.
+        """
+        lawyer = Lawyer.objects.get(user=self.superuser)
+        parent = Task.objects.create(
+            title='Nadrzędne do nowego podzadania TI17',
+            assigned_lawyer=lawyer, created_by=lawyer,
+            due_date=make_due(3), status=TaskStatus.NOWE,
+        )
+        self.client.force_login(self.superuser)
+        post_data = {
+            'title': parent.title,
+            'priority': 'normalna',
+            'status': 'nowe',
+            'description': '',
+            'task_set-TOTAL_FORMS': '1',
+            'task_set-INITIAL_FORMS': '0',
+            'task_set-MIN_NUM_FORMS': '0',
+            'task_set-MAX_NUM_FORMS': '1000',
+            'task_set-0-title': 'Nowe podzadanie via formset TI17',
+            'task_set-0-priority': 'normalna',
+            'task_set-0-status': 'nowe',
+            'task_set-0-description': '',
+            'task_set-0-assigned_lawyer': str(lawyer.pk),
+        }
+        self.client.post(reverse('szkp:task_edit', kwargs={'pk': parent.pk}), data=post_data)
+        new_sub = Task.objects.filter(
+            title='Nowe podzadanie via formset TI17',
+            parent_task=parent,
+        ).first()
+        self.assertIsNotNone(
+            new_sub,
+            'Podzadanie nie zostało zapisane po POST z danymi formset — '
+            'widok nie przetwarza SubtaskInlineFormSet',
+        )
+
+    def test_ti_su_18_su_task_form_post_usuwa_podzadanie_z_delete_checkbox(self):
+        """TI-SU-18: POST task_edit z DELETE=on dla istniejącego podzadania → podzadanie usunięte.
+
+        W RED: widok nie przetwarza formset → podzadanie nadal istnieje → assertFalse(True) fail.
+        W GREEN: widok obsługuje deleted_objects → podzadanie usunięte z bazy.
+        """
+        lawyer = Lawyer.objects.get(user=self.superuser)
+        parent = Task.objects.create(
+            title='Nadrzędne do usunięcia podzadania TI18',
+            assigned_lawyer=lawyer, created_by=lawyer,
+            due_date=make_due(3), status=TaskStatus.NOWE,
+        )
+        sub = Task.objects.create(
+            title='Podzadanie do usunięcia TI18',
+            assigned_lawyer=lawyer, created_by=lawyer,
+            parent_task=parent,
+            due_date=make_due(5), status=TaskStatus.NOWE,
+        )
+        self.client.force_login(self.superuser)
+        post_data = {
+            'title': parent.title,
+            'priority': 'normalna',
+            'status': 'nowe',
+            'description': '',
+            'task_set-TOTAL_FORMS': '1',
+            'task_set-INITIAL_FORMS': '1',
+            'task_set-MIN_NUM_FORMS': '0',
+            'task_set-MAX_NUM_FORMS': '1000',
+            'task_set-0-id': str(sub.pk),
+            'task_set-0-title': sub.title,
+            'task_set-0-priority': 'normalna',
+            'task_set-0-status': 'nowe',
+            'task_set-0-description': '',
+            'task_set-0-assigned_lawyer': str(lawyer.pk),
+            'task_set-0-DELETE': 'on',
+        }
+        self.client.post(reverse('szkp:task_edit', kwargs={'pk': parent.pk}), data=post_data)
+        still_exists = Task.objects.filter(pk=sub.pk).exists()
+        self.assertFalse(
+            still_exists,
+            f'Podzadanie pk={sub.pk} nadal istnieje po POST z DELETE=on — '
+            'widok nie obsługuje deleted_objects z formset',
+        )
+
+    def test_ti_su_19_assigned_lawyer_w_taskformsu_jest_modelchoicefield(self):
+        """TI-SU-19: TaskFormSU.fields['assigned_lawyer'] to ModelChoiceField (nie IntegerField).
+
+        W RED: TaskFormSU.assigned_lawyer = IntegerField → assertIsInstance fail.
+        W GREEN: TaskFormSU.assigned_lawyer = ModelChoiceField → pass.
+        """
+        from django import forms as django_forms
+        from szkp.forms import TaskFormSU
+        form = TaskFormSU()
+        self.assertIsInstance(
+            form.fields['assigned_lawyer'],
+            django_forms.ModelChoiceField,
+            'TaskFormSU.assigned_lawyer nie jest ModelChoiceField — '
+            'pole wyświetla ID zamiast nazwisk prawników',
+        )
+
+    def test_ti_su_20_case_w_taskformsu_jest_modelchoicefield(self):
+        """TI-SU-20: TaskFormSU.fields['case'] to ModelChoiceField (nie IntegerField).
+
+        W RED: TaskFormSU.case = IntegerField → assertIsInstance fail.
+        W GREEN: TaskFormSU.case = ModelChoiceField → pass.
+        """
+        from django import forms as django_forms
+        from szkp.forms import TaskFormSU
+        form = TaskFormSU()
+        self.assertIsInstance(
+            form.fields['case'],
+            django_forms.ModelChoiceField,
+            'TaskFormSU.case nie jest ModelChoiceField — '
+            'pole wyświetla ID zamiast sygnatur spraw',
+        )
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # TI-SU-15 – TI-SU-16: case_lawyer_add

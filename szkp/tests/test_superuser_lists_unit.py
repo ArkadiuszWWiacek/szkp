@@ -185,3 +185,53 @@ class SuperuserListCssTest(SimpleTestCase):
     def test_tu_sul22_css_zawiera_dash_pagination(self):
         """TU-SUL22: style.css definiuje .dash-pagination dla paginacji."""
         self.assertIn('.dash-pagination', self._css())
+
+    def test_tu_sul23_css_zawiera_task_row_subtask(self):
+        """TU-SUL23: style.css definiuje .task-row--subtask dla wierszy podzadań."""
+        self.assertIn(
+            '.task-row--subtask', self._css(),
+            'Brak reguły .task-row--subtask w static/style.css — '
+            'wiersze podzadań nie mają dedykowanego stylu',
+        )
+
+    def test_tu_sul24_task_list_su_zawiera_class_task_row_parent(self):
+        """TU-SUL24: task_list_su.html używa klasy CSS task-row--parent dla zadań nadrzędnych."""
+        path = os.path.join(
+            settings.BASE_DIR,
+            'szkp', 'templates', 'szkp', 'task_list_su.html',
+        )
+        with open(path, encoding='utf-8') as f:
+            content = f.read()
+        self.assertIn(
+            'task-row--parent', content,
+            'Brak "task-row--parent" w task_list_su.html — '
+            'wiersze nadrzędne nie mają klasy CSS do selektowania w testach',
+        )
+
+    def test_tu_sul25_task_list_su_zawiera_class_task_row_subtask(self):
+        """TU-SUL25: task_list_su.html używa klasy CSS task-row--subtask dla podzadań."""
+        path = os.path.join(
+            settings.BASE_DIR,
+            'szkp', 'templates', 'szkp', 'task_list_su.html',
+        )
+        with open(path, encoding='utf-8') as f:
+            content = f.read()
+        self.assertIn(
+            'task-row--subtask', content,
+            'Brak "task-row--subtask" w task_list_su.html — '
+            'podzadania nie są renderowane z wymaganą klasą CSS',
+        )
+
+    def test_tu_sul26_task_list_su_iteruje_task_set(self):
+        """TU-SUL26: task_list_su.html zawiera pętlę po task.task_set.all (podzadania)."""
+        path = os.path.join(
+            settings.BASE_DIR,
+            'szkp', 'templates', 'szkp', 'task_list_su.html',
+        )
+        with open(path, encoding='utf-8') as f:
+            content = f.read()
+        self.assertIn(
+            'task.task_set.all', content,
+            'Brak "task.task_set.all" w task_list_su.html — '
+            'szablon nie iteruje podzadań zadania nadrzędnego',
+        )

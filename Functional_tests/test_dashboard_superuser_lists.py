@@ -325,11 +325,19 @@ class SuperuserTaskListTest(SzkpSeleniumTestCase):
         inny_prawnik = Lawyer.objects.create(
             first_name='Inny', last_name='Prawnik', bar_number='TST/SU/ZAD/INP',
         )
-        Task.objects.create(
+        self.parent_task = Task.objects.create(
             title='Zadanie testowe listy su',
             assigned_lawyer=inny_prawnik,
             created_by=inny_prawnik,
             due_date=make_due(3),
+            status=TaskStatus.NOWE,
+        )
+        self.subtask = Task.objects.create(
+            title='Podzadanie testowe listy su',
+            assigned_lawyer=inny_prawnik,
+            created_by=inny_prawnik,
+            parent_task=self.parent_task,
+            due_date=make_due(5),
             status=TaskStatus.NOWE,
         )
 
@@ -396,6 +404,46 @@ class SuperuserTaskListTest(SzkpSeleniumTestCase):
         self.assertEqual(
             len(sidebar), 0,
             'Staff bez is_superuser widzi .dash-sidebar — routing do dash-template jest nieprawidłowy',
+        )
+
+    def test_psu_l04f_podzadania_wyswietlane_pod_zadaniem_nadrzednym(self):
+        """PSU-L04f: Lista zadań SU wyświetla wiersze podzadań z klasą .task-row--subtask."""
+        self._jako_superuser()
+        subtask_rows = self.selenium.find_elements(By.CSS_SELECTOR, '.task-row--subtask')
+        self.assertGreater(
+            len(subtask_rows), 0,
+            'Brak wierszy .task-row--subtask — podzadania nie są grupowane pod zadaniem nadrzędnym; '
+            'task_list_su.html nie renderuje podzadań',
+        )
+
+    def test_psu_l04g_wiersz_podzadania_nie_ma_linku_edytuj(self):
+        """PSU-L04g: Wiersze .task-row--subtask nie zawierają linku /edytuj/."""
+        self._jako_superuser()
+        subtask_rows = self.selenium.find_elements(By.CSS_SELECTOR, '.task-row--subtask')
+        self.assertGreater(
+            len(subtask_rows), 0,
+            'Brak wierszy .task-row--subtask — nie można zweryfikować braku linku Edytuj',
+        )
+        for row in subtask_rows:
+            edit_links = row.find_elements(By.CSS_SELECTOR, 'a[href*="/edytuj/"]')
+            self.assertEqual(
+                len(edit_links), 0,
+                'Wiersz .task-row--subtask zawiera link /edytuj/ — podzadanie powinno być '
+                'edytowalne tylko z formularza zadania nadrzędnego',
+            )
+
+    def test_psu_l04h_wiersz_nadrzedny_ma_link_edytuj(self):
+        """PSU-L04h: Wiersze .task-row--parent zawierają link /edytuj/."""
+        self._jako_superuser()
+        parent_rows = self.selenium.find_elements(By.CSS_SELECTOR, '.task-row--parent')
+        self.assertGreater(
+            len(parent_rows), 0,
+            'Brak wierszy .task-row--parent — zadania nadrzędne nie mają wymaganej klasy CSS',
+        )
+        edit_links = parent_rows[0].find_elements(By.CSS_SELECTOR, 'a[href*="/edytuj/"]')
+        self.assertGreater(
+            len(edit_links), 0,
+            'Wiersz .task-row--parent nie zawiera linku /edytuj/ — brak akcji edycji przy zadaniu nadrzędnym',
         )
 
 

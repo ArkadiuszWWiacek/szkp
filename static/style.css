@@ -2096,6 +2096,12 @@ a.invoice-item:hover {
 .dash-data-table tr:last-child td { border-bottom: none; }
 .dash-data-table tr:hover td { background: rgba(245,242,237,0.5); }
 
+.task-row--subtask td { background: var(--dash-surface-alt); font-size: 13px; }
+.task-row--subtask:hover td { background: color-mix(in srgb, var(--dash-surface-alt) 80%, var(--dash-accent-warm) 20%); }
+.task-subtask-title { padding-left: 2rem !important; }
+.dash-subtask-form { border-top: 1px solid var(--dash-border); padding: 16px 0; }
+.dash-subtask-form:first-child { border-top: none; padding-top: 0; }
+
 /* ── MONO ── */
 .dash-mono {
   font-family: 'IBM Plex Mono', monospace;

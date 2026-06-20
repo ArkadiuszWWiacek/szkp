@@ -15,7 +15,9 @@ from szkp.models import (
     CaseLawyer, CaseLawyerRole,
     Client, ClientType,
     Lawyer,
+    Task, TaskStatus,
 )
+from szkp.tests.utils import make_due
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -537,4 +539,176 @@ class SUDocumentFormTest(SzkpSeleniumTestCase):
         self.assertEqual(
             len(sidebar), 0,
             '.dash-sidebar obecny dla nie-SU na document_form — blad regresji',
+        )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TC-SU-F25 – TC-SU-F30: task_form hierarchia — ModelChoiceField + inline formset
+# ═══════════════════════════════════════════════════════════════════════════
+
+@tag('functional')
+class SUTaskFormHierarchyTest(SzkpSeleniumTestCase):
+    """TC-SU-F25–F30: SU na formularzu zadania widzi selekty z nazwami i może edytować podzadania inline."""
+
+    def setUp(self):
+        self.selenium.get(self.live_server_url)
+        self.selenium.delete_all_cookies()
+
+        self.superuser = User.objects.create_user(
+            username='su_taskhier', password='x',
+            is_staff=True, is_superuser=True,
+        )
+        self.lawyer = Lawyer.objects.create(
+            user=self.superuser,
+            first_name='Su', last_name='Admin',
+            bar_number='TST/TH/001',
+        )
+        self.lawyer2 = Lawyer.objects.create(
+            first_name='Anna', last_name='Kowalska',
+            bar_number='TST/TH/002',
+        )
+        klient = Client.objects.create(
+            type=ClientType.OSOBA_FIZYCZNA,
+            first_name='Jan', last_name='Klient',
+            pesel='80010112348',
+        )
+        self.case = Case.objects.create(
+            client=klient,
+            case_number='TST/TH/2024/001',
+            title='Sprawa hierarchii zadań',
+            case_type=CaseType.CYWILNA,
+        )
+        self.parent_task = Task.objects.create(
+            title='Zadanie nadrzędne hierarchii',
+            assigned_lawyer=self.lawyer,
+            created_by=self.lawyer,
+            due_date=make_due(7),
+            status=TaskStatus.NOWE,
+        )
+        self.subtask = Task.objects.create(
+            title='Podzadanie istniejące',
+            assigned_lawyer=self.lawyer,
+            created_by=self.lawyer,
+            parent_task=self.parent_task,
+            due_date=make_due(5),
+            status=TaskStatus.NOWE,
+        )
+        self._zaloguj_przez_orm(self.superuser)
+
+    def test_tc_su_f25_assigned_lawyer_jest_selectem_z_nazwiskami(self):
+        """TC-SU-F25: SU na formularzu nowego zadania widzi <select> dla assigned_lawyer z nazwiskami prawników."""
+        self.selenium.get(self.live_server_url + '/szkp/zadania/nowe/')
+        selects = self.selenium.find_elements(By.CSS_SELECTOR, 'select[name="assigned_lawyer"]')
+        self.assertGreater(
+            len(selects), 0,
+            'Brak <select name="assigned_lawyer"> — pole renderuje się jako <input type="number">; '
+            'TaskFormSU.assigned_lawyer powinno być ModelChoiceField',
+        )
+        select = Select(selects[0])
+        option_texts = [opt.text for opt in select.options]
+        lawyer_name = f'{self.lawyer2.first_name} {self.lawyer2.last_name}'
+        self.assertIn(
+            lawyer_name, option_texts,
+            f'Nazwisko {lawyer_name!r} nieobecne w opcjach selektu assigned_lawyer — '
+            f'dostępne opcje: {option_texts}',
+        )
+
+    def test_tc_su_f26_case_jest_selectem_z_sygnaturami(self):
+        """TC-SU-F26: SU na formularzu nowego zadania widzi <select> dla case z sygnaturami spraw."""
+        self.selenium.get(self.live_server_url + '/szkp/zadania/nowe/')
+        selects = self.selenium.find_elements(By.CSS_SELECTOR, 'select[name="case"]')
+        self.assertGreater(
+            len(selects), 0,
+            'Brak <select name="case"> — pole renderuje się jako <input type="number">; '
+            'TaskFormSU.case powinno być ModelChoiceField',
+        )
+        select = Select(selects[0])
+        option_texts = [opt.text for opt in select.options]
+        self.assertTrue(
+            any(self.case.case_number in text for text in option_texts),
+            f'Sygnatura {self.case.case_number!r} nieobecna w opcjach selektu case — '
+            f'dostępne opcje: {option_texts}',
+        )
+
+    def test_tc_su_f27_su_task_form_edit_zawiera_sekcje_podzadan(self):
+        """TC-SU-F27: SU edytując zadanie nadrzędne widzi sekcję 'Podzadania' z formularzem inline."""
+        url = self.live_server_url + f'/szkp/zadania/{self.parent_task.pk}/edytuj/'
+        self.selenium.get(url)
+        podzadania_headers = self.selenium.find_elements(
+            By.XPATH, '//*[contains(text(), "Podzadania")]',
+        )
+        self.assertGreater(
+            len(podzadania_headers), 0,
+            'Brak sekcji z tekstem "Podzadania" w formularzu edycji zadania nadrzędnego — '
+            'inline formset podzadań nie jest renderowany',
+        )
+
+    def test_tc_su_f28_su_task_form_mozna_edytowac_podzadanie_inline(self):
+        """TC-SU-F28: SU może zmienić tytuł istniejącego podzadania przez formularz inline."""
+        url = self.live_server_url + f'/szkp/zadania/{self.parent_task.pk}/edytuj/'
+        self.selenium.get(url)
+        title_inputs = self.selenium.find_elements(
+            By.CSS_SELECTOR, 'input[name^="task_set-"][name$="-title"]',
+        )
+        self.assertGreater(
+            len(title_inputs), 0,
+            'Brak pól title podzadania w formularzu (input[name^="task_set-"][name$="-title"]) — '
+            'formset podzadań nie jest renderowany',
+        )
+        title_inputs[0].clear()
+        title_inputs[0].send_keys('Zmieniony tytuł podzadania')
+        self.selenium.find_element(By.CSS_SELECTOR, 'button[type="submit"]').click()
+        updated = Task.objects.get(pk=self.subtask.pk)
+        self.assertEqual(
+            updated.title, 'Zmieniony tytuł podzadania',
+            f'Tytuł podzadania nie zmienił się po zapisie — aktualnie: {updated.title!r}',
+        )
+
+    def test_tc_su_f29_su_task_form_mozna_dodac_podzadanie_inline(self):
+        """TC-SU-F29: SU może dodać nowe podzadanie przez extra-row w formularzu inline."""
+        url = self.live_server_url + f'/szkp/zadania/{self.parent_task.pk}/edytuj/'
+        self.selenium.get(url)
+        title_inputs = self.selenium.find_elements(
+            By.CSS_SELECTOR, 'input[name^="task_set-"][name$="-title"]',
+        )
+        self.assertGreater(
+            len(title_inputs), 1,
+            'Brak dodatkowego (extra) wiersza dla nowego podzadania — '
+            'SubtaskInlineFormSet powinien mieć extra=1',
+        )
+        extra_title = title_inputs[-1]
+        extra_title.send_keys('Nowe podzadanie przez formset')
+        lawyer_selects = self.selenium.find_elements(
+            By.CSS_SELECTOR, 'select[name^="task_set-"][name$="-assigned_lawyer"]',
+        )
+        lawyer_name = f'{self.lawyer.first_name} {self.lawyer.last_name}'
+        Select(lawyer_selects[-1]).select_by_visible_text(lawyer_name)
+        self.selenium.find_element(By.CSS_SELECTOR, 'button[type="submit"]').click()
+        new_task = Task.objects.filter(
+            title='Nowe podzadanie przez formset',
+            parent_task=self.parent_task,
+        ).first()
+        self.assertIsNotNone(
+            new_task,
+            'Nowe podzadanie nie zostało zapisane w bazie po wypełnieniu extra-row formset',
+        )
+
+    def test_tc_su_f30_su_task_form_mozna_usunac_podzadanie_inline(self):
+        """TC-SU-F30: SU może usunąć podzadanie zaznaczając checkbox DELETE w formularzu inline."""
+        url = self.live_server_url + f'/szkp/zadania/{self.parent_task.pk}/edytuj/'
+        self.selenium.get(url)
+        delete_checkboxes = self.selenium.find_elements(
+            By.CSS_SELECTOR, 'input[name^="task_set-"][name$="-DELETE"]',
+        )
+        self.assertGreater(
+            len(delete_checkboxes), 0,
+            'Brak checkboxów DELETE w formularzu podzadań — '
+            'SubtaskInlineFormSet powinien mieć can_delete=True',
+        )
+        delete_checkboxes[0].click()
+        self.selenium.find_element(By.CSS_SELECTOR, 'button[type="submit"]').click()
+        still_exists = Task.objects.filter(pk=self.subtask.pk).exists()
+        self.assertFalse(
+            still_exists,
+            f'Podzadanie pk={self.subtask.pk} nadal istnieje w bazie po zaznaczeniu DELETE i zapisaniu',
         )
