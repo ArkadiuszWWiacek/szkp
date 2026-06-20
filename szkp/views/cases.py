@@ -127,6 +127,8 @@ def case_detail(request, pk):
             'prawnicy':  lawyers.count(),
         },
     }
+    if request.user.is_superuser:
+        return render(request, 'szkp/case_detail_su.html', context)
     return render(request, 'szkp/case_detail.html', context)
 
 

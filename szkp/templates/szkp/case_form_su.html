@@ -45,12 +45,26 @@
           {{ form.as_div }}
         </div>
       </div>
+      {% if case %}
+        <div class="dash-detail-meta">
+          <div class="dash-detail-meta-item">
+            Utworzono: <strong>{{ case.created_at|date:"d.m.Y H:i" }}</strong>
+          </div>
+          <div class="dash-detail-meta-item">
+            Zaktualizowano: <strong>{{ case.updated_at|date:"d.m.Y H:i" }}</strong>
+          </div>
+        </div>
+      {% endif %}
     </div>
     <div class="dash-page-header-actions">
       <button type="submit" class="dash-btn dash-btn--primary">
         Zapisz
       </button>
-      <a href="{% url 'szkp:case_list' %}" class="dash-btn dash-btn--ghost">Anuluj</a>
+      {% if case %}
+        <a href="{% url 'szkp:case_detail' case.pk %}" class="dash-btn dash-btn--ghost">Anuluj</a>
+      {% else %}
+        <a href="{% url 'szkp:case_list' %}" class="dash-btn dash-btn--ghost">Anuluj</a>
+      {% endif %}
     </div>
   </form>
 {% endblock content %}

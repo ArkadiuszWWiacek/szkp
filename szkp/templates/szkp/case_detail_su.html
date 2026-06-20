@@ -1,0 +1,369 @@
+{% extends "base_dash.html" %}
+
+{% block title %}
+  {{ case.case_number }} — Sprawa
+{% endblock title %}
+{% block topbar_title %}
+  {{ case.case_number }}
+{% endblock topbar_title %}
+{% block nav_cases %}
+  active
+{% endblock nav_cases %}
+
+{% block content %}
+
+  <div class="dash-page-header">
+    <div>
+      <h1>
+        {{ case.case_number }}
+      </h1>
+      <div class="dash-subtitle">
+        {{ case.title }}
+      </div>
+    </div>
+    <div class="dash-page-header-actions">
+      <a href="{% url 'szkp:case_edit' case.pk %}" class="dash-btn dash-btn--primary">
+        Edytuj
+      </a>
+      <a href="{% url 'szkp:case_list' %}" class="dash-btn dash-btn--ghost">
+        Powrót
+      </a>
+    </div>
+  </div>
+
+  <div class="dash-panel dash-panel--mb">
+    <div class="dash-panel-header">
+      <span class="dash-panel-title">Dane sprawy</span>
+    </div>
+
+    <div class="dash-detail-grid">
+      <div>
+        <div class="dash-detail-label">Sygnatura akt</div>
+        <div class="dash-detail-value dash-detail-value--mono">{{ case.case_number }}</div>
+      </div>
+      {% if case.court_case_number %}
+        <div>
+          <div class="dash-detail-label">Sygnatura sądowa</div>
+          <div class="dash-detail-value dash-detail-value--mono">{{ case.court_case_number }}</div>
+        </div>
+      {% endif %}
+      <div>
+        <div class="dash-detail-label">Typ sprawy</div>
+        <div class="dash-detail-value">{{ case.get_case_type_display }}</div>
+      </div>
+      <div>
+        <div class="dash-detail-label">Status</div>
+        <div class="dash-detail-value">{{ case.get_status_display }}</div>
+      </div>
+      <div>
+        <div class="dash-detail-label">Priorytet</div>
+        <div class="dash-detail-value">{{ case.get_case_priority_display|default:"—" }}</div>
+      </div>
+      <div>
+        <div class="dash-detail-label">Klient</div>
+        <div class="dash-detail-value">{{ case.client }}</div>
+      </div>
+      {% if lead_lawyer %}
+        <div>
+          <div class="dash-detail-label">Prowadzący</div>
+          <div class="dash-detail-value">{{ lead_lawyer.lawyer.first_name }} {{ lead_lawyer.lawyer.last_name }}</div>
+        </div>
+      {% endif %}
+      {% if case.opened_at %}
+        <div>
+          <div class="dash-detail-label">Data otwarcia</div>
+          <div class="dash-detail-value dash-detail-value--mono">{{ case.opened_at|date:"d.m.Y" }}</div>
+        </div>
+      {% endif %}
+      {% if case.closed_at %}
+        <div>
+          <div class="dash-detail-label">Data zamknięcia</div>
+          <div class="dash-detail-value dash-detail-value--mono">{{ case.closed_at|date:"d.m.Y" }}</div>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if case.description %}
+      <div class="dash-detail-desc">{{ case.description }}</div>
+    {% endif %}
+
+    <div class="dash-detail-meta">
+      <div class="dash-detail-meta-item">
+        Utworzono: <strong>{{ case.created_at|date:"d.m.Y H:i" }}</strong>
+      </div>
+      <div class="dash-detail-meta-item">
+        Zaktualizowano: <strong>{{ case.updated_at|date:"d.m.Y H:i" }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-tabs">
+    <a class="dash-tab {% if active_tab == 'terminy' %}active{% endif %}"
+       href="?tab=terminy">
+      Terminy <span class="dash-tab-count">{{ tab_counts.terminy }}</span>
+    </a>
+    <a class="dash-tab {% if active_tab == 'dokumenty' %}active{% endif %}"
+       href="?tab=dokumenty">
+      Dokumenty <span class="dash-tab-count">{{ tab_counts.dokumenty }}</span>
+    </a>
+    <a class="dash-tab {% if active_tab == 'zadania' %}active{% endif %}"
+       href="?tab=zadania">
+      Zadania <span class="dash-tab-count">{{ tab_counts.zadania }}</span>
+    </a>
+    <a class="dash-tab {% if active_tab == 'faktury' %}active{% endif %}"
+       href="?tab=faktury">
+      Faktury <span class="dash-tab-count">{{ tab_counts.faktury }}</span>
+    </a>
+    <a class="dash-tab {% if active_tab == 'prawnicy' %}active{% endif %}"
+       href="?tab=prawnicy">
+      Prawnicy <span class="dash-tab-count">{{ tab_counts.prawnicy }}</span>
+    </a>
+  </div>
+
+  {% if active_tab == 'terminy' %}
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Terminy sądowe</span>
+        <a href="{% url 'szkp:court_hearing_new' case.pk %}" class="dash-panel-action">+ Dodaj termin</a>
+      </div>
+      {% if hearings %}
+        <table class="dash-data-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Typ</th>
+              <th>Sąd / sala</th>
+              <th>Sędzia</th>
+              <th>Status</th>
+              <th>Akcje</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for h in hearings %}
+              <tr>
+                <td><span class="dash-mono">{{ h.scheduled_at|date:"d.m.Y" }}</span></td>
+                <td>{{ h.get_hearing_type_display }}</td>
+                <td>
+                  {{ h.court_name }}
+                  {% if h.courtroom %}
+                    , sala {{ h.courtroom }}
+                  {% endif %}
+                </td>
+                <td>{{ h.judge_name|default:"—" }}</td>
+                <td>{{ h.get_status_display }}</td>
+                <td>
+                  <a href="{% url 'szkp:court_hearing_edit' case.pk h.pk %}" class="dash-panel-action">Edytuj</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="dash-table-empty">Brak terminów sądowych dla tej sprawy.</div>
+      {% endif %}
+    </div>
+
+  {% elif active_tab == 'dokumenty' %}
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Dokumenty</span>
+        <a href="{% url 'szkp:document_new' case.pk %}" class="dash-panel-action">+ Dodaj dokument</a>
+      </div>
+      {% if documents %}
+        <table class="dash-data-table">
+          <thead>
+            <tr>
+              <th>Tytuł</th>
+              <th>Typ</th>
+              <th>Wersje</th>
+              <th>Data dodania</th>
+              <th>Akcje</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for doc in documents %}
+              <tr>
+                <td>{{ doc.title }}{% if doc.is_internal %} <span class="dash-doc-internal">[wewn.]</span>{% endif %}</td>
+                <td>{{ doc.get_document_type_display }}</td>
+                <td>
+                  {% for ver in doc.documentversion_set.all %}
+                    v{{ ver.version_number }}
+                  {% empty %}
+                    —
+                  {% endfor %}
+                </td>
+                <td><span class="dash-mono">{{ doc.created_at|date:"d.m.Y" }}</span></td>
+                <td>
+                  <a href="{% url 'szkp:document_detail' case.pk doc.pk %}" class="dash-panel-action">Szczegóły</a>
+                  ·
+                  <a href="{% url 'szkp:document_version_upload' case.pk doc.pk %}" class="dash-panel-action">+ Wersja</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="dash-table-empty">Brak dokumentów dla tej sprawy.</div>
+      {% endif %}
+    </div>
+
+  {% elif active_tab == 'zadania' %}
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Zadania</span>
+        <a href="{% url 'szkp:case_task_new' case.pk %}" class="dash-panel-action">+ Dodaj zadanie</a>
+      </div>
+      {% if tasks %}
+        <table class="dash-data-table">
+          <thead>
+            <tr>
+              <th>Tytuł</th>
+              <th>Priorytet</th>
+              <th>Status</th>
+              <th>Prawnik</th>
+              <th>Termin</th>
+              <th>Akcje</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for task in tasks %}
+              <tr>
+                <td>{{ task.title }}</td>
+                <td>{{ task.get_priority_display }}</td>
+                <td>{{ task.get_status_display }}</td>
+                <td>
+                  {% if task.assigned_lawyer %}
+                    {{ task.assigned_lawyer.first_name }} {{ task.assigned_lawyer.last_name }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+                <td>
+                  {% if task.due_date %}
+                    <span class="dash-mono">{{ task.due_date|date:"d.m.Y" }}</span>
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+                <td>
+                  <a href="{% url 'szkp:task_detail' task.pk %}" class="dash-panel-action">Szczegóły</a>
+                </td>
+              </tr>
+              {% for sub in task.task_set.all %}
+                <tr class="task-row--subtask">
+                  <td class="task-subtask-title">↳ {{ sub.title }}</td>
+                  <td>{{ sub.get_priority_display }}</td>
+                  <td>{{ sub.get_status_display }}</td>
+                  <td>
+                    {% if sub.assigned_lawyer %}
+                      {{ sub.assigned_lawyer.first_name }} {{ sub.assigned_lawyer.last_name }}
+                    {% else %}
+                      —
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if sub.due_date %}
+                      <span class="dash-mono">{{ sub.due_date|date:"d.m.Y" }}</span>
+                    {% else %}
+                      —
+                    {% endif %}
+                  </td>
+                  <td>
+                    <a href="{% url 'szkp:task_detail' sub.pk %}" class="dash-panel-action">Szczegóły</a>
+                  </td>
+                </tr>
+              {% endfor %}
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="dash-table-empty">Brak zadań dla tej sprawy.</div>
+      {% endif %}
+    </div>
+
+  {% elif active_tab == 'faktury' %}
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Faktury</span>
+        <a href="{% url 'szkp:invoice_new' case.pk %}" class="dash-panel-action">+ Wystaw fakturę</a>
+      </div>
+      {% if invoices %}
+        <table class="dash-data-table">
+          <thead>
+            <tr>
+              <th>Numer</th>
+              <th>Data wystawienia</th>
+              <th>Termin płatności</th>
+              <th>Kwota brutto</th>
+              <th>Status</th>
+              <th>Akcje</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for inv in invoices %}
+              <tr>
+                <td><span class="dash-mono">{{ inv.invoice_number }}</span></td>
+                <td><span class="dash-mono">{{ inv.issue_date|date:"d.m.Y" }}</span></td>
+                <td>
+                  {% if inv.due_date %}
+                    <span class="dash-mono">{{ inv.due_date|date:"d.m.Y" }}</span>
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+                <td><span class="dash-mono">{{ inv.gross_amount|floatformat:2 }} {{ inv.currency }}</span></td>
+                <td>{{ inv.get_status_display }}</td>
+                <td>
+                  <a href="{% url 'szkp:invoice_edit' case.pk inv.pk %}" class="dash-panel-action">Edytuj</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="dash-table-empty">Brak faktur dla tej sprawy.</div>
+      {% endif %}
+    </div>
+
+  {% elif active_tab == 'prawnicy' %}
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Przypisani prawnicy</span>
+        <a href="{% url 'szkp:case_lawyer_add' case.pk %}" class="dash-panel-action">+ Przypisz prawnika</a>
+      </div>
+      {% if lawyers %}
+        <table class="dash-data-table">
+          <thead>
+            <tr>
+              <th>Imię i nazwisko</th>
+              <th>Rola</th>
+              <th>Nr wpisu</th>
+              <th>E-mail</th>
+              <th>Akcje</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cl in lawyers %}
+              <tr>
+                <td>{{ cl.lawyer.first_name }} {{ cl.lawyer.last_name }}</td>
+                <td>{{ cl.get_role_display }}</td>
+                <td><span class="dash-mono">{{ cl.lawyer.bar_number|default:"—" }}</span></td>
+                <td>{{ cl.lawyer.email|default:"—" }}</td>
+                <td>
+                  {% if cl.role != 'prowadzacy' %}
+                    <a href="{% url 'szkp:case_lawyer_delete' case.pk cl.pk %}" class="dash-panel-action">Usuń</a>
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="dash-table-empty">Brak przypisanych prawników.</div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+{% endblock content %}
