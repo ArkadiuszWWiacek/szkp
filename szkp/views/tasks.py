@@ -14,12 +14,34 @@ from szkp.models import Case, CaseLawyer, Lawyer, Task, TaskPriority, TaskStatus
 @login_required
 def my_tasks(request):
     if request.user.is_superuser:
+        q = request.GET.get('q', '').strip()
+        sort = request.GET.get('sort', 'due_date')
+        direction = request.GET.get('dir', 'asc')
+
+        valid_sort_fields = {
+            'assigned_lawyer': 'assigned_lawyer__last_name',
+            'case':            'case__case_number',
+            'due_date':        'due_date',
+            'status':          'status',
+        }
+        sort_field = valid_sort_fields.get(sort, 'due_date')
+        if direction == 'desc':
+            sort_field = f'-{sort_field}'
+
         tasks = (Task.objects
                  .filter(parent_task__isnull=True)
                  .select_related('case', 'assigned_lawyer')
-                 .prefetch_related('task_set__assigned_lawyer', 'task_set__case')
-                 .order_by('status', 'due_date'))
-        return render(request, 'szkp/task_list_su.html', {'tasks': tasks})
+                 .prefetch_related('task_set__assigned_lawyer', 'task_set__case'))
+        if q:
+            tasks = tasks.filter(title__icontains=q)
+        tasks = tasks.order_by(sort_field)
+
+        return render(request, 'szkp/task_list_su.html', {
+            'tasks': tasks,
+            'q': q,
+            'sort': sort,
+            'direction': direction,
+        })
 
     today = timezone.localdate()
     status_filter = request.GET.get('status', '')

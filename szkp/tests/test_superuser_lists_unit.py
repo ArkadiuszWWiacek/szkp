@@ -235,3 +235,59 @@ class SuperuserListCssTest(SimpleTestCase):
             'Brak "task.task_set.all" w task_list_su.html — '
             'szablon nie iteruje podzadań zadania nadrzędnego',
         )
+
+    def _task_list_su_content(self):
+        path = os.path.join(
+            settings.BASE_DIR,
+            'szkp', 'templates', 'szkp', 'task_list_su.html',
+        )
+        with open(path, encoding='utf-8') as f:
+            return f.read()
+
+    def test_tu_sul27_task_list_su_laduje_szkp_tags(self):
+        """TU-SUL27: task_list_su.html zawiera {% load szkp_tags %} (wymagane przez sort_th)."""
+        self.assertIn(
+            'load szkp_tags', self._task_list_su_content(),
+            'Brak "{% load szkp_tags %}" w task_list_su.html — '
+            'szablon nie może używać tagu sort_th bez załadowania biblioteki',
+        )
+
+    def test_tu_sul28_task_list_su_uzywa_sort_th_dla_assigned_lawyer(self):
+        """TU-SUL28: task_list_su.html używa sort_th "assigned_lawyer" dla kolumny Prawnik."""
+        self.assertIn(
+            'sort_th "assigned_lawyer"', self._task_list_su_content(),
+            'Brak sort_th "assigned_lawyer" w task_list_su.html — '
+            'kolumna "Przypisany prawnik" nie jest sortowalna',
+        )
+
+    def test_tu_sul29_task_list_su_uzywa_sort_th_dla_due_date(self):
+        """TU-SUL29: task_list_su.html używa sort_th "due_date" dla kolumny Termin."""
+        self.assertIn(
+            'sort_th "due_date"', self._task_list_su_content(),
+            'Brak sort_th "due_date" w task_list_su.html — '
+            'kolumna "Termin" nie jest sortowalna',
+        )
+
+    def test_tu_sul30_task_list_su_uzywa_sort_th_dla_status(self):
+        """TU-SUL30: task_list_su.html używa sort_th "status" dla kolumny Status."""
+        self.assertIn(
+            'sort_th "status"', self._task_list_su_content(),
+            'Brak sort_th "status" w task_list_su.html — '
+            'kolumna "Status" nie jest sortowalna',
+        )
+
+    def test_tu_sul31_task_list_su_nie_uzywa_sort_th_dla_title(self):
+        """TU-SUL31: task_list_su.html NIE używa sort_th "title" — Tytuł jest niesortowalne."""
+        self.assertNotIn(
+            'sort_th "title"', self._task_list_su_content(),
+            'task_list_su.html zawiera sort_th "title" — zgodnie ze specyfikacją '
+            'kolumna "Tytuł" nie powinna mieć linku sortowania',
+        )
+
+    def test_tu_sul32_task_list_su_ma_input_wyszukiwania(self):
+        """TU-SUL32: task_list_su.html zawiera pole wyszukiwania name="q"."""
+        self.assertIn(
+            'name="q"', self._task_list_su_content(),
+            'Brak name="q" w task_list_su.html — '
+            'pole wyszukiwania słów kluczowych nie zostało dodane do szablonu',
+        )

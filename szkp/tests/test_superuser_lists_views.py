@@ -204,6 +204,129 @@ class SuperuserTaskListViewTest(TestCase):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# TI-SUL21–TI-SUL25: task_list — sortowanie i wyszukiwanie dla SU
+# ═══════════════════════════════════════════════════════════════════════════
+
+@tag('integration')
+class SuperuserTaskListSortSearchViewTest(TestCase):
+    """TI-SUL21–TI-SUL25: GET /szkp/zadania/ — sortowanie i wyszukiwanie dla superusera."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.superuser = User.objects.create_user(
+            username='su_sort_int', password='x',
+            is_staff=True, is_superuser=True,
+        )
+        cls.prawnik = Lawyer.objects.create(
+            first_name='Sort', last_name='Prawnik', bar_number='TST/TI/SRT/001',
+        )
+        cls.task_wczesny = Task.objects.create(
+            title='Zadanie Wczesne',
+            assigned_lawyer=cls.prawnik, created_by=cls.prawnik,
+            due_date=make_due(2), status=TaskStatus.NOWE,
+        )
+        cls.task_pozny = Task.objects.create(
+            title='Zadanie Pozne',
+            assigned_lawyer=cls.prawnik, created_by=cls.prawnik,
+            due_date=make_due(10), status=TaskStatus.W_TOKU,
+        )
+
+    def setUp(self):
+        self.client.force_login(self.superuser)
+
+    def test_ti_sul21_kontekst_zawiera_sort_i_direction(self):
+        """TI-SUL21: GET /zadania/ jako SU → context['sort'] i context['direction'] są przekazane.
+
+        W RED: widok nie przekazuje sort/direction → KeyError lub None.
+        W GREEN: widok czyta GET params i dodaje do kontekstu.
+        """
+        response = self.client.get(reverse('szkp:my_tasks'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            'sort', response.context,
+            "context['sort'] brak — widok SU nie przekazuje parametru sortowania do szablonu",
+        )
+        self.assertIn(
+            'direction', response.context,
+            "context['direction'] brak — widok SU nie przekazuje kierunku sortowania do szablonu",
+        )
+
+    def test_ti_sul22_kontekst_zawiera_q(self):
+        """TI-SUL22: GET /zadania/?q=test → context['q'] == 'test'.
+
+        W RED: widok nie czyta GET['q'] → brak 'q' w kontekście.
+        W GREEN: widok przekazuje q do kontekstu.
+        """
+        response = self.client.get(reverse('szkp:my_tasks') + '?q=test')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            'q', response.context,
+            "context['q'] brak — widok SU nie przekazuje frazy wyszukiwania do szablonu",
+        )
+        self.assertEqual(
+            response.context['q'], 'test',
+            f"context['q'] != 'test', otrzymano: {response.context.get('q')}",
+        )
+
+    def test_ti_sul23_wyszukiwanie_filtruje_po_tytule(self):
+        """TI-SUL23: GET ?q=Wczesne → queryset zawiera tylko 'Zadanie Wczesne'.
+
+        W RED: widok ignoruje GET['q'] → oba zadania w kontekście.
+        W GREEN: widok filtruje title__icontains → tylko Wczesne.
+        """
+        response = self.client.get(reverse('szkp:my_tasks') + '?q=Wczesne')
+        self.assertEqual(response.status_code, 200)
+        tasks = list(response.context['tasks'])
+        titles = [t.title for t in tasks]
+        self.assertIn(
+            'Zadanie Wczesne', titles,
+            f"'Zadanie Wczesne' brak w wynikach ?q=Wczesne. Tytuły: {titles}",
+        )
+        self.assertNotIn(
+            'Zadanie Pozne', titles,
+            f"'Zadanie Pozne' nadal widoczne po ?q=Wczesne — filtr nie działa. Tytuły: {titles}",
+        )
+
+    def test_ti_sul24_sortuje_po_due_date_asc(self):
+        """TI-SUL24: GET ?sort=due_date&dir=asc → zadania posortowane od najwcześniejszego.
+
+        W RED: widok ignoruje GET sort/dir → kolejność nieokreślona.
+        W GREEN: widok stosuje order_by('due_date') → Wczesne przed Późnym.
+        """
+        response = self.client.get(reverse('szkp:my_tasks') + '?sort=due_date&dir=asc')
+        self.assertEqual(response.status_code, 200)
+        tasks = list(response.context['tasks'])
+        pks = [t.pk for t in tasks]
+        self.assertGreaterEqual(len(pks), 2, 'Za mało zadań w kontekście')
+        wczesne_idx = pks.index(self.task_wczesny.pk)
+        pozne_idx = pks.index(self.task_pozny.pk)
+        self.assertLess(
+            wczesne_idx, pozne_idx,
+            f'?sort=due_date&dir=asc: "Wczesne" (idx {wczesne_idx}) powinno być przed '
+            f'"Późne" (idx {pozne_idx})',
+        )
+
+    def test_ti_sul25_sortuje_po_due_date_desc(self):
+        """TI-SUL25: GET ?sort=due_date&dir=desc → zadania posortowane od najpóźniejszego.
+
+        W RED: widok ignoruje GET sort/dir → kolejność nieokreślona.
+        W GREEN: widok stosuje order_by('-due_date') → Późne przed Wczesnym.
+        """
+        response = self.client.get(reverse('szkp:my_tasks') + '?sort=due_date&dir=desc')
+        self.assertEqual(response.status_code, 200)
+        tasks = list(response.context['tasks'])
+        pks = [t.pk for t in tasks]
+        self.assertGreaterEqual(len(pks), 2, 'Za mało zadań w kontekście')
+        wczesne_idx = pks.index(self.task_wczesny.pk)
+        pozne_idx = pks.index(self.task_pozny.pk)
+        self.assertLess(
+            pozne_idx, wczesne_idx,
+            f'?sort=due_date&dir=desc: "Późne" (idx {pozne_idx}) powinno być przed '
+            f'"Wczesne" (idx {wczesne_idx})',
+        )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # TI-SUL09–TI-SUL13: user_list — dostęp i kontekst
 # ═══════════════════════════════════════════════════════════════════════════
 

@@ -551,3 +551,142 @@ class SuperuserUserListTest(SzkpSeleniumTestCase):
             is_login_redirect or is_forbidden,
             f'Staff bez is_superuser nie dostał 403 ani redirectu na login. URL: {current_url}',
         )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PSU-L04-SS: /szkp/zadania/ — sortowanie i wyszukiwanie (superuser)
+# ═══════════════════════════════════════════════════════════════════════════
+
+@tag('functional')
+class SuperuserTaskListSortSearchTest(SzkpSeleniumTestCase):
+    """PSU-L04-SS: Sortowanie kolumn i wyszukiwanie po tytule na liście zadań SU."""
+
+    def setUp(self):
+        self.selenium.get(self.live_server_url)
+        self.selenium.delete_all_cookies()
+
+        self.superuser = User.objects.create_user(
+            username='su_sort_tasks', password='x',
+            is_staff=True, is_superuser=True,
+        )
+        self.prawnik = Lawyer.objects.create(
+            first_name='Jan', last_name='Kowalski', bar_number='TST/SS/001',
+        )
+        self.task_a = Task.objects.create(
+            title='Analiza umowy',
+            assigned_lawyer=self.prawnik,
+            created_by=self.prawnik,
+            due_date=make_due(5),
+            status=TaskStatus.NOWE,
+        )
+        self.task_b = Task.objects.create(
+            title='Rozprawa sądowa',
+            assigned_lawyer=self.prawnik,
+            created_by=self.prawnik,
+            due_date=make_due(3),
+            status=TaskStatus.W_TOKU,
+        )
+
+    def _jako_superuser(self, url_suffix=''):
+        self.selenium.delete_all_cookies()
+        self._zaloguj_przez_orm(self.superuser)
+        self.selenium.get(self.live_server_url + ZADANIA + url_suffix)
+
+    def test_psu_l04i_task_list_su_ma_pole_wyszukiwania(self):
+        """PSU-L04i: Widok /szkp/zadania/ dla SU zawiera <input name="q"> w toolbarze."""
+        self._jako_superuser()
+        inputs = self.selenium.find_elements(By.CSS_SELECTOR, 'input[name="q"]')
+        self.assertGreater(
+            len(inputs), 0,
+            'Brak <input name="q"> — pole wyszukiwania nie zostało dodane do task_list_su.html',
+        )
+
+    def test_psu_l04j_wyszukiwanie_filtruje_po_tytule(self):
+        """PSU-L04j: Wyszukiwanie ?q=Analiza wyświetla tylko zadanie 'Analiza umowy'."""
+        self._jako_superuser('?q=Analiza')
+        source = self.selenium.page_source
+        self.assertIn(
+            'Analiza umowy', source,
+            'Wyniki wyszukiwania nie zawierają "Analiza umowy" — filtrowanie po tytule nie działa',
+        )
+        self.assertNotIn(
+            'Rozprawa sądowa', source,
+            '"Rozprawa sądowa" nadal widoczna po wyszukaniu ?q=Analiza — filtr nie wyklucza niepasujących',
+        )
+
+    def test_psu_l04k_kolumna_prawnik_ma_link_sortowania(self):
+        """PSU-L04k: Nagłówek kolumny 'Przypisany prawnik' zawiera <a href*="sort=assigned_lawyer">."""
+        self._jako_superuser()
+        sort_links = self.selenium.find_elements(
+            By.CSS_SELECTOR, 'th a[href*="sort=assigned_lawyer"]',
+        )
+        self.assertGreater(
+            len(sort_links), 0,
+            'Brak <a href*="sort=assigned_lawyer"> w <th> — kolumna Przypisany prawnik nie jest sortowalna',
+        )
+
+    def test_psu_l04l_kolumna_termin_ma_link_sortowania(self):
+        """PSU-L04l: Nagłówek kolumny 'Termin' zawiera <a href*="sort=due_date">."""
+        self._jako_superuser()
+        sort_links = self.selenium.find_elements(
+            By.CSS_SELECTOR, 'th a[href*="sort=due_date"]',
+        )
+        self.assertGreater(
+            len(sort_links), 0,
+            'Brak <a href*="sort=due_date"> w <th> — kolumna Termin nie jest sortowalna',
+        )
+
+    def test_psu_l04m_kolumna_status_ma_link_sortowania(self):
+        """PSU-L04m: Nagłówek kolumny 'Status' zawiera <a href*="sort=status">."""
+        self._jako_superuser()
+        sort_links = self.selenium.find_elements(
+            By.CSS_SELECTOR, 'th a[href*="sort=status"]',
+        )
+        self.assertGreater(
+            len(sort_links), 0,
+            'Brak <a href*="sort=status"> w <th> — kolumna Status nie jest sortowalna',
+        )
+
+    def test_psu_l04n_kolumna_tytul_nie_ma_linku_sortowania(self):
+        """PSU-L04n: Nagłówek 'Tytuł' jest zwykłym <th> bez linku sortowania."""
+        self._jako_superuser()
+        title_headers = self.selenium.find_elements(
+            By.XPATH,
+            "//thead//th[normalize-space(.)='Tytuł']",
+        )
+        self.assertGreater(
+            len(title_headers), 0,
+            'Brak komórki nagłówkowej "Tytuł" — nie można zweryfikować braku linku sortowania',
+        )
+        for th in title_headers:
+            sort_links = th.find_elements(By.CSS_SELECTOR, 'a[href*="sort="]')
+            self.assertEqual(
+                len(sort_links), 0,
+                'Komórka nagłówkowa "Tytuł" zawiera link sortowania — zgodnie ze specyfikacją '
+                'ta kolumna nie powinna być sortowalna',
+            )
+
+    def test_psu_l04o_sortowanie_zmienia_kolejnosc_wynikow(self):
+        """PSU-L04o: ?sort=status&dir=asc sortuje zadania rosnąco po statusie."""
+        Task.objects.create(
+            title='Zadanie zakończone',
+            assigned_lawyer=self.prawnik,
+            created_by=self.prawnik,
+            due_date=make_due(1),
+            status=TaskStatus.ZAKOŃCZONE,
+        )
+        self._jako_superuser('?sort=status&dir=asc')
+        rows = self.selenium.find_elements(By.CSS_SELECTOR, '.task-row--parent')
+        self.assertGreaterEqual(
+            len(rows), 3,
+            f'Oczekiwano ≥3 wierszy .task-row--parent po sortowaniu, znaleziono: {len(rows)}',
+        )
+        # Kolumna Status jest 5. (indeks 4): Tytuł|Prawnik|Sprawa|Termin|Status|Akcje
+        statuses = [
+            row.find_elements(By.TAG_NAME, 'td')[4].text
+            for row in rows[:3]
+        ]
+        self.assertEqual(
+            statuses, sorted(statuses),
+            f'Kolejność statusów po sort=status&dir=asc nie jest rosnąca: {statuses}',
+        )

@@ -1,19 +1,33 @@
 {% extends "base_dash.html" %}
+{% load szkp_tags %}
 
-{% block title %}Zadania{% endblock title %}
-{% block topbar_title %}Zadania{% endblock topbar_title %}
-{% block nav_tasks %}active{% endblock nav_tasks %}
+{% block title %}
+  Zadania
+{% endblock title %}
+{% block topbar_title %}
+  Zadania
+{% endblock topbar_title %}
+{% block nav_tasks %}
+  active
+{% endblock nav_tasks %}
 
 {% block content %}
 
   <div class="dash-page-header">
     <div>
-      <h1>Zadania</h1>
-      <div class="dash-subtitle">Wszystkie zadania w systemie</div>
+      <h1>
+        Zadania
+      </h1>
+      <div class="dash-subtitle">
+        Wszystkie zadania w systemie
+      </div>
     </div>
     <div class="dash-page-header-actions">
       <a href="{% url 'szkp:task_new' %}" class="dash-btn dash-btn--primary">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+        <svg fill="none"
+             viewBox="0 0 24 24"
+             stroke="currentColor"
+             stroke-width="1.8">
           <path d="M12 5v14M5 12h14" />
         </svg>
         Nowe zadanie
@@ -21,30 +35,41 @@
     </div>
   </div>
 
+  <form method="get" class="dash-toolbar">
+    <input type="text" name="q" value="{{ q }}" placeholder="Szukaj w tytułach…" class="dash-search-input">
+    <button type="submit" class="dash-btn dash-btn--ghost dash-toolbar-submit">Szukaj</button>
+  </form>
+
   <div class="dash-panel">
     <table class="dash-data-table">
       <thead>
         <tr>
-          <th>Tytuł</th>
-          <th>Przypisany prawnik</th>
-          <th>Sprawa</th>
-          <th>Termin</th>
-          <th>Status</th>
-          <th>Akcje</th>
+          <th>
+            Tytuł
+          </th>
+          {% sort_th "assigned_lawyer" "Przypisany prawnik" %}
+          {% sort_th "case" "Sprawa" %}
+          {% sort_th "due_date" "Termin" %}
+          {% sort_th "status" "Status" %}
+          <th>
+            Akcje
+          </th>
         </tr>
       </thead>
       <tbody>
         {% for task in tasks %}
           <tr class="task-row--parent">
             <td>
-              <a href="{% url 'szkp:task_detail' task.pk %}">{{ task.title }}</a>
+              {{ task.title }}
               {% with sub_count=task.task_set.count %}
                 {% if sub_count %}
                   <span class="dash-badge">{{ sub_count }}</span>
                 {% endif %}
               {% endwith %}
             </td>
-            <td>{{ task.assigned_lawyer }}</td>
+            <td>
+              {{ task.assigned_lawyer }}
+            </td>
             <td>
               {% if task.case %}
                 <span class="dash-mono">{{ task.case.case_number }}</span>
@@ -52,8 +77,12 @@
                 —
               {% endif %}
             </td>
-            <td>{{ task.due_date|date:"d.m.Y H:i"|default:"—" }}</td>
-            <td>{{ task.get_status_display }}</td>
+            <td>
+              {{ task.due_date|date:"d.m.Y H:i"|default:"—" }}
+            </td>
+            <td>
+              {{ task.get_status_display }}
+            </td>
             <td>
               <a href="{% url 'szkp:task_edit' task.pk %}">Edytuj</a>
               ·
@@ -63,9 +92,11 @@
           {% for subtask in task.task_set.all %}
             <tr class="task-row--subtask">
               <td class="task-subtask-title">
-                <a href="{% url 'szkp:task_detail' subtask.pk %}">{{ subtask.title }}</a>
+                {{ subtask.title }}
               </td>
-              <td>{{ subtask.assigned_lawyer }}</td>
+              <td>
+                {{ subtask.assigned_lawyer }}
+              </td>
               <td>
                 {% if subtask.case %}
                   <span class="dash-mono">{{ subtask.case.case_number }}</span>
@@ -73,14 +104,22 @@
                   —
                 {% endif %}
               </td>
-              <td>{{ subtask.due_date|date:"d.m.Y H:i"|default:"—" }}</td>
-              <td>{{ subtask.get_status_display }}</td>
-              <td>—</td>
+              <td>
+                {{ subtask.due_date|date:"d.m.Y H:i"|default:"—" }}
+              </td>
+              <td>
+                {{ subtask.get_status_display }}
+              </td>
+              <td>
+                —
+              </td>
             </tr>
           {% endfor %}
         {% empty %}
           <tr>
-            <td colspan="6" class="dash-table-empty">Brak zadań</td>
+            <td colspan="6" class="dash-table-empty">
+              Brak zadań
+            </td>
           </tr>
         {% endfor %}
       </tbody>
