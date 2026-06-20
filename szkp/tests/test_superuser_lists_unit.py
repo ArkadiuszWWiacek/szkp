@@ -291,3 +291,313 @@ class SuperuserListCssTest(SimpleTestCase):
             'Brak name="q" w task_list_su.html — '
             'pole wyszukiwania słów kluczowych nie zostało dodane do szablonu',
         )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TU-SUL33–TU-SUL39: user_form_su.html — istnienie i struktura szablonu
+# ═══════════════════════════════════════════════════════════════════════════
+
+@tag('unit')
+class SuperuserUserFormTemplateTest(SimpleTestCase):
+    """TU-SUL33–TU-SUL39: Szablon user_form_su.html istnieje i zawiera wymagane pola."""
+
+    def _path(self):
+        return os.path.join(
+            apps.get_app_config('szkp').path,
+            'templates', 'szkp', 'user_form_su.html',
+        )
+
+    def _content(self):
+        path = self._path()
+        if not os.path.exists(path):
+            self.fail(f'Brak pliku user_form_su.html — nie można sprawdzić zawartości: {path}')
+        with open(path, encoding='utf-8') as f:
+            return f.read()
+
+    def test_tu_sul33_user_form_su_istnieje(self):
+        """TU-SUL33: szkp/templates/szkp/user_form_su.html istnieje na dysku."""
+        self.assertTrue(os.path.exists(self._path()), f'Brak pliku: {self._path()}')
+
+    def test_tu_sul34_user_form_su_rozszerza_base_dash(self):
+        """TU-SUL34: user_form_su.html zawiera extends 'base_dash.html'."""
+        self.assertIn('base_dash.html', self._content())
+
+    def test_tu_sul35_user_form_su_ma_pole_username(self):
+        """TU-SUL35: user_form_su.html zawiera pole name="username"."""
+        self.assertIn(
+            'name="username"', self._content(),
+            'Brak name="username" w user_form_su.html — pole loginu niedostępne w formularzu',
+        )
+
+    def test_tu_sul36_user_form_su_ma_pole_email(self):
+        """TU-SUL36: user_form_su.html zawiera pole name="email"."""
+        self.assertIn(
+            'name="email"', self._content(),
+            'Brak name="email" w user_form_su.html — pole email niedostępne w formularzu',
+        )
+
+    def test_tu_sul37_user_form_su_ma_pole_password(self):
+        """TU-SUL37: user_form_su.html zawiera pole name="password"."""
+        self.assertIn(
+            'name="password"', self._content(),
+            'Brak name="password" w user_form_su.html — pole hasła niedostępne w formularzu',
+        )
+
+    def test_tu_sul38_user_form_su_ma_pole_password_confirm(self):
+        """TU-SUL38: user_form_su.html zawiera pole name="password_confirm"."""
+        self.assertIn(
+            'name="password_confirm"', self._content(),
+            'Brak name="password_confirm" w user_form_su.html — potwierdzenie hasła niedostępne',
+        )
+
+    def test_tu_sul39_user_form_su_ma_aktywny_nav_users(self):
+        """TU-SUL39: user_form_su.html ustawia {% block nav_users %}dash-nav-item--active{% endblock nav_users %}."""
+        content = self._content()
+        self.assertIn(
+            'nav_users', content,
+            'Brak bloku nav_users w user_form_su.html — pozycja "Użytkownicy" nie będzie podświetlona',
+        )
+        self.assertIn(
+            'dash-nav-item--active', content,
+            'Brak dash-nav-item--active w bloku nav_users w user_form_su.html',
+        )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TU-SUL40–TU-SUL41: base_dash.html — nawigacja do listy użytkowników
+# ═══════════════════════════════════════════════════════════════════════════
+
+@tag('unit')
+class SuperuserNavigationBaseTemplateTest(SimpleTestCase):
+    """TU-SUL40–TU-SUL41: base_dash.html zawiera blok i link nawigacyjny dla użytkowników."""
+
+    def _base_dash_content(self):
+        path = os.path.join(settings.BASE_DIR, 'templates', 'base_dash.html')
+        with open(path, encoding='utf-8') as f:
+            return f.read()
+
+    def test_tu_sul40_base_dash_zawiera_blok_nav_users(self):
+        """TU-SUL40: base_dash.html definiuje {% block nav_users %}{% endblock nav_users %}."""
+        self.assertIn(
+            'nav_users', self._base_dash_content(),
+            'Brak bloku nav_users w base_dash.html — szablony rozszerzające nie mogą ustawić '
+            'aktywnego stanu dla pozycji Użytkownicy',
+        )
+
+    def test_tu_sul41_base_dash_zawiera_link_do_user_list(self):
+        """TU-SUL41: base_dash.html zawiera link (href) do widoku listy użytkowników."""
+        content = self._base_dash_content()
+        has_link = (
+            "url 'szkp:user_list'" in content
+            or '/uzytkownicy/' in content
+        )
+        self.assertTrue(
+            has_link,
+            "base_dash.html nie zawiera linku do szkp:user_list — "
+            "pozycja 'Użytkownicy' nie dodana do paska bocznego",
+        )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TU-SUL42–TU-SUL44: user_list_su.html — aktualizacje szablonu
+# ═══════════════════════════════════════════════════════════════════════════
+
+@tag('unit')
+class SuperuserUserListSuTemplateUpdatesTest(SimpleTestCase):
+    """TU-SUL42–TU-SUL44: user_list_su.html zaktualizowany o nav_users, wyszukiwanie, linki SZKP."""
+
+    def _content(self):
+        path = os.path.join(
+            apps.get_app_config('szkp').path,
+            'templates', 'szkp', 'user_list_su.html',
+        )
+        with open(path, encoding='utf-8') as f:
+            return f.read()
+
+    def test_tu_sul42_user_list_su_ma_aktywny_nav_users(self):
+        """TU-SUL42: user_list_su.html ustawia {% block nav_users %}dash-nav-item--active{% endblock nav_users %}."""
+        content = self._content()
+        self.assertIn(
+            'nav_users', content,
+            'Brak bloku nav_users w user_list_su.html — podświetlenie pozycji nawigacji niedostępne',
+        )
+        self.assertIn(
+            'dash-nav-item--active', content,
+            'Brak dash-nav-item--active w bloku nav_users w user_list_su.html',
+        )
+
+    def test_tu_sul43_user_list_su_ma_pole_wyszukiwania(self):
+        """TU-SUL43: user_list_su.html zawiera <input name="q"> dla wyszukiwania użytkowników."""
+        self.assertIn(
+            'name="q"', self._content(),
+            'Brak name="q" w user_list_su.html — wyszukiwanie użytkowników niedostępne',
+        )
+
+    def test_tu_sul44_user_list_su_link_edytuj_nie_prowadzi_do_admin(self):
+        """TU-SUL44: user_list_su.html używa user_form_edit (nie admin:auth_user_change) dla edycji."""
+        content = self._content()
+        self.assertIn(
+            'user_form_edit', content,
+            'Brak user_form_edit w user_list_su.html — link "Edytuj" nadal przez /admin/',
+        )
+        self.assertNotIn(
+            'admin:auth_user_change', content,
+            'user_list_su.html nadal zawiera admin:auth_user_change — '
+            'zarządzanie użytkownikami powinno być przez formularz SZKP',
+        )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TU-SUL45: users.py — user_form
+# ═══════════════════════════════════════════════════════════════════════════
+
+@tag('unit')
+class SuperuserUserFormViewModuleTest(SimpleTestCase):
+    """TU-SUL45: szkp/views/users.py definiuje funkcję user_form."""
+
+    def _content(self):
+        path = os.path.join(settings.BASE_DIR, 'szkp', 'views', 'users.py')
+        if not os.path.exists(path):
+            self.fail('Brak szkp/views/users.py')
+        with open(path, encoding='utf-8') as f:
+            return f.read()
+
+    def test_tu_sul45_users_py_zawiera_def_user_form(self):
+        """TU-SUL45: szkp/views/users.py definiuje funkcję user_form."""
+        self.assertIn(
+            'user_form', self._content(),
+            'Brak def user_form w szkp/views/users.py — widok formularza niezaimplementowany',
+        )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TU-SUL46: __init__.py — eksport user_form
+# ═══════════════════════════════════════════════════════════════════════════
+
+@tag('unit')
+class SuperuserUserFormInitExportTest(SimpleTestCase):
+    """TU-SUL46: szkp/views/__init__.py eksportuje user_form."""
+
+    def _content(self):
+        path = os.path.join(settings.BASE_DIR, 'szkp', 'views', '__init__.py')
+        with open(path, encoding='utf-8') as f:
+            return f.read()
+
+    def test_tu_sul46_init_eksportuje_user_form(self):
+        """TU-SUL46: szkp/views/__init__.py zawiera 'user_form' w imporcie."""
+        self.assertIn(
+            'user_form', self._content(),
+            "szkp/views/__init__.py nie eksportuje 'user_form'",
+        )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TU-SUL47–TU-SUL48: URLs formularza użytkownika
+# ═══════════════════════════════════════════════════════════════════════════
+
+@tag('unit')
+class SuperuserUserFormUrlsTest(SimpleTestCase):
+    """TU-SUL47–TU-SUL48: URL-e user_form_create i user_form_edit są zarejestrowane."""
+
+    def test_tu_sul47_url_user_form_create_zarejestrowany(self):
+        """TU-SUL47: URL szkp:user_form_create istnieje i wskazuje na /uzytkownicy/nowy/."""
+        try:
+            url = reverse('szkp:user_form_create')
+        except NoReverseMatch:
+            url = None
+        self.assertIsNotNone(
+            url, 'URL szkp:user_form_create nie jest zarejestrowany w szkp/urls.py',
+        )
+        self.assertIn('/nowy/', url, f'URL user_form_create nie zawiera /nowy/: {url}')
+
+    def test_tu_sul48_url_user_form_edit_zarejestrowany(self):
+        """TU-SUL48: URL szkp:user_form_edit(pk=1) istnieje i wskazuje na /uzytkownicy/1/edytuj/."""
+        try:
+            url = reverse('szkp:user_form_edit', kwargs={'pk': 1})
+        except NoReverseMatch:
+            url = None
+        self.assertIsNotNone(
+            url, 'URL szkp:user_form_edit nie jest zarejestrowany w szkp/urls.py',
+        )
+        self.assertIn('/edytuj/', url, f'URL user_form_edit nie zawiera /edytuj/: {url}')
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TU-SUL49–TU-SUL53: UserFormSU — walidacja formularza
+# ═══════════════════════════════════════════════════════════════════════════
+
+@tag('unit')
+class SuperuserUserFormClassTest(SimpleTestCase):
+    """TU-SUL49–TU-SUL53: UserFormSU waliduje dane wejściowe poprawnie."""
+
+    def _get_form_class(self):
+        try:
+            from szkp.forms import UserFormSU
+            return UserFormSU
+        except ImportError:
+            self.fail('Nie można zaimportować UserFormSU z szkp.forms — klasa nie istnieje')
+
+    def test_tu_sul49_user_form_su_importowalny(self):
+        """TU-SUL49: UserFormSU importowalny z szkp.forms."""
+        self._get_form_class()
+
+    def test_tu_sul50_puste_dane_sa_niepoprawne_brak_username(self):
+        """TU-SUL50: UserFormSU(data={}, is_new=True).is_valid() == False, błąd w 'username'."""
+        UserFormSU = self._get_form_class()
+        form = UserFormSU(data={}, is_new=True)
+        self.assertFalse(form.is_valid())
+        self.assertIn(
+            'username', form.errors,
+            f"Brak błędu 'username' dla pustych danych. Błędy: {dict(form.errors)}",
+        )
+
+    def test_tu_sul51_niezgodne_hasla_sa_niepoprawne(self):
+        """TU-SUL51: UserFormSU z niezgodnymi hasłami → is_valid() == False, błąd w 'password_confirm'."""
+        UserFormSU = self._get_form_class()
+        form = UserFormSU(
+            data={
+                'username': 'testuser',
+                'password': 'HasloA1!',
+                'password_confirm': 'HasloB2!',
+            },
+            is_new=True,
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn(
+            'password_confirm', form.errors,
+            f"Brak błędu 'password_confirm' dla niezgodnych haseł. Błędy: {dict(form.errors)}",
+        )
+
+    def test_tu_sul52_poprawne_dane_z_haslem_sa_poprawne(self):
+        """TU-SUL52: UserFormSU z poprawnymi danymi (create) → is_valid() == True."""
+        UserFormSU = self._get_form_class()
+        form = UserFormSU(
+            data={
+                'username': 'nowyuser',
+                'email': 'nowy@test.pl',
+                'password': 'BezpieczneHaslo1!',
+                'password_confirm': 'BezpieczneHaslo1!',
+            },
+            is_new=True,
+        )
+        self.assertTrue(
+            form.is_valid(),
+            f'UserFormSU z poprawnymi danymi nie przeszedł walidacji. Błędy: {dict(form.errors)}',
+        )
+
+    def test_tu_sul53_puste_haslo_w_trybie_edycji_jest_poprawne(self):
+        """TU-SUL53: UserFormSU(is_new=False) z pustym hasłem → is_valid() == True (hasło opcjonalne)."""
+        UserFormSU = self._get_form_class()
+        form = UserFormSU(
+            data={
+                'username': 'edytowanyuser',
+                'email': 'edytowany@test.pl',
+                'password': '',
+                'password_confirm': '',
+            },
+            is_new=False,
+        )
+        self.assertTrue(
+            form.is_valid(),
+            f'UserFormSU(is_new=False) z pustym hasłem powinien być poprawny. Błędy: {dict(form.errors)}',
+        )

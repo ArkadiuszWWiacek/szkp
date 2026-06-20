@@ -1,0 +1,132 @@
+{% extends "base_dash.html" %}
+
+{% block title %}{% if is_new %}Nowy użytkownik{% else %}Edytuj użytkownika{% endif %}{% endblock title %}
+{% block topbar_title %}{% if is_new %}Nowy użytkownik{% else %}Edytuj użytkownika{% endif %}{% endblock topbar_title %}
+{% block nav_users %}dash-nav-item--active{% endblock nav_users %}
+
+{% block content %}
+
+  <div class="dash-page-header">
+    <div>
+      <h1>{% if is_new %}Nowy użytkownik{% else %}Edytuj: {{ form_data.username }}{% endif %}</h1>
+      <div class="dash-subtitle">Widok administratora — zarządzanie kontem użytkownika</div>
+    </div>
+  </div>
+
+  {% if errors %}
+    <div class="dash-form-errors">
+      Formularz zawiera błędy — sprawdź pola i popraw dane.
+    </div>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Dane konta</span>
+      </div>
+      <div class="dash-panel-body">
+        <div class="dash-form">
+
+          <div>
+            <label for="id_username">Login *</label>
+            <input type="text" id="id_username" name="username"
+                   value="{{ form_data.username|default:'' }}"
+                   required maxlength="150"
+                   {% if errors.username %}aria-invalid="true"{% endif %}>
+            {% if errors.username %}
+              <ul class="errorlist">{% for e in errors.username %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
+          </div>
+
+          <div>
+            <label for="id_email">E-mail</label>
+            <input type="email" id="id_email" name="email"
+                   value="{{ form_data.email|default:'' }}"
+                   {% if errors.email %}aria-invalid="true"{% endif %}>
+            {% if errors.email %}
+              <ul class="errorlist">{% for e in errors.email %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
+          </div>
+
+          <div>
+            <label for="id_first_name">Imię</label>
+            <input type="text" id="id_first_name" name="first_name"
+                   value="{{ form_data.first_name|default:'' }}" maxlength="150">
+          </div>
+
+          <div>
+            <label for="id_last_name">Nazwisko</label>
+            <input type="text" id="id_last_name" name="last_name"
+                   value="{{ form_data.last_name|default:'' }}" maxlength="150">
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">Uprawnienia</span>
+      </div>
+      <div class="dash-panel-body">
+        <div class="dash-form">
+
+          <div>
+            <input type="checkbox" id="id_is_staff" name="is_staff"
+                   {% if form_data.is_staff %}checked{% endif %}>
+            <label for="id_is_staff">Pracownik (dostęp do systemu)</label>
+          </div>
+
+          <div>
+            <input type="checkbox" id="id_is_active" name="is_active"
+                   {% if form_data.is_active %}checked{% endif %}>
+            <label for="id_is_active">Aktywny</label>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-panel">
+      <div class="dash-panel-header">
+        <span class="dash-panel-title">
+          Hasło{% if not is_new %} — zostaw puste, aby nie zmieniać{% endif %}
+        </span>
+      </div>
+      <div class="dash-panel-body">
+        <div class="dash-form">
+
+          <div>
+            <label for="id_password">Hasło{% if is_new %} *{% endif %}</label>
+            <input type="password" id="id_password" name="password"
+                   {% if is_new %}required{% endif %}
+                   {% if errors.password %}aria-invalid="true"{% endif %}>
+            {% if errors.password %}
+              <ul class="errorlist">{% for e in errors.password %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
+          </div>
+
+          <div>
+            <label for="id_password_confirm">Powtórz hasło{% if is_new %} *{% endif %}</label>
+            <input type="password" id="id_password_confirm" name="password_confirm"
+                   {% if is_new %}required{% endif %}
+                   {% if errors.password_confirm %}aria-invalid="true"{% endif %}>
+            {% if errors.password_confirm %}
+              <ul class="errorlist">{% for e in errors.password_confirm %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-page-header-actions">
+      <button type="submit" class="dash-btn dash-btn--primary">Zapisz</button>
+      <a href="{% url 'szkp:user_list' %}" class="dash-btn dash-btn--ghost">Anuluj</a>
+    </div>
+
+  </form>
+
+{% endblock content %}

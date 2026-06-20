@@ -410,3 +410,304 @@ class SuperuserUserToggleActiveTest(_SuperuserListsBase):
         self.client.force_login(self.staff)
         response = self.client.post(self._toggle_url(self.target.pk))
         self.assertEqual(response.status_code, 403)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TI-SUL26–TI-SUL29: user_list — wyszukiwanie i sortowanie
+# ═══════════════════════════════════════════════════════════════════════════
+
+@tag('integration')
+class SuperuserUserListSearchSortViewTest(_SuperuserListsBase):
+    """TI-SUL26–TI-SUL29: GET /szkp/uzytkownicy/ z parametrami ?q= i ?sort= dla superusera."""
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.user_a = User.objects.create_user(
+            username='alfa_uzytkownik', email='alfa@test.pl', password='x',
+        )
+        cls.user_b = User.objects.create_user(
+            username='zeta_uzytkownik', email='zeta@test.pl', password='x',
+        )
+
+    def setUp(self):
+        self.client.force_login(self.superuser)
+
+    def test_ti_sul26_wyszukiwanie_q_filtruje_queryset(self):
+        """TI-SUL26: GET /uzytkownicy/?q=alfa → context['page_obj'] zawiera tylko alfa_uzytkownik.
+
+        W RED: widok ignoruje GET['q'] → oba użytkownicy w kontekście.
+        W GREEN: widok filtruje username__icontains='alfa' → tylko alfa_uzytkownik.
+        """
+        response = self.client.get(UZYTKOWNICY + '?q=alfa')
+        self.assertEqual(response.status_code, 200)
+        usernames = [u.username for u in response.context['page_obj']]
+        self.assertIn(
+            'alfa_uzytkownik', usernames,
+            f"'alfa_uzytkownik' brak w ?q=alfa. Użytkownicy: {usernames}",
+        )
+        self.assertNotIn(
+            'zeta_uzytkownik', usernames,
+            f"'zeta_uzytkownik' nadal widoczny po ?q=alfa — filtr nie działa. Użytkownicy: {usernames}",
+        )
+
+    def test_ti_sul27_sortowanie_username_asc(self):
+        """TI-SUL27: GET /uzytkownicy/?sort=username&dir=asc → alfa przed zeta.
+
+        W RED: widok ignoruje parametry sortowania → kolejność nieokreślona.
+        W GREEN: widok stosuje order_by('username') → alfabetycznie rosnąco.
+        """
+        response = self.client.get(UZYTKOWNICY + '?sort=username&dir=asc')
+        self.assertEqual(response.status_code, 200)
+        usernames = [u.username for u in response.context['page_obj']]
+        alfa_idx = next((i for i, n in enumerate(usernames) if 'alfa' in n), None)
+        zeta_idx = next((i for i, n in enumerate(usernames) if 'zeta' in n), None)
+        self.assertIsNotNone(alfa_idx, f"'alfa_uzytkownik' nie znaleziony. Użytkownicy: {usernames}")
+        self.assertIsNotNone(zeta_idx, f"'zeta_uzytkownik' nie znaleziony. Użytkownicy: {usernames}")
+        self.assertLess(
+            alfa_idx, zeta_idx,
+            f'?sort=username&dir=asc: alfa (idx {alfa_idx}) powinno być przed zeta (idx {zeta_idx})',
+        )
+
+    def test_ti_sul28_sortowanie_username_desc(self):
+        """TI-SUL28: GET /uzytkownicy/?sort=username&dir=desc → zeta przed alfa.
+
+        W RED: widok ignoruje parametry sortowania → kolejność nieokreślona.
+        W GREEN: widok stosuje order_by('-username') → alfabetycznie malejąco.
+        """
+        response = self.client.get(UZYTKOWNICY + '?sort=username&dir=desc')
+        self.assertEqual(response.status_code, 200)
+        usernames = [u.username for u in response.context['page_obj']]
+        alfa_idx = next((i for i, n in enumerate(usernames) if 'alfa' in n), None)
+        zeta_idx = next((i for i, n in enumerate(usernames) if 'zeta' in n), None)
+        self.assertIsNotNone(alfa_idx, f"'alfa_uzytkownik' nie znaleziony. Użytkownicy: {usernames}")
+        self.assertIsNotNone(zeta_idx, f"'zeta_uzytkownik' nie znaleziony. Użytkownicy: {usernames}")
+        self.assertLess(
+            zeta_idx, alfa_idx,
+            f'?sort=username&dir=desc: zeta (idx {zeta_idx}) powinno być przed alfa (idx {alfa_idx})',
+        )
+
+    def test_ti_sul29_kontekst_zawiera_q_sort_direction(self):
+        """TI-SUL29: GET /uzytkownicy/?q=x&sort=username&dir=asc → context ma q, sort, direction.
+
+        W RED: widok nie przekazuje tych kluczy → KeyError lub brak kluczy.
+        W GREEN: widok dodaje q, sort, direction do context.
+        """
+        response = self.client.get(UZYTKOWNICY + '?q=alfa&sort=username&dir=asc')
+        self.assertEqual(response.status_code, 200)
+        for key in ('q', 'sort', 'direction'):
+            self.assertIn(
+                key, response.context,
+                f"context['{key}'] brak — widok nie przekazuje parametru do szablonu",
+            )
+        self.assertEqual(response.context['q'], 'alfa')
+        self.assertEqual(response.context['sort'], 'username')
+        self.assertEqual(response.context['direction'], 'asc')
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TI-SUL30–TI-SUL35: user_form (tworzenie) — dostęp i zachowanie POST
+# ═══════════════════════════════════════════════════════════════════════════
+
+@tag('integration')
+class SuperuserUserFormCreateViewTest(_SuperuserListsBase):
+    """TI-SUL30–TI-SUL35: GET/POST /szkp/uzytkownicy/nowy/ — tworzenie użytkownika."""
+
+    def _url(self):
+        return reverse('szkp:user_form_create')
+
+    def test_ti_sul30_superuser_dostaje_200_i_szablon(self):
+        """TI-SUL30: GET /nowy/ jako superuser → 200 + user_form_su.html.
+
+        W RED: URL nie istnieje → NoReverseMatch lub 404.
+        W GREEN: URL zarejestrowany, widok zwraca formularz.
+        """
+        self.client.force_login(self.superuser)
+        response = self.client.get(self._url())
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'szkp/user_form_su.html')
+
+    def test_ti_sul31_staff_dostaje_403(self):
+        """TI-SUL31: GET /nowy/ jako staff (non-superuser) → 403 Forbidden.
+
+        W RED: URL nie istnieje → NoReverseMatch.
+        W GREEN: URL istnieje, widok sprawdza is_superuser.
+        """
+        self.client.force_login(self.staff)
+        response = self.client.get(self._url())
+        self.assertEqual(response.status_code, 403)
+
+    def test_ti_sul32_niezalogowany_dostaje_302_na_login(self):
+        """TI-SUL32: GET /nowy/ bez logowania → 302 redirect na stronę logowania.
+
+        W RED: URL nie istnieje → NoReverseMatch.
+        W GREEN: @login_required przekierowuje na /accounts/login/.
+        """
+        response = self.client.get(self._url())
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('login', response['Location'])
+
+    def test_ti_sul33_post_poprawne_dane_tworzy_uzytkownika(self):
+        """TI-SUL33: POST /nowy/ z poprawnymi danymi → 302 redirect + User w bazie.
+
+        W RED: URL nie istnieje → NoReverseMatch.
+        W GREEN: widok tworzy User i przekierowuje na listę.
+        """
+        self.client.force_login(self.superuser)
+        response = self.client.post(self._url(), {
+            'username': 'nowy_ti_sul33',
+            'email': 'ti33@test.pl',
+            'password': 'BezpieczneHaslo1!',
+            'password_confirm': 'BezpieczneHaslo1!',
+            'is_staff': '',
+            'is_active': 'on',
+        })
+        self.assertEqual(
+            response.status_code, 302,
+            f'POST /nowy/ nie zwrócił redirect. Status: {response.status_code}',
+        )
+        self.assertTrue(
+            User.objects.filter(username='nowy_ti_sul33').exists(),
+            'Użytkownik "nowy_ti_sul33" nie istnieje w bazie po POST — widok nie zapisuje',
+        )
+
+    def test_ti_sul34_post_niezgodne_hasla_nie_tworzy_uzytkownika(self):
+        """TI-SUL34: POST /nowy/ z niezgodnymi hasłami → 200 (formularz z błędami), brak nowego User.
+
+        W RED: URL nie istnieje → NoReverseMatch.
+        W GREEN: walidacja odrzuca formularz, User nie jest tworzony.
+        """
+        self.client.force_login(self.superuser)
+        response = self.client.post(self._url(), {
+            'username': 'nowy_ti_sul34',
+            'password': 'HasloA1!',
+            'password_confirm': 'HasloB2!',
+        })
+        self.assertEqual(
+            response.status_code, 200,
+            f'POST z niezgodnymi hasłami powinien zwrócić 200 (formularz). Status: {response.status_code}',
+        )
+        self.assertFalse(
+            User.objects.filter(username='nowy_ti_sul34').exists(),
+            'Użytkownik "nowy_ti_sul34" zapisany mimo niezgodnych haseł — brak walidacji',
+        )
+
+    def test_ti_sul35_post_zduplikowana_nazwa_nie_tworzy_uzytkownika(self):
+        """TI-SUL35: POST /nowy/ z już istniejącym username → 200 (błąd), brak duplikatu.
+
+        W RED: URL nie istnieje → NoReverseMatch.
+        W GREEN: walidacja unikalności username odrzuca formularz.
+        """
+        User.objects.create_user(username='zajeta_nazwa_ti35', password='x')
+        self.client.force_login(self.superuser)
+        response = self.client.post(self._url(), {
+            'username': 'zajeta_nazwa_ti35',
+            'password': 'BezpieczneHaslo1!',
+            'password_confirm': 'BezpieczneHaslo1!',
+        })
+        self.assertEqual(
+            response.status_code, 200,
+            f'POST ze zduplikowanym username powinien zwrócić 200 (błąd). Status: {response.status_code}',
+        )
+        self.assertEqual(
+            User.objects.filter(username='zajeta_nazwa_ti35').count(), 1,
+            'Duplikat użytkownika "zajeta_nazwa_ti35" zapisany — brak walidacji unikalności',
+        )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TI-SUL36–TI-SUL40: user_form (edycja) — dostęp i zachowanie POST
+# ═══════════════════════════════════════════════════════════════════════════
+
+@tag('integration')
+class SuperuserUserFormEditViewTest(_SuperuserListsBase):
+    """TI-SUL36–TI-SUL40: GET/POST /szkp/uzytkownicy/<pk>/edytuj/ — edycja użytkownika."""
+
+    def setUp(self):
+        self.target = User.objects.create_user(
+            username='edytowany_ti_edit', email='stary_ti@test.pl',
+            password='StarePHaslo1!', is_staff=False,
+        )
+        self._original_password = self.target.password
+
+    def _url(self, pk=None):
+        return reverse('szkp:user_form_edit', kwargs={'pk': pk or self.target.pk})
+
+    def test_ti_sul36_superuser_dostaje_200_i_szablon(self):
+        """TI-SUL36: GET /edytuj/ jako superuser → 200 + user_form_su.html.
+
+        W RED: URL nie istnieje → NoReverseMatch.
+        W GREEN: URL zarejestrowany, widok zwraca formularz edycji.
+        """
+        self.client.force_login(self.superuser)
+        response = self.client.get(self._url())
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'szkp/user_form_su.html')
+
+    def test_ti_sul37_kontekst_zawiera_dane_uzytkownika(self):
+        """TI-SUL37: GET /edytuj/ → context['form_data']['email'] == 'stary_ti@test.pl'.
+
+        W RED: URL nie istnieje → NoReverseMatch.
+        W GREEN: widok wczytuje dane User i przekazuje jako form_data.
+        """
+        self.client.force_login(self.superuser)
+        response = self.client.get(self._url())
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response, 'stary_ti@test.pl',
+            msg_prefix='Email użytkownika nie widoczny w formularzu edycji — form_data nie wczytane',
+        )
+
+    def test_ti_sul38_post_zmiana_email_aktualizuje_baze(self):
+        """TI-SUL38: POST /edytuj/ z nowym emailem → 302 redirect + zaktualizowany email w bazie.
+
+        W RED: URL nie istnieje → NoReverseMatch.
+        W GREEN: widok aktualizuje User.email i przekierowuje.
+        """
+        self.client.force_login(self.superuser)
+        response = self.client.post(self._url(), {
+            'username': self.target.username,
+            'email': 'nowy_ti38@test.pl',
+            'password': '',
+            'password_confirm': '',
+            'is_active': 'on',
+        })
+        self.assertEqual(
+            response.status_code, 302,
+            f'POST /edytuj/ nie zwrócił redirect. Status: {response.status_code}',
+        )
+        self.target.refresh_from_db()
+        self.assertEqual(
+            self.target.email, 'nowy_ti38@test.pl',
+            f'Email nie zaktualizowany. Aktualny: {self.target.email}',
+        )
+
+    def test_ti_sul39_post_puste_haslo_nie_zmienia_hasla(self):
+        """TI-SUL39: POST /edytuj/ z pustymi polami hasła → hasło bez zmian w bazie.
+
+        W RED: URL nie istnieje → NoReverseMatch.
+        W GREEN: widok pomija set_password gdy password == ''.
+        """
+        self.client.force_login(self.superuser)
+        self.client.post(self._url(), {
+            'username': self.target.username,
+            'email': self.target.email,
+            'password': '',
+            'password_confirm': '',
+            'is_active': 'on',
+        })
+        self.target.refresh_from_db()
+        self.assertEqual(
+            self.target.password, self._original_password,
+            'Hasło zostało zmienione mimo pustych pól password/password_confirm — brak ochrony hasła',
+        )
+
+    def test_ti_sul40_staff_bez_superuser_dostaje_403(self):
+        """TI-SUL40: GET /edytuj/ jako staff (non-superuser) → 403 Forbidden.
+
+        W RED: URL nie istnieje → NoReverseMatch.
+        W GREEN: widok sprawdza is_superuser i rzuca PermissionDenied.
+        """
+        self.client.force_login(self.staff)
+        response = self.client.get(self._url())
+        self.assertEqual(response.status_code, 403)

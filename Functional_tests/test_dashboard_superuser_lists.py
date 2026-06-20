@@ -4,6 +4,7 @@ from decimal import Decimal
 from django.contrib.auth.models import User
 from django.test import tag
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 
 from Functional_tests.base import SzkpSeleniumTestCase
 from szkp.models import (
@@ -501,18 +502,19 @@ class SuperuserUserListTest(SzkpSeleniumTestCase):
             'Użytkownik "inny_uzytkownik" nie widoczny — widok /uzytkownicy/ nie istnieje lub nie zwraca listy',
         )
 
-    def test_psu_l05c_link_edytuj_prowadzi_do_panelu_admin(self):
-        """PSU-L05c: Linki 'Edytuj' w tabeli użytkowników wskazują na /admin/auth/user/."""
+    def test_psu_l05c_link_edytuj_prowadzi_do_formularza_szkp(self):
+        """PSU-L05c: Linki 'Edytuj' w tabeli użytkowników wskazują na /szkp/uzytkownicy/<pk>/edytuj/."""
         self._jako_superuser()
         edit_links = self.selenium.find_elements(By.PARTIAL_LINK_TEXT, 'Edytuj')
         self.assertTrue(len(edit_links) > 0, 'Brak linków "Edytuj" na liście użytkowników')
-        admin_links = [
+        szkp_links = [
             el for el in edit_links
-            if '/admin/auth/user/' in (el.get_attribute('href') or '')
+            if '/uzytkownicy/' in (el.get_attribute('href') or '')
+            and '/edytuj/' in (el.get_attribute('href') or '')
         ]
         self.assertTrue(
-            len(admin_links) > 0,
-            'Linki "Edytuj" nie prowadzą do /admin/auth/user/ — błędna nawigacja CRUD użytkowników',
+            len(szkp_links) > 0,
+            'Linki "Edytuj" nie prowadzą do /uzytkownicy/<pk>/edytuj/ — zarządzanie powinno być przez formularz SZKP',
         )
 
     def test_psu_l05d_wiersz_ma_przycisk_dezaktywuj_lub_aktywuj(self):
@@ -550,6 +552,85 @@ class SuperuserUserListTest(SzkpSeleniumTestCase):
         self.assertTrue(
             is_login_redirect or is_forbidden,
             f'Staff bez is_superuser nie dostał 403 ani redirectu na login. URL: {current_url}',
+        )
+
+    def test_psu_l05g_sidebar_zawiera_link_do_uzytkownicy(self):
+        """PSU-L05g: Sidebar dash (na pulpicie) zawiera link do /szkp/uzytkownicy/ dla superusera."""
+        self.selenium.delete_all_cookies()
+        self._zaloguj_przez_orm(self.superuser)
+        self.selenium.get(self.live_server_url + '/szkp/pulpit/')
+        sidebar_links = self.selenium.find_elements(
+            By.CSS_SELECTOR,
+            '.dash-sidebar a[href*="/uzytkownicy/"]',
+        )
+        self.assertGreater(
+            len(sidebar_links), 0,
+            'Brak linku do /uzytkownicy/ w .dash-sidebar — '
+            'pozycja "Użytkownicy" nie dodana do base_dash.html dla superusera',
+        )
+
+    def test_psu_l05h_klikniecie_sidebar_linku_nawiguje_do_uzytkownicy(self):
+        """PSU-L05h: Kliknięcie linku sidebarowego 'Użytkownicy' otwiera /szkp/uzytkownicy/."""
+        self.selenium.delete_all_cookies()
+        self._zaloguj_przez_orm(self.superuser)
+        self.selenium.get(self.live_server_url + '/szkp/pulpit/')
+        link = self.selenium.find_element(
+            By.CSS_SELECTOR,
+            '.dash-sidebar a[href*="/uzytkownicy/"]',
+        )
+        self.selenium.get(link.get_attribute('href'))
+        self.assertIn(
+            '/uzytkownicy/', self.selenium.current_url,
+            f'Link sidebarowy nie prowadzi do /uzytkownicy/. URL: {self.selenium.current_url}',
+        )
+
+    def test_psu_l05i_wyszukiwanie_filtruje_uzytkownikow(self):
+        """PSU-L05i: Pole <input name="q"> filtruje listę użytkowników po loginie."""
+        User.objects.create_user(username='zupelnie_inny_xyz', password='x')
+        self._jako_superuser()
+        search = self.selenium.find_element(By.CSS_SELECTOR, 'input[name="q"]')
+        search.click()
+        search.clear()
+        search.send_keys('inny_uzytkownik')
+        self.selenium.find_element(By.CSS_SELECTOR, 'button.dash-toolbar-submit').click()
+        source = self.selenium.page_source
+        self.assertIn(
+            'inny_uzytkownik', source,
+            'Wyszukiwanie ?q=inny_uzytkownik nie znalazło tego użytkownika',
+        )
+        self.assertNotIn(
+            'zupelnie_inny_xyz', source,
+            '"zupelnie_inny_xyz" nadal widoczny po filtrowaniu — wyszukiwanie nie wyklucza niepasujących',
+        )
+
+    def test_psu_l05j_przycisk_nowy_uzytkownik_prowadzi_do_formularza_szkp(self):
+        """PSU-L05j: 'Nowy użytkownik' linkuje do /szkp/uzytkownicy/nowy/ (nie /admin/)."""
+        self._jako_superuser()
+        btn = self.selenium.find_element(By.CSS_SELECTOR, '.dash-page-header .dash-btn')
+        href = btn.get_attribute('href') or ''
+        self.assertIn(
+            '/uzytkownicy/nowy/', href,
+            f'Link "Nowy użytkownik" nie wskazuje na /uzytkownicy/nowy/ — href: {href}',
+        )
+        self.assertNotIn(
+            '/admin/', href,
+            f'Link "Nowy użytkownik" nadal prowadzi do /admin/ zamiast do formularza SZKP — href: {href}',
+        )
+
+    def test_psu_l05k_link_edytuj_prowadzi_do_formularza_szkp(self):
+        """PSU-L05k: Linki 'Edytuj' wskazują na /szkp/uzytkownicy/<pk>/edytuj/ (nie /admin/)."""
+        self._jako_superuser()
+        edit_links = self.selenium.find_elements(By.PARTIAL_LINK_TEXT, 'Edytuj')
+        self.assertGreater(len(edit_links), 0, 'Brak linków "Edytuj" na liście użytkowników')
+        szkp_edit_links = [
+            el for el in edit_links
+            if '/uzytkownicy/' in (el.get_attribute('href') or '')
+            and '/edytuj/' in (el.get_attribute('href') or '')
+        ]
+        self.assertGreater(
+            len(szkp_edit_links), 0,
+            'Linki "Edytuj" nie wskazują na /uzytkownicy/<pk>/edytuj/ — '
+            'zarządzanie użytkownikami nadal przez /admin/ zamiast przez SZKP',
         )
 
 
@@ -689,4 +770,90 @@ class SuperuserTaskListSortSearchTest(SzkpSeleniumTestCase):
         self.assertEqual(
             statuses, sorted(statuses),
             f'Kolejność statusów po sort=status&dir=asc nie jest rosnąca: {statuses}',
+        )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PSU-L05-FORM: /szkp/uzytkownicy/nowy/ i /edytuj/ — formularz SZKP
+# ═══════════════════════════════════════════════════════════════════════════
+
+@tag('functional')
+class SuperuserUserFormTest(SzkpSeleniumTestCase):
+    """PSU-L05-FORM: Formularz tworzenia i edycji użytkownika w widoku superusera (bez /admin/)."""
+
+    USER_FORM_CREATE = '/szkp/uzytkownicy/nowy/'
+
+    def setUp(self):
+        self.selenium.get(self.live_server_url)
+        self.selenium.delete_all_cookies()
+
+        self.superuser = User.objects.create_user(
+            username='su_form_users', password='x',
+            is_staff=True, is_superuser=True,
+        )
+        self.istniejacy = User.objects.create_user(
+            username='istniejacy_user', email='stary@test.pl',
+            password='x', is_staff=False,
+        )
+
+    def _jako_superuser_na(self, url):
+        self.selenium.delete_all_cookies()
+        self._zaloguj_przez_orm(self.superuser)
+        self.selenium.get(self.live_server_url + url)
+
+    def test_psu_l05l_formularz_tworzenia_poprawne_dane_tworzy_uzytkownika(self):
+        """PSU-L05l: POST /nowy/ z poprawnymi danymi → redirect na listę + user w bazie."""
+        self._jako_superuser_na(self.USER_FORM_CREATE)
+        self.selenium.find_element(By.CSS_SELECTOR, 'input[name="username"]').send_keys('nowy_test_sl05l')
+        self.selenium.find_element(By.CSS_SELECTOR, 'input[name="email"]').send_keys('sl05l@test.pl')
+        self.selenium.find_element(By.CSS_SELECTOR, 'input[name="password"]').send_keys('BezpieczneHaslo1!')
+        self.selenium.find_element(By.CSS_SELECTOR, 'input[name="password_confirm"]').send_keys('BezpieczneHaslo1!')
+        self.selenium.find_element(By.CSS_SELECTOR, '[type="submit"]').click()
+        self.assertIn(
+            UZYTKOWNICY, self.selenium.current_url,
+            f'Brak przekierowania na listę po zapisaniu. URL: {self.selenium.current_url}',
+        )
+        self.assertTrue(
+            User.objects.filter(username='nowy_test_sl05l').exists(),
+            'Użytkownik "nowy_test_sl05l" nie istnieje w bazie po zapisaniu formularza',
+        )
+
+    def test_psu_l05m_formularz_tworzenia_niezgodne_hasla_wyswietla_blad(self):
+        """PSU-L05m: POST /nowy/ z niezgodnymi hasłami → błąd walidacji, użytkownik nie zapisany."""
+        self._jako_superuser_na(self.USER_FORM_CREATE)
+        self.selenium.find_element(By.CSS_SELECTOR, 'input[name="username"]').send_keys('uzytkownik_sl05m')
+        self.selenium.find_element(By.CSS_SELECTOR, 'input[name="password"]').send_keys('HasloA1!')
+        self.selenium.find_element(By.CSS_SELECTOR, 'input[name="password_confirm"]').send_keys('HasloB2!')
+        self.selenium.find_element(By.CSS_SELECTOR, '[type="submit"]').click()
+        self.assertFalse(
+            User.objects.filter(username='uzytkownik_sl05m').exists(),
+            'Użytkownik "uzytkownik_sl05m" zapisany mimo niezgodnych haseł — brak walidacji',
+        )
+        page = self.selenium.page_source
+        has_error = (
+            'niezgodne' in page.lower()
+            or 'różni' in page.lower()
+            or 'password_confirm' in page.lower()
+            or 'dash-error' in page.lower()
+        )
+        self.assertTrue(
+            has_error,
+            'Brak komunikatu błędu przy niezgodnych hasłach — walidacja formularza nie działa',
+        )
+
+    def test_psu_l05n_formularz_edycji_zmiana_email_widoczna_na_liscie(self):
+        """PSU-L05n: POST /edytuj/ ze zmienionym emailem → redirect + zaktualizowany email na liście."""
+        edit_url = f'/szkp/uzytkownicy/{self.istniejacy.pk}/edytuj/'
+        self._jako_superuser_na(edit_url)
+        email_input = self.selenium.find_element(By.CSS_SELECTOR, 'input[name="email"]')
+        email_input.clear()
+        email_input.send_keys('zmieniony_sl05n@test.pl')
+        self.selenium.find_element(By.CSS_SELECTOR, '[type="submit"]').click()
+        self.assertIn(
+            UZYTKOWNICY, self.selenium.current_url,
+            f'Brak przekierowania na listę po edycji. URL: {self.selenium.current_url}',
+        )
+        self.assertIn(
+            'zmieniony_sl05n@test.pl', self.selenium.page_source,
+            'Zaktualizowany email nie widoczny na liście — zapis edycji nie działa',
         )

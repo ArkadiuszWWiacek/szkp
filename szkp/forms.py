@@ -375,3 +375,37 @@ class CaseLawyerFormSU(CaseLawyerForm):
 
     def clean_role(self):
         return self.cleaned_data.get('role')
+
+
+class UserFormSU(forms.Form):
+    username = forms.CharField(max_length=150, label='Login')
+    email = forms.EmailField(required=False, label='E-mail')
+    first_name = forms.CharField(max_length=150, required=False, label='Imię')
+    last_name = forms.CharField(max_length=150, required=False, label='Nazwisko')
+    is_staff = forms.BooleanField(required=False, label='Pracownik (dostęp do systemu)')
+    is_active = forms.BooleanField(required=False, label='Aktywny')
+    password = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput,
+        label='Hasło',
+    )
+    password_confirm = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput,
+        label='Powtórz hasło',
+    )
+
+    def __init__(self, *args, is_new=True, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._is_new = is_new
+        if is_new:
+            self.fields['password'].required = True
+            self.fields['password_confirm'].required = True
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get('password', '')
+        password_confirm = cleaned_data.get('password_confirm', '')
+        if password and password != password_confirm:
+            self.add_error('password_confirm', 'Hasła muszą być identyczne.')
+        return cleaned_data
