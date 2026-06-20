@@ -2,6 +2,8 @@ import sys
 from itertools import chain
 
 import django
+
+from szkp.charts import generate_case_dist_chart
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.sessions.models import Session
@@ -110,6 +112,9 @@ def _dashboard_superuser(request, today):
         reverse=True,
     )[:8]
 
+    cases_by_status = dict(Case.objects.values_list('status').annotate(n=Count('id')))
+    cases_total = Case.objects.count()
+
     context = {
         'today': today,
         'active_cases_count':     Case.objects.filter(
@@ -138,8 +143,9 @@ def _dashboard_superuser(request, today):
         'recent_cases':           Case.objects.select_related('client').order_by('-created_at')[:5],
         'recent_invoices':        Invoice.objects.select_related('case').order_by('-issue_date')[:5],
         'users':                  User.objects.select_related('lawyer').order_by('-last_login')[:5],
-        'cases_total':            Case.objects.count(),
-        'cases_by_status':        dict(Case.objects.values_list('status').annotate(n=Count('id'))),
+        'cases_total':            cases_total,
+        'cases_by_status':        cases_by_status,
+        'case_dist_chart':        generate_case_dist_chart(cases_by_status, cases_total),
         'active_sessions':        active_sessions,
         'django_version':         f'{django.VERSION[0]}.{django.VERSION[1]}.{django.VERSION[2]}',
         'python_version':         f'{sys.version_info.major}.{sys.version_info.minor}',

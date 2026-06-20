@@ -340,3 +340,45 @@ class DashboardSuperuserListLimitsTest(TestCase):
         ctx = self._ctx()
         self.assertRegex(ctx['django_version'], r'^\d+\.\d+\.\d+$')
         self.assertRegex(ctx['python_version'], r'^\d+\.\d+$')
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TI-D40–TI-D42: Wykres kołowy rozkładu spraw
+# ═══════════════════════════════════════════════════════════════════════════
+
+@tag('integration')
+class DashboardSuperuserChartTest(TestCase):
+    """Kontekst i szablon zawierają wykres kołowy rozkładu spraw."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.superuser = User.objects.create_user(
+            username='super_chart', password='x', is_staff=True, is_superuser=True,
+        )
+        cls.klient = Client.objects.create(
+            type=ClientType.OSOBA_FIZYCZNA,
+            first_name='Chart', last_name='Klient', pesel='90010112300',
+        )
+        Case.objects.create(
+            client=cls.klient, case_number='TST/CHT/001',
+            title='Sprawa testowa', case_type=CaseType.CYWILNA,
+            status=CaseStatus.W_TOKU,
+        )
+
+    def _response(self):
+        self.client.force_login(self.superuser)
+        return self.client.get(PULPIT)
+
+    def test_ti_d40_context_contains_case_dist_chart(self):
+        """TI-D40: Kontekst zawiera klucz case_dist_chart."""
+        self.assertIn('case_dist_chart', self._response().context)
+
+    def test_ti_d41_chart_is_nonempty_string_when_cases_exist(self):
+        """TI-D41: case_dist_chart jest niepustym stringiem gdy są sprawy."""
+        chart = self._response().context['case_dist_chart']
+        self.assertIsInstance(chart, str)
+        self.assertGreater(len(chart), 0)
+
+    def test_ti_d42_response_contains_base64_img(self):
+        """TI-D42: Odpowiedź HTML zawiera tag img z danymi PNG base64."""
+        self.assertContains(self._response(), 'data:image/png;base64,')

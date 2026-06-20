@@ -265,7 +265,8 @@
             </svg>
             Użytkownicy systemu
           </div>
-          <a href="{% url 'admin:auth_user_changelist' %}" class="dash-panel-action">Zarządzaj →</a>
+          <a href="{% url 'admin:auth_user_changelist' %}"
+             class="dash-panel-action">Zarządzaj →</a>
         </div>
         {% for u in users %}
           <div class="dash-user-row">
@@ -314,7 +315,7 @@
   <div class="dash-wide-grid">
 
     <!-- ACTIVITY FEED -->
-    <div class="dash-panel">
+    <div class="dash-panel dash-wg-feed">
       <div class="dash-panel-header">
         <div class="dash-panel-title">
           <svg fill="none"
@@ -362,223 +363,207 @@
       </div>
     </div>
 
-    <!-- Prawa kolumna -->
-    <div class="dash-col-stack">
-
-      <!-- SZYBKIE AKCJE -->
-      <div class="dash-panel">
-        <div class="dash-panel-header">
-          <div class="dash-panel-title">
-            Szybkie akcje
-          </div>
+    <!-- SZYBKIE AKCJE -->
+    <div class="dash-panel dash-wg-quick">
+      <div class="dash-panel-header">
+        <div class="dash-panel-title">
+          Szybkie akcje
         </div>
-        <div class="dash-quick-actions">
-          <a href="{% url 'szkp:case_new' %}" class="dash-quick-action">
+      </div>
+      <div class="dash-quick-actions">
+        <a href="{% url 'szkp:case_new' %}" class="dash-quick-action">
+          <div class="dash-qa-icon dash-qa-icon--ox">
+            <svg fill="none"
+                 viewBox="0 0 24 24"
+                 stroke="currentColor"
+                 stroke-width="1.8">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+          </div>
+          Nowa sprawa
+        </a>
+        <a href="{% url 'szkp:client_new' %}" class="dash-quick-action">
+          <div class="dash-qa-icon dash-qa-icon--bl">
+            <svg fill="none"
+                 viewBox="0 0 24 24"
+                 stroke="currentColor"
+                 stroke-width="1.8">
+              <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
+              <circle cx="9" cy="7" r="4" /><line x1="19" y1="8" x2="19" y2="14" /><line x1="22" y1="11" x2="16" y2="11" />
+            </svg>
+          </div>
+          Nowy klient
+        </a>
+        <a href="{% url 'szkp:my_tasks' %}" class="dash-quick-action">
+          <div class="dash-qa-icon dash-qa-icon--gr">
+            <svg fill="none"
+                 viewBox="0 0 24 24"
+                 stroke="currentColor"
+                 stroke-width="1.8">
+              <path d="M9 11l3 3L22 4" />
+              <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+            </svg>
+          </div>
+          Zadania
+        </a>
+        <a href="{% url 'szkp:invoice_list' %}" class="dash-quick-action">
+          <div class="dash-qa-icon dash-qa-icon--br">
+            <svg fill="none"
+                 viewBox="0 0 24 24"
+                 stroke="currentColor"
+                 stroke-width="1.8">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+              <polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" />
+            </svg>
+          </div>
+          Faktury
+        </a>
+        {% if request.user.is_superuser %}
+          <a href="{% url 'admin:index' %}" class="dash-quick-action">
             <div class="dash-qa-icon dash-qa-icon--ox">
               <svg fill="none"
                    viewBox="0 0 24 24"
                    stroke="currentColor"
                    stroke-width="1.8">
-                <path d="M12 5v14M5 12h14" />
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
             </div>
-            Nowa sprawa
+            /admin/ Django
           </a>
-          <a href="{% url 'szkp:client_new' %}" class="dash-quick-action">
-            <div class="dash-qa-icon dash-qa-icon--bl">
-              <svg fill="none"
-                   viewBox="0 0 24 24"
-                   stroke="currentColor"
-                   stroke-width="1.8">
-                <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
-                <circle cx="9" cy="7" r="4" /><line x1="19" y1="8" x2="19" y2="14" /><line x1="22" y1="11" x2="16" y2="11" />
-              </svg>
-            </div>
-            Nowy klient
-          </a>
-          <a href="{% url 'szkp:my_tasks' %}" class="dash-quick-action">
-            <div class="dash-qa-icon dash-qa-icon--gr">
-              <svg fill="none"
-                   viewBox="0 0 24 24"
-                   stroke="currentColor"
-                   stroke-width="1.8">
-                <path d="M9 11l3 3L22 4" />
-                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
-              </svg>
-            </div>
-            Zadania
-          </a>
-          <a href="{% url 'szkp:invoice_list' %}" class="dash-quick-action">
-            <div class="dash-qa-icon dash-qa-icon--br">
-              <svg fill="none"
-                   viewBox="0 0 24 24"
-                   stroke="currentColor"
-                   stroke-width="1.8">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                <polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" />
-              </svg>
-            </div>
-            Faktury
-          </a>
-          {% if request.user.is_superuser %}
-            <a href="{% url 'admin:index' %}" class="dash-quick-action">
-              <div class="dash-qa-icon dash-qa-icon--ox">
-                <svg fill="none"
-                     viewBox="0 0 24 24"
-                     stroke="currentColor"
-                     stroke-width="1.8">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
-              </div>
-              /admin/ Django
-            </a>
-          {% endif %}
-        </div>
+        {% endif %}
       </div>
+    </div>
 
-      <!-- STAN SYSTEMU -->
-      {% if request.user.is_superuser %}
-        <div class="dash-panel">
-          <div class="dash-panel-header">
-            <div class="dash-panel-title">
-              <svg fill="none"
-                   viewBox="0 0 24 24"
-                   stroke="currentColor"
-                   stroke-width="1.8">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-              </svg>
-              Stan systemu
-            </div>
-          </div>
-          <div class="dash-status-list">
-            <div class="dash-status-row">
-              <span class="dash-status-label">Sesje aktywne</span>
-              <span class="dash-status-indicator si-ok">
-                <span class="dash-si-dot"></span>{{ active_sessions }} zalogowanych
-              </span>
-            </div>
-            <div class="dash-status-row">
-              <span class="dash-status-label">Faktury przeterminowane</span>
-              <span class="dash-status-indicator
-                           {% if invoices_overdue_count %}
-                             si-err
-                           {% else %}
-                             si-ok
-                           {% endif %}">
-                <span class="dash-si-dot"></span>{{ invoices_overdue_count }} wymagają uwagi
-              </span>
-            </div>
-            <div class="dash-status-row">
-              <span class="dash-status-label">Terminy bez prawnika</span>
-              <span class="dash-status-indicator
-                           {% if hearings_unassigned %}
-                             si-warn
-                           {% else %}
-                             si-ok
-                           {% endif %}">
-                <span class="dash-si-dot"></span>{{ hearings_unassigned }} nieprzypisanych
-              </span>
-            </div>
-            <div class="dash-status-row">
-              <span class="dash-status-label">Wersja Django / Python</span>
-              <span class="dash-status-indicator">
-                <span class="dash-mono">{{ django_version }} / {{ python_version }}</span>
-              </span>
-            </div>
-          </div>
-        </div>
-      {% endif %}
-
-      <!-- ROZKŁAD SPRAW -->
-      <div class="dash-panel">
+    <!-- STAN SYSTEMU -->
+    {% if request.user.is_superuser %}
+      <div class="dash-panel dash-wg-status">
         <div class="dash-panel-header">
           <div class="dash-panel-title">
-            Rozkład spraw wg statusu
+            <svg fill="none"
+                 viewBox="0 0 24 24"
+                 stroke="currentColor"
+                 stroke-width="1.8">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+            </svg>
+            Stan systemu
           </div>
         </div>
-        <div class="dash-stat-bar-row">
-          {% with cases_total as total %}
-            {% with cases_by_status.w_toku|default:0 as n_wtoku %}
-              <div>
-                <div class="dash-stat-bar-top">
-                  <span class="dash-stat-bar-label">W toku</span>
-                  <span class="dash-stat-bar-val">{{ n_wtoku }} / {{ total }}</span>
-                </div>
-                <div class="dash-stat-bar-track">
-                  <div class="dash-stat-bar-fill dash-sbf-brass"
-                       data-bar-pct="{% if total %}
-                                       {% widthratio n_wtoku total 100 %}
-                                     {% else %}
-                                       0
-                                     {% endif %}">
-                  </div>
-                </div>
-              </div>
-            {% endwith %}
-            {% with cases_by_status.nowa|default:0 as n_nowa %}
-              <div>
-                <div class="dash-stat-bar-top">
-                  <span class="dash-stat-bar-label">Nowe</span>
-                  <span class="dash-stat-bar-val">{{ n_nowa }} / {{ total }}</span>
-                </div>
-                <div class="dash-stat-bar-track">
-                  <div class="dash-stat-bar-fill dash-sbf-blue"
-                       data-bar-pct="{% if total %}
-                                       {% widthratio n_nowa total 100 %}
-                                     {% else %}
-                                       0
-                                     {% endif %}">
-                  </div>
-                </div>
-              </div>
-            {% endwith %}
-            {% with cases_by_status.zawieszona|default:0 as n_zaw %}
-              <div>
-                <div class="dash-stat-bar-top">
-                  <span class="dash-stat-bar-label">Zawieszone</span>
-                  <span class="dash-stat-bar-val">{{ n_zaw }} / {{ total }}</span>
-                </div>
-                <div class="dash-stat-bar-track">
-                  <div class="dash-stat-bar-fill dash-sbf-gray"
-                       data-bar-pct="{% if total %}
-                                       {% widthratio n_zaw total 100 %}
-                                     {% else %}
-                                       0
-                                     {% endif %}">
-                  </div>
-                </div>
-              </div>
-            {% endwith %}
-            {% with cases_by_status.zakończona|default:0 as n_zak %}
-              <div>
-                <div class="dash-stat-bar-top">
-                  <span class="dash-stat-bar-label">Zakończone</span>
-                  <span class="dash-stat-bar-val">{{ n_zak }} / {{ total }}</span>
-                </div>
-                <div class="dash-stat-bar-track">
-                  <div class="dash-stat-bar-fill dash-sbf-green"
-                       data-bar-pct="{% if total %}
-                                       {% widthratio n_zak total 100 %}
-                                     {% else %}
-                                       0
-                                     {% endif %}">
-                  </div>
-                </div>
-              </div>
-            {% endwith %}
-          {% endwith %}
+        <div class="dash-status-list">
+          <div class="dash-status-row">
+            <span class="dash-status-label">Sesje aktywne</span>
+            <span class="dash-status-indicator si-ok">
+              <span class="dash-si-dot"></span>{{ active_sessions }} zalogowanych
+            </span>
+          </div>
+          <div class="dash-status-row">
+            <span class="dash-status-label">Faktury przeterminowane</span>
+            <span class="dash-status-indicator
+                         {% if invoices_overdue_count %}
+                           si-err
+                         {% else %}
+                           si-ok
+                         {% endif %}">
+              <span class="dash-si-dot"></span>{{ invoices_overdue_count }} wymagają uwagi
+            </span>
+          </div>
+          <div class="dash-status-row">
+            <span class="dash-status-label">Terminy bez prawnika</span>
+            <span class="dash-status-indicator
+                         {% if hearings_unassigned %}
+                           si-warn
+                         {% else %}
+                           si-ok
+                         {% endif %}">
+              <span class="dash-si-dot"></span>{{ hearings_unassigned }} nieprzypisanych
+            </span>
+          </div>
+          <div class="dash-status-row">
+            <span class="dash-status-label">Wersja Django / Python</span>
+            <span class="dash-status-indicator">
+              <span class="dash-mono">{{ django_version }} / {{ python_version }}</span>
+            </span>
+          </div>
         </div>
       </div>
+    {% endif %}
 
+    <!-- ROZKŁAD SPRAW -->
+    <div class="dash-panel dash-wg-dist">
+      <div class="dash-panel-header">
+        <div class="dash-panel-title">
+          Rozkład spraw wg statusu
+        </div>
+      </div>
+      <div class="dash-case-dist">
+        {% with cases_total as total %}
+          {% with cases_by_status.w_toku|default:0 as n_wtoku %}
+            {% with cases_by_status.nowa|default:0 as n_nowa %}
+              {% with cases_by_status.zawieszona|default:0 as n_zaw %}
+                {% with cases_by_status.zakończona|default:0 as n_zak %}
+                  <div class="dash-seg-legend">
+                    <div class="dash-seg-item">
+                      <span class="dash-seg-dot dash-seg-dot-brass"></span>
+                      <span class="dash-seg-name">W toku</span>
+                      <span class="dash-seg-num">{{ n_wtoku }}</span>
+                      <span class="dash-seg-pct">
+                        {% if total %}
+                          {% widthratio n_wtoku total 100 %}%
+                        {% else %}
+                          —
+                        {% endif %}
+                      </span>
+                    </div>
+                    <div class="dash-seg-item">
+                      <span class="dash-seg-dot dash-seg-dot-blue"></span>
+                      <span class="dash-seg-name">Nowe</span>
+                      <span class="dash-seg-num">{{ n_nowa }}</span>
+                      <span class="dash-seg-pct">
+                        {% if total %}
+                          {% widthratio n_nowa total 100 %}%
+                        {% else %}
+                          —
+                        {% endif %}
+                      </span>
+                    </div>
+                    <div class="dash-seg-item">
+                      <span class="dash-seg-dot dash-seg-dot-gray"></span>
+                      <span class="dash-seg-name">Zawieszone</span>
+                      <span class="dash-seg-num">{{ n_zaw }}</span>
+                      <span class="dash-seg-pct">
+                        {% if total %}
+                          {% widthratio n_zaw total 100 %}%
+                        {% else %}
+                          —
+                        {% endif %}
+                      </span>
+                    </div>
+                    <div class="dash-seg-item">
+                      <span class="dash-seg-dot dash-seg-dot-green"></span>
+                      <span class="dash-seg-name">Zakończone</span>
+                      <span class="dash-seg-num">{{ n_zak }}</span>
+                      <span class="dash-seg-pct">
+                        {% if total %}
+                          {% widthratio n_zak total 100 %}%
+                        {% else %}
+                          —
+                        {% endif %}
+                      </span>
+                    </div>
+                  </div>
+                  {% if case_dist_chart %}
+                    <img src="data:image/png;base64,{{ case_dist_chart }}"
+                         alt="Rozkład spraw wg statusu"
+                         class="dash-dist-chart-img">
+                  {% endif %}
+                {% endwith %}
+              {% endwith %}
+            {% endwith %}
+          {% endwith %}
+        {% endwith %}
+      </div>
     </div>
   </div>
 
 {% endblock content %}
 
-{% block scripts %}
-  <script>
-  document.querySelectorAll('[data-bar-pct]').forEach(function(el) {
-    el.style.width = el.dataset.barPct + '%';
-  });
-  </script>
-{% endblock scripts %}
+{% block scripts %}{% endblock scripts %}
