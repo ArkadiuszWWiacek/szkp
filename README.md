@@ -2,6 +2,16 @@
 
 Aplikacja webowa Django do zarządzania sprawami, klientami, prawnikami, terminami sądowymi, dokumentami, fakturami i zadaniami kancelarii prawnej.
 
+## Funkcje
+
+- **Sprawy** — lista z wyszukiwaniem, filtrowaniem, sortowaniem i paginacją; zakładki na szczegółach sprawy (terminy, dokumenty, zadania, faktury, prawnicy); zmiana statusu inline
+- **Klienci** — CRUD z walidacją PESEL (osoby fizyczne) i NIP (firmy)
+- **Terminy sądowe** — tworzenie i edycja powiązana ze sprawą; walidacja daty w przyszłości
+- **Dokumenty** — upload pliku z wersjonowaniem; podgląd inline `.txt`/`.md`
+- **Faktury** — lista z filtrem statusu i paginacją; automatyczne obliczanie kwoty brutto (netto × VAT); oznaczanie jako opłacona
+- **Zadania** — lista własnych zadań z filtrami (status, okres, numer sprawy); podzadania (inline formset); blokada zamknięcia gdy są nieukończone podzadania
+- **Panel superusera** — oddzielny dashboard (metryki, feed aktywności, wykres kołowy spraw, lista użytkowników, info systemowe); zarządzanie użytkownikami (tworzenie, edycja, aktywacja/deaktywacja)
+
 ## Wymagania
 
 - Python **3.12**
@@ -116,15 +126,18 @@ Python_Web/          # konfiguracja projektu (settings, urls)
 szkp/                # główna aplikacja domenowa
   models/            # modele (jeden plik = jeden model)
   views/             # widoki (jeden plik = jeden obszar domenowy)
-  forms.py           # formularze
+  templatetags/      # tagi szablonów (sort_th, widget_value)
+  forms.py           # formularze (ModelForm + plain Form)
+  permissions.py     # helpery kontroli dostępu (require_case_access)
   urls.py            # routing
   admin.py           # panel administracyjny
   tests/             # testy jednostkowe i integracyjne
   management/
     commands/        # komendy manage.py (seed_*)
-templates/           # szablony HTML (Bootstrap 5.3)
+accounts/            # uwierzytelnianie (formularz logowania)
+templates/           # szablony HTML (base.html Bootstrap 5.3, base_dash.html panel SU)
 Functional_tests/    # testy Selenium (LiveServerTestCase)
-static/              # CSS/JS
+static/              # CSS (style.css z tokenami --szkp-* i --dash-*)
 ```
 
 ## Zależności
@@ -135,6 +148,8 @@ Pełna lista w `requirements.txt`. Główne pakiety:
 |---|---|---|
 | Django | 5.1.2 | framework webowy |
 | dj-database-url | 2.3.0 | parsowanie `DATABASE_URL` (SQLite / PostgreSQL) |
+| markdown | 3.10 | podgląd plików `.md` w widoku dokumentu |
+| matplotlib | 3.10.8 | wykres kołowy spraw w panelu superusera |
 | Faker | 40.11.0 | generowanie danych testowych |
 | psycopg | 3.3.2 | sterownik PostgreSQL |
 | selenium | 4.38.0 | testy funkcjonalne |

@@ -12,3 +12,4 @@ CLAUDE.md
 staticfiles/
 htmlcov/
 media/
+graphify-out/
