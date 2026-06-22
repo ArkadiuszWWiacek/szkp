@@ -87,20 +87,6 @@
     </table>
   </div>
 
-  {% if page_obj.has_other_pages %}
-    <nav class="dash-pagination">
-      {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&sort={{ sort }}&dir={{ direction }}"
-           class="dash-btn dash-btn--ghost dash-btn--sm">‹</a>
-      {% endif %}
-      <span class="dash-pagination-info">
-        Strona {{ page_obj.number }} z {{ page_obj.paginator.num_pages }}
-      </span>
-      {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}&q={{ q }}&sort={{ sort }}&dir={{ direction }}"
-           class="dash-btn dash-btn--ghost dash-btn--sm">›</a>
-      {% endif %}
-    </nav>
-  {% endif %}
+  {% pagination_dash page_obj %}
 
 {% endblock content %}

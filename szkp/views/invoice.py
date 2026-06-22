@@ -1,7 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -10,6 +9,7 @@ from django.views.decorators.http import require_POST
 from szkp.forms import InvoiceForm, InvoiceFormSU
 from szkp.models import Case, CaseLawyer, Invoice, InvoiceStatus
 from szkp.permissions import require_case_access
+from szkp.view_utils import apply_sorting, apply_pagination
 
 
 def _form_context(case, invoice, form):
@@ -36,11 +36,7 @@ def invoice_form(request, case_pk, pk=None):
     )
 
     if request.method == 'POST':
-        form = FormClass(
-            request.POST,
-            instance=invoice,
-            instance_pk=invoice.pk if invoice else None,
-        )
+        form = FormClass(request.POST, instance=invoice)
         if form.is_valid():
             obj = form.save(commit=False)
             if not invoice:
@@ -51,10 +47,7 @@ def invoice_form(request, case_pk, pk=None):
 
         return render(request, template, _form_context(case, invoice, form))
 
-    form = FormClass(
-        instance=invoice,
-        instance_pk=invoice.pk if invoice else None,
-    )
+    form = FormClass(instance=invoice)
     return render(request, template, _form_context(case, invoice, form))
 
 
@@ -64,18 +57,7 @@ def invoice_list(request):
     status = request.GET.get('status')
     sort = request.GET.get('sort', 'issue_date')
     direction = request.GET.get('dir', 'desc')
-    valid_sort_fields = {
-        'invoice_number': 'invoice_number',
-        'case':           'case__case_number',
-        'issue_date':     'issue_date',
-        'due_date':       'due_date',
-        'gross_amount':   'gross_amount',
-        'status':         'status',
-    }
-    sort_field = valid_sort_fields.get(sort, 'issue_date')
-    if direction == 'desc':
-        sort_field = f'-{sort_field}'
-    qs = Invoice.objects.select_related('case').order_by(sort_field)
+    qs = Invoice.objects.select_related('case')
     if not request.user.is_staff:
         assigned = CaseLawyer.objects.filter(
             lawyer__user=request.user
@@ -88,8 +70,15 @@ def invoice_list(request):
             Q(invoice_number__icontains=q)
             | Q(case__case_number__icontains=q)
         )
-    paginator = Paginator(qs, 20)
-    page_obj = paginator.get_page(request.GET.get('page', 1))
+    qs = apply_sorting(qs, sort, direction, {
+        'invoice_number': 'invoice_number',
+        'case':           'case__case_number',
+        'issue_date':     'issue_date',
+        'due_date':       'due_date',
+        'gross_amount':   'gross_amount',
+        'status':         'status',
+    }, 'issue_date')
+    page_obj = apply_pagination(qs, request.GET.get('page', 1))
     ctx = {
         'page_obj':       page_obj,
         'invoices':       page_obj,

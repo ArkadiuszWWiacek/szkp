@@ -116,9 +116,8 @@ class InvoiceForm(forms.ModelForm):
             'due_date':   forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
         }
 
-    def __init__(self, *args, instance_pk=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._instance_pk = instance_pk
         self.fields['vat_rate'].required = False
         self.fields['currency'].required = False
         self.fields['status'].required = False
@@ -129,9 +128,8 @@ class InvoiceForm(forms.ModelForm):
     def clean_invoice_number(self):
         number = self.cleaned_data.get('invoice_number')
         qs = Invoice.objects.filter(invoice_number=number)
-        exclude_pk = self._instance_pk if self._instance_pk is not None else self.instance.pk
-        if exclude_pk:
-            qs = qs.exclude(pk=exclude_pk)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
             raise forms.ValidationError('Faktura o tym numerze już istnieje.')
         return number
@@ -174,10 +172,11 @@ class TaskForm(forms.ModelForm):
 
     def clean_assigned_lawyer(self):
         pk = self.cleaned_data.get('assigned_lawyer')
-        if self._case_lawyer_pks is not None and pk is not None:
-            if pk not in self._case_lawyer_pks:
-                raise forms.ValidationError('Wybrany prawnik nie jest przypisany do tej sprawy.')
-        return pk
+        if pk is None:
+            return None
+        if self._case_lawyer_pks is not None and pk not in self._case_lawyer_pks:
+            raise forms.ValidationError('Wybrany prawnik nie jest przypisany do tej sprawy.')
+        return Lawyer.objects.get(pk=pk)
 
     def clean_priority(self):
         return self.cleaned_data.get('priority') or TaskPriority.NORMALNA
@@ -209,7 +208,10 @@ class DocumentVersionForm(forms.Form):
 
 
 class CaseLawyerForm(forms.Form):
-    lawyer = forms.IntegerField()
+    lawyer = forms.ModelChoiceField(
+        queryset=Lawyer.objects.none(),
+        empty_label='— wybierz prawnika —',
+    )
     role   = forms.ChoiceField(choices=[
         (CaseLawyerRole.ASYSTENT, CaseLawyerRole.ASYSTENT.label),
         (CaseLawyerRole.DORADCA,  CaseLawyerRole.DORADCA.label),
@@ -218,14 +220,9 @@ class CaseLawyerForm(forms.Form):
     def __init__(self, *args, available_lawyer_pks=None, **kwargs):
         super().__init__(*args, **kwargs)
         self._available_lawyer_pks = available_lawyer_pks or []
-
-    def clean_lawyer(self):
-        pk = self.cleaned_data.get('lawyer')
-        if pk not in self._available_lawyer_pks:
-            raise forms.ValidationError(
-                'Wybrany prawnik jest już przypisany do tej sprawy lub nie istnieje.'
-            )
-        return pk
+        self.fields['lawyer'].queryset = Lawyer.objects.filter(
+            pk__in=self._available_lawyer_pks
+        ).order_by('last_name', 'first_name')
 
     def clean_role(self):
         role = self.cleaned_data.get('role')

@@ -24,6 +24,8 @@
   --szkp-text:        #1A201E;
   --szkp-text-muted:  #5C645F;
   --szkp-text-faint:  #8A8F89;
+  --szkp-primary:     #B0894F;
+  --szkp-hover:       rgba(176, 137, 79, 0.07);
 
   /* === STATUS === */
   --status-nowa-bg:     #EEF1EE;
@@ -1641,10 +1643,13 @@ a.invoice-item:hover {
   --dash-parchment:  #F5F2ED;
   --dash-parch-dk:   #E8E4DC;
   --dash-white:      #FFFFFF;
-  --dash-success:    #1A6B3A;
-  --dash-warning:    #7A5A00;
-  --dash-sidebar-w:  52px;
-  --dash-topbar-h:   56px;
+  --dash-success:      #1A6B3A;
+  --dash-warning:      #7A5A00;
+  --dash-sidebar-w:    52px;
+  --dash-topbar-h:     56px;
+  --dash-surface-alt:  #F0EDE7;
+  --dash-accent-warm:  #D4AE1A;
+  --dash-border:       #D4D0C8;
 }
 
 /* ── WRAPPER ── */

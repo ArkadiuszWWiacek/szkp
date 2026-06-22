@@ -14,30 +14,12 @@
         <h1 class="szkp-page-title">Usuń zadanie</h1>
     </div>
 
-    <div class="szkp-card">
-        <div class="szkp-card__body szkp-card__body--lg">
-
-            <p class="mb-1">Czy na pewno chcesz usunąć zadanie:</p>
-            <p class="fw-medium fs-135 mb-4">{{ task.title }}</p>
-
-            {% if task.task_set.exists %}
-            <p class="text-muted-szkp fs-13 mb-4">
-                Uwaga: usunięcie spowoduje też usunięcie wszystkich podzadań tego zadania.
-            </p>
-            {% endif %}
-
-            <p class="text-muted-szkp fs-13 mb-4">Tej operacji nie można cofnąć.</p>
-
-            <div class="d-flex justify-content-end gap-3">
-                <a href="{% url 'szkp:my_tasks' %}" class="btn-szkp btn-szkp--outline">Anuluj</a>
-                <form method="post">
-                    {% csrf_token %}
-                    <button type="submit" class="btn-szkp btn-szkp--danger">Usuń zadanie</button>
-                </form>
-            </div>
-
-        </div>
-    </div>
+    {% url 'szkp:my_tasks' as cancel_url %}
+    {% if task.task_set.exists %}
+    {% include "szkp/partials/confirm_delete.html" with confirm_question="Czy na pewno chcesz usunąć zadanie:" object_name=task.title warning_text="Uwaga: usunięcie spowoduje też usunięcie wszystkich podzadań tego zadania." cancel_url=cancel_url confirm_text="Usuń zadanie" %}
+    {% else %}
+    {% include "szkp/partials/confirm_delete.html" with confirm_question="Czy na pewno chcesz usunąć zadanie:" object_name=task.title cancel_url=cancel_url confirm_text="Usuń zadanie" %}
+    {% endif %}
 
 </div>
 {% endblock content %}

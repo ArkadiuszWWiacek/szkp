@@ -14,35 +14,8 @@
         <h1 class="szkp-page-title">Usuń klienta</h1>
     </div>
 
-    <div class="szkp-card">
-        <div class="szkp-card__body szkp-card__body--lg">
-
-            {% if error %}
-            <div class="alert alert-danger mb-4">{{ error }}</div>
-            {% endif %}
-
-            <p class="mb-1">Czy na pewno chcesz usunąć klienta:</p>
-            <p class="fw-medium fs-135 mb-4">
-                {% if client.is_individual %}
-                    {{ client.first_name }} {{ client.last_name }}
-                {% else %}
-                    {{ client.company_name }}
-                {% endif %}
-            </p>
-            <p class="text-muted-szkp fs-13 mb-4">
-                Tej operacji nie można cofnąć. Usunięcie jest możliwe tylko jeśli klient nie ma przypisanych spraw.
-            </p>
-
-            <div class="d-flex justify-content-end gap-3">
-                <a href="{% url 'szkp:client_list' %}" class="btn-szkp btn-szkp--outline">Anuluj</a>
-                <form method="post">
-                    {% csrf_token %}
-                    <button type="submit" class="btn-szkp btn-szkp--danger">Usuń klienta</button>
-                </form>
-            </div>
-
-        </div>
-    </div>
+    {% url 'szkp:client_list' as cancel_url %}
+    {% include "szkp/partials/confirm_delete.html" with confirm_question="Czy na pewno chcesz usunąć klienta:" object_name=client warning_text="Usunięcie jest możliwe tylko jeśli klient nie ma przypisanych spraw." cancel_url=cancel_url confirm_text="Usuń klienta" error=error %}
 
 </div>
 {% endblock content %}

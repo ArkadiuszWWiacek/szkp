@@ -26,33 +26,33 @@
                 <div class="mb-3">
                     <label for="id_lawyer" class="szkp-label">Prawnik</label>
                     <select id="id_lawyer" name="lawyer"
-                            class="szkp-select-full{% if errors.lawyer %} is-invalid{% endif %}">
-                        <option value="">— wybierz prawnika —</option>
-                        {% for l in available_lawyers %}
+                            class="szkp-select-full{% if form.lawyer.errors %} is-invalid{% endif %}">
+                        <option value="">{{ form.lawyer.field.empty_label }}</option>
+                        {% for l in form.lawyer.field.queryset %}
                         <option value="{{ l.pk }}"
-                            {% if form_data.lawyer == l.pk|stringformat:"s" %}selected{% endif %}>
+                            {% if form.lawyer.value|stringformat:"s" == l.pk|stringformat:"s" %}selected{% endif %}>
                             {{ l.last_name }} {{ l.first_name }}{% if l.bar_number %} ({{ l.bar_number }}){% endif %}{% if l.specialization %} · {{ l.specialization }}{% endif %}
                         </option>
                         {% endfor %}
                     </select>
-                    {% if errors.lawyer %}
-                    <span class="szkp-error">{{ errors.lawyer.0 }}</span>
+                    {% if form.lawyer.errors %}
+                    <span class="szkp-error">{{ form.lawyer.errors.0 }}</span>
                     {% endif %}
                 </div>
 
                 <div class="mb-3">
                     <label for="id_role" class="szkp-label">Rola</label>
                     <select id="id_role" name="role"
-                            class="szkp-select-full{% if errors.role %} is-invalid{% endif %}">
-                        {% for val, label in role_choices %}
+                            class="szkp-select-full{% if form.role.errors %} is-invalid{% endif %}">
+                        {% for val, label in form.role.field.choices %}
                         <option value="{{ val }}"
-                            {% if form_data.role == val %}selected{% endif %}>
+                            {% if form.role.value == val %}selected{% endif %}>
                             {{ label }}
                         </option>
                         {% endfor %}
                     </select>
-                    {% if errors.role %}
-                    <span class="szkp-error">{{ errors.role.0 }}</span>
+                    {% if form.role.errors %}
+                    <span class="szkp-error">{{ form.role.errors.0 }}</span>
                     {% endif %}
                 </div>
 

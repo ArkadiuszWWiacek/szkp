@@ -381,9 +381,9 @@ class SuperuserDashboardWideGridTest(SzkpSeleniumTestCase):
         )
 
     def test_tc_d25_panel_rozkladu_spraw_jest_widoczny(self):
-        """TC-D25: Panel rozkładu spraw wg statusu (.dash-stat-bar-row) jest widoczny."""
-        stat_bars = self.selenium.find_elements(By.CSS_SELECTOR, '.dash-stat-bar-row')
+        """TC-D25: Panel rozkładu spraw wg statusu (wykres kołowy .dash-dist-chart-img) jest widoczny."""
+        chart_imgs = self.selenium.find_elements(By.CSS_SELECTOR, '.dash-dist-chart-img')
         self.assertTrue(
-            len(stat_bars) > 0,
-            'Brak elementu .dash-stat-bar-row — panel rozkładu spraw nie jest renderowany',
+            len(chart_imgs) > 0,
+            'Brak elementu .dash-dist-chart-img — wykres kołowy rozkładu spraw nie jest renderowany',
         )

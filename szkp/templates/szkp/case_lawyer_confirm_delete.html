@@ -18,25 +18,10 @@
         <h1 class="szkp-page-title">Usuń prawnika ze sprawy</h1>
     </div>
 
-    <div class="szkp-card">
-        <div class="szkp-card__body szkp-card__body--lg">
-
-            <p class="mb-1">Czy na pewno chcesz usunąć ze sprawy prawnika:</p>
-            <p class="fw-medium fs-135 mb-1">{{ cl.lawyer.first_name }} {{ cl.lawyer.last_name }}</p>
-            <p class="text-muted-szkp fs-13 mb-4">{{ cl.get_role_display }}</p>
-
-            <p class="text-muted-szkp fs-13 mb-4">Tej operacji nie można cofnąć.</p>
-
-            <div class="d-flex justify-content-end gap-3">
-                <a href="{% url 'szkp:case_detail' cl.case.pk %}?tab=prawnicy" class="btn-szkp btn-szkp--outline">Anuluj</a>
-                <form method="post">
-                    {% csrf_token %}
-                    <button type="submit" class="btn-szkp btn-szkp--danger">Usuń prawnika</button>
-                </form>
-            </div>
-
-        </div>
-    </div>
+    {% url 'szkp:case_detail' cl.case.pk as case_url %}
+    {% with cancel_url=case_url|add:"?tab=prawnicy" %}
+    {% include "szkp/partials/confirm_delete.html" with confirm_question="Czy na pewno chcesz usunąć ze sprawy prawnika:" object_name=cl.lawyer object_subtext=cl.get_role_display cancel_url=cancel_url confirm_text="Usuń prawnika" %}
+    {% endwith %}
 
 </div>
 {% endblock content %}

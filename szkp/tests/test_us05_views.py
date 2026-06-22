@@ -262,16 +262,16 @@ class CaseLawyerAddViewTest(StaffLawyerTestCase):
         self.assertEqual(r.status_code, 200)
 
     def test_get_kontekst_zawiera_dostepnych_prawnikow(self):
-        """Kontekst formularza zawiera listę dostępnych prawników."""
+        """Formularz zawiera listę dostępnych prawników w queryset pola lawyer."""
         r = self.client.get(self._url())
-        available = list(r.context['available_lawyers'])
+        available = list(r.context['form'].fields['lawyer'].queryset)
         self.assertIn(self.lawyer2, available)
         self.assertNotIn(self.lawyer, available)
 
     def test_get_kontekst_zawiera_role_bez_prowadzacego(self):
-        """Lista ról w kontekście nie zawiera roli PROWADZĄCY."""
+        """Pole role w formularzu nie zawiera roli PROWADZĄCY."""
         r = self.client.get(self._url())
-        wartosci = [val for val, _ in r.context['role_choices']]
+        wartosci = [val for val, _ in r.context['form'].fields['role'].choices]
         self.assertNotIn(CaseLawyerRole.PROWADZACY, wartosci)
         self.assertIn(CaseLawyerRole.ASYSTENT, wartosci)
         self.assertIn(CaseLawyerRole.DORADCA, wartosci)
@@ -300,19 +300,19 @@ class CaseLawyerAddViewTest(StaffLawyerTestCase):
         """POST bez wybranego prawnika zwraca błąd walidacji."""
         r = self._post({'lawyer': '', 'role': CaseLawyerRole.ASYSTENT})
         self.assertEqual(r.status_code, 200)
-        self.assertIn('lawyer', r.context['errors'])
+        self.assertIn('lawyer', r.context['form'].errors)
 
     def test_post_brak_roli_zwraca_blad(self):
         """POST bez wybranej roli zwraca błąd walidacji."""
         r = self._post({'lawyer': self.lawyer2.pk, 'role': ''})
         self.assertEqual(r.status_code, 200)
-        self.assertIn('role', r.context['errors'])
+        self.assertIn('role', r.context['form'].errors)
 
     def test_post_rola_prowadzacy_zwraca_blad(self):
         """POST z rolą PROWADZĄCY zwraca błąd walidacji."""
         r = self._post(self._valid_data(role=CaseLawyerRole.PROWADZACY))
         self.assertEqual(r.status_code, 200)
-        self.assertIn('role', r.context['errors'])
+        self.assertIn('role', r.context['form'].errors)
 
     def test_post_duplikat_prawnika_zwraca_blad(self):
         """POST z prawnikiem już przypisanym do sprawy zwraca błąd walidacji."""
@@ -321,7 +321,7 @@ class CaseLawyerAddViewTest(StaffLawyerTestCase):
         )
         r = self._post(self._valid_data())
         self.assertEqual(r.status_code, 200)
-        self.assertIn('lawyer', r.context['errors'])
+        self.assertIn('lawyer', r.context['form'].errors)
 
 
 @tag('integration')

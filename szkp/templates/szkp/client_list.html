@@ -107,34 +107,7 @@
                         {% endfor %}
                     </tbody>
                 </table>
-                <div class="szkp-pagination">
-                    <div class="szkp-pagination__info">
-                        Pokazano {{ page_obj.start_index }}–{{ page_obj.end_index }} z {{ page_obj.paginator.count }}
-                    </div>
-                    <div class="szkp-pagination__pages">
-                        {% if page_obj.has_previous %}
-                            <a class="szkp-page-btn"
-                               href="?q={{ q }}&sort={{ sort }}&dir={{ direction }}&page={{ page_obj.previous_page_number }}">‹</a>
-                        {% else %}
-                            <span class="szkp-page-btn szkp-page-btn--disabled">‹</span>
-                        {% endif %}
-                        {% for num in page_obj.paginator.page_range %}
-                            {% if page_obj.number == num %}
-                                <span class="szkp-page-btn active">{{ num }}</span>
-                            {% elif num >= page_obj.number|add:"-3" and num <= page_obj.number|add:"3" %}
-                                <a class="szkp-page-btn" href="?q={{ q }}&sort={{ sort }}&dir={{ direction }}&page={{ num }}">{{ num }}</a>
-                            {% elif num == 1 or num == page_obj.paginator.num_pages %}
-                                <a class="szkp-page-btn" href="?q={{ q }}&sort={{ sort }}&dir={{ direction }}&page={{ num }}">{{ num }}</a>
-                            {% endif %}
-                        {% endfor %}
-                        {% if page_obj.has_next %}
-                            <a class="szkp-page-btn"
-                               href="?q={{ q }}&sort={{ sort }}&dir={{ direction }}&page={{ page_obj.next_page_number }}">›</a>
-                        {% else %}
-                            <span class="szkp-page-btn szkp-page-btn--disabled">›</span>
-                        {% endif %}
-                    </div>
-                </div>
+                {% pagination page_obj %}
             </div>
         {% else %}
             <div class="szkp-card">

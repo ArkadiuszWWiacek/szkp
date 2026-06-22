@@ -126,16 +126,18 @@ Python_Web/          # konfiguracja projektu (settings, urls)
 szkp/                # główna aplikacja domenowa
   models/            # modele (jeden plik = jeden model)
   views/             # widoki (jeden plik = jeden obszar domenowy)
-  templatetags/      # tagi szablonów (sort_th, widget_value)
+  templatetags/      # tagi szablonów (sort_th, pagination, pagination_dash, widget_value)
   forms.py           # formularze (ModelForm + plain Form)
   permissions.py     # helpery kontroli dostępu (require_case_access)
+  view_utils.py      # helpery widoków (apply_sorting, apply_pagination)
   urls.py            # routing
   admin.py           # panel administracyjny
+  templates/szkp/    # szablony widoków; partials/ — wielokrotnego użytku (pagination, confirm_delete)
   tests/             # testy jednostkowe i integracyjne
   management/
     commands/        # komendy manage.py (seed_*)
 accounts/            # uwierzytelnianie (formularz logowania)
-templates/           # szablony HTML (base.html Bootstrap 5.3, base_dash.html panel SU)
+templates/           # szablony projektowe (base.html Bootstrap 5.3, base_dash.html panel SU)
 Functional_tests/    # testy Selenium (LiveServerTestCase)
 static/              # CSS (style.css z tokenami --szkp-* i --dash-*)
 ```

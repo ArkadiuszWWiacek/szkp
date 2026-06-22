@@ -8,7 +8,23 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from szkp.forms import TaskForm, TaskFormSU, SubtaskInlineFormSet
-from szkp.models import Case, CaseLawyer, Lawyer, Task, TaskPriority, TaskStatus
+from szkp.models import Case, Lawyer, Task, TaskPriority, TaskStatus
+from szkp.permissions import require_case_access
+
+
+def _filter_tasks(qs, status_filter, period_filter, case_number_filter, today):
+    if status_filter:
+        qs = qs.filter(status=status_filter)
+    if period_filter == 'today':
+        qs = qs.filter(due_date__date=today)
+    elif period_filter == 'week':
+        qs = qs.filter(due_date__date__lte=today + timezone.timedelta(days=7),
+                       due_date__date__gte=today)
+    elif period_filter == 'overdue':
+        qs = qs.filter(due_date__date__lt=today).exclude(status=TaskStatus.ZAKOŃCZONE)
+    if case_number_filter:
+        qs = qs.filter(case__case_number__icontains=case_number_filter)
+    return qs
 
 
 @login_required
@@ -64,19 +80,7 @@ def my_tasks(request):
           .select_related('case', 'assigned_lawyer')
           .prefetch_related('task_set__assigned_lawyer'))
 
-    if status_filter:
-        qs = qs.filter(status=status_filter)
-
-    if period_filter == 'today':
-        qs = qs.filter(due_date__date=today)
-    elif period_filter == 'week':
-        qs = qs.filter(due_date__date__lte=today + timezone.timedelta(days=7),
-                       due_date__date__gte=today)
-    elif period_filter == 'overdue':
-        qs = qs.filter(due_date__date__lt=today).exclude(status=TaskStatus.ZAKOŃCZONE)
-
-    if case_number_filter:
-        qs = qs.filter(case__case_number__icontains=case_number_filter)
+    qs = _filter_tasks(qs, status_filter, period_filter, case_number_filter, today)
 
     qs = qs.annotate(priority_rank=priority_rank).order_by('priority_rank', 'due_date')
 
@@ -105,6 +109,57 @@ def task_detail(request, pk):
     })
 
 
+def _save_task(form, formset, obj, task, case, lawyer, is_su, request, template, lawyer_choices):
+    assigned = form.cleaned_data.get('assigned_lawyer')
+    if is_su:
+        if assigned:
+            obj.assigned_lawyer = assigned
+        created = form.cleaned_data.get('created_by')
+        if created:
+            obj.created_by = created
+        elif not task:
+            obj.created_by = lawyer
+        case_obj = form.cleaned_data.get('case')
+        if case_obj is not None:
+            obj.case = case_obj
+        if not task:
+            parent_obj = form.cleaned_data.get('parent_task')
+            if parent_obj:
+                obj.parent_task = parent_obj
+    else:
+        if case and assigned:
+            obj.assigned_lawyer = assigned
+        elif not task:
+            obj.assigned_lawyer = lawyer
+        if not task:
+            obj.created_by = lawyer
+            parent_pk_val = request.POST.get('parent_task')
+            if parent_pk_val:
+                obj.parent_task_id = int(parent_pk_val)
+            if case:
+                obj.case = case
+
+    if task and obj.status == TaskStatus.ZAKOŃCZONE and obj.has_unfinished_subtasks:
+        form.add_error('status', 'Nie można zakończyć zadania — najpierw zakończ wszystkie podzadania.')
+        return render(request, template,
+                      _task_context(task, form, case=case, lawyer_choices=lawyer_choices, formset=formset))
+
+    obj.save()
+
+    if formset:
+        new_instances = formset.save(commit=False)
+        for inst in new_instances:
+            if not inst.pk:
+                inst.created_by = lawyer
+                if not inst.assigned_lawyer_id:
+                    inst.assigned_lawyer = obj.assigned_lawyer
+            inst.save()
+        for deleted in formset.deleted_objects:
+            deleted.delete()
+
+    return None
+
+
 def _task_context(task, form, parent_pk=None, case=None, lawyer_choices=None, formset=None):
     return {
         'task': task,
@@ -127,15 +182,11 @@ def task_form(request, pk=None, case_pk=None):
     case = None
     if case_pk:
         case = get_object_or_404(Case, pk=case_pk)
-        if not request.user.is_staff:
-            if not CaseLawyer.objects.filter(case=case, lawyer=lawyer).exists():
-                raise PermissionDenied
+        require_case_access(request, case)
 
     if task and task.case and not case:
         case = task.case
-        if not request.user.is_staff:
-            if not CaseLawyer.objects.filter(case=case, lawyer=lawyer).exists():
-                raise PermissionDenied
+        require_case_access(request, case)
 
     lawyer_choices = None
     case_lawyer_pks = None
@@ -171,56 +222,10 @@ def task_form(request, pk=None, case_pk=None):
 
         if form.is_valid() and (formset is None or formset.is_valid()):
             obj = form.save(commit=False)
-
-            if is_su:
-                assigned = form.cleaned_data.get('assigned_lawyer')
-                if assigned:
-                    obj.assigned_lawyer = assigned
-                created = form.cleaned_data.get('created_by')
-                if created:
-                    obj.created_by = created
-                elif not task:
-                    obj.created_by = lawyer
-                case_obj = form.cleaned_data.get('case')
-                if case_obj is not None:
-                    obj.case = case_obj
-                if not task:
-                    parent_obj = form.cleaned_data.get('parent_task')
-                    if parent_obj:
-                        obj.parent_task = parent_obj
-            else:
-                assigned_pk = form.cleaned_data.get('assigned_lawyer')
-                if case and assigned_pk:
-                    obj.assigned_lawyer_id = assigned_pk
-                elif not task:
-                    obj.assigned_lawyer = lawyer
-                if not task:
-                    obj.created_by = lawyer
-                    parent_pk_val = request.POST.get('parent_task')
-                    if parent_pk_val:
-                        obj.parent_task_id = int(parent_pk_val)
-                    if case:
-                        obj.case = case
-
-            if pk and obj.status == TaskStatus.ZAKOŃCZONE and obj.has_unfinished_subtasks:
-                form.add_error('status', 'Nie można zakończyć zadania — najpierw zakończ wszystkie podzadania.')
-                return render(request, template,
-                              _task_context(task, form, case=case, lawyer_choices=lawyer_choices,
-                                            formset=formset))
-
-            obj.save()
-
-            if formset:
-                new_instances = formset.save(commit=False)
-                for inst in new_instances:
-                    if not inst.pk:
-                        inst.created_by = lawyer
-                        if not inst.assigned_lawyer_id:
-                            inst.assigned_lawyer = obj.assigned_lawyer
-                    inst.save()
-                for deleted in formset.deleted_objects:
-                    deleted.delete()
-
+            error_response = _save_task(form, formset, obj, task, case, lawyer, is_su,
+                                        request, template, lawyer_choices)
+            if error_response is not None:
+                return error_response
             messages.success(request, 'Zadanie zostało zapisane.')
             return redirect(redirect_url)
 

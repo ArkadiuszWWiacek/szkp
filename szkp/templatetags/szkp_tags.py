@@ -5,6 +5,13 @@ from django import template
 register = template.Library()
 
 
+def _base_url_without_page(request):
+    """Zwraca słownik parametrów GET bez klucza 'page'."""
+    if not request:
+        return {}
+    return {k: v for k, v in request.GET.items() if k != 'page'}
+
+
 @register.filter
 def widget_value(bound_field):
     """Zwraca wartość pola sformatowaną przez widget (np. daty jako YYYY-MM-DD)."""
@@ -38,3 +45,23 @@ def sort_th(context, key, label):
         'current_dir': direction if is_active else '',
         'url': f'?{urlencode(params)}',
     }
+
+
+@register.inclusion_tag('szkp/partials/pagination.html', takes_context=True)
+def pagination(context, page_obj):
+    """Renderuje paginację w stylu Bootstrap (base.html).
+    Użycie: {% pagination page_obj %}
+    """
+    params = _base_url_without_page(context.get('request'))
+    base_url = f'?{urlencode(params)}&' if params else '?'
+    return {'page_obj': page_obj, 'base_url': base_url}
+
+
+@register.inclusion_tag('szkp/partials/pagination_dash.html', takes_context=True)
+def pagination_dash(context, page_obj):
+    """Renderuje paginację w stylu dashboard (base_dash.html).
+    Użycie: {% pagination_dash page_obj %}
+    """
+    params = _base_url_without_page(context.get('request'))
+    base_url = f'?{urlencode(params)}&' if params else '?'
+    return {'page_obj': page_obj, 'base_url': base_url}

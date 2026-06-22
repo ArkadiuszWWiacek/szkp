@@ -249,7 +249,7 @@ class DocumentVersionUploadViewTest(StaffLawyerTestCase):
         """POST bez pliku przy uploadzie nowej wersji zwraca błąd walidacji."""
         r = self.client.post(self._url(), {})
         self.assertEqual(r.status_code, 200)
-        self.assertIn('file', r.context['errors'])
+        self.assertIn('file', r.context['form'].errors)
 
     def test_post_redirect_na_zakladke_dokumenty(self):
         """Po uploadzie nowej wersji widok przekierowuje na zakładkę ?tab=dokumenty."""

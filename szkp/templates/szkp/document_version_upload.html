@@ -24,9 +24,9 @@
                 <div class="mb-3">
                     <label for="id_file" class="szkp-label">Plik <span class="text-danger">*</span></label>
                     <input type="file" id="id_file" name="file"
-                           class="szkp-input{% if errors.file %} is-invalid{% endif %}">
-                    {% if errors.file %}
-                    <span class="szkp-error">{{ errors.file.0 }}</span>
+                           class="szkp-input{% if form.file.errors %} is-invalid{% endif %}">
+                    {% if form.file.errors %}
+                    <span class="szkp-error">{{ form.file.errors.0 }}</span>
                     {% endif %}
                 </div>
 

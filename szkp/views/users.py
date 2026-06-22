@@ -1,11 +1,11 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 
 from szkp.forms import UserFormSU
+from szkp.view_utils import apply_sorting, apply_pagination
 
 User = get_user_model()
 
@@ -28,20 +28,14 @@ def user_list(request):
 
     sort = request.GET.get('sort', 'username')
     direction = request.GET.get('dir', 'asc')
-    valid_sort_fields = {
+    qs = apply_sorting(qs, sort, direction, {
         'username':    'username',
         'email':       'email',
         'date_joined': 'date_joined',
         'last_login':  'last_login',
         'is_staff':    'is_staff',
-    }
-    sort_field = valid_sort_fields.get(sort, 'username')
-    if direction == 'desc':
-        sort_field = f'-{sort_field}'
-    qs = qs.order_by(sort_field)
-
-    paginator = Paginator(qs, 20)
-    page_obj = paginator.get_page(request.GET.get('page', 1))
+    }, 'username')
+    page_obj = apply_pagination(qs, request.GET.get('page', 1))
 
     return render(request, 'szkp/user_list_su.html', {
         'page_obj':  page_obj,
@@ -101,22 +95,18 @@ def user_form(request, pk=None):
                         instance.set_password(data['password'])
                     instance.save()
                 return redirect('szkp:user_list')
-        form_data = request.POST
-        errors = form.errors
     else:
-        errors = {}
-        form_data = {
+        form = UserFormSU(is_new=is_new, initial={
             'username':   instance.username   if instance else '',
             'email':      instance.email      if instance else '',
             'first_name': instance.first_name if instance else '',
             'last_name':  instance.last_name  if instance else '',
             'is_staff':   instance.is_staff   if instance else False,
             'is_active':  instance.is_active  if instance else True,
-        }
+        })
 
     return render(request, 'szkp/user_form_su.html', {
-        'form_data': form_data,
-        'errors':    errors,
-        'instance':  instance,
-        'is_new':    is_new,
+        'form':     form,
+        'instance': instance,
+        'is_new':   is_new,
     })

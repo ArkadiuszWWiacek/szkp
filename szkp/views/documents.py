@@ -5,13 +5,13 @@ import markdown as md_lib
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
 from django.db.models import Max
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from szkp.forms import DocumentForm, DocumentVersionForm
-from szkp.models import Case, CaseLawyer, Document, DocumentType, DocumentVersion, Lawyer
+from szkp.models import Case, Document, DocumentType, DocumentVersion, Lawyer
+from szkp.permissions import require_case_access
 
 
 def _save_file(uploaded_file, case_pk):
@@ -36,12 +36,6 @@ def _next_version_number(document):
     return (max_ver or 0) + 1
 
 
-def _check_access(request, case):
-    if not request.user.is_staff:
-        if not CaseLawyer.objects.filter(case=case, lawyer__user=request.user).exists():
-            raise PermissionDenied
-
-
 def _form_context(case, document, form):
     return {
         'case': case,
@@ -55,7 +49,7 @@ def _form_context(case, document, form):
 def document_detail(request, case_pk, pk):
     case = get_object_or_404(Case, pk=case_pk)
     document = get_object_or_404(Document, pk=pk, case=case)
-    _check_access(request, case)
+    require_case_access(request, case)
     versions = document.documentversion_set.select_related('created_by_lawyer').order_by('version_number')
     try:
         ver_num = int(request.GET.get('wersja', 0))
@@ -93,7 +87,7 @@ def document_detail(request, case_pk, pk):
 def document_form(request, case_pk, pk=None):
     case = get_object_or_404(Case, pk=case_pk)
     document = get_object_or_404(Document, pk=pk, case=case) if pk else None
-    _check_access(request, case)
+    require_case_access(request, case)
 
     redirect_url = reverse('szkp:case_detail', kwargs={'pk': case_pk}) + '?tab=dokumenty'
 
@@ -131,7 +125,7 @@ def document_form(request, case_pk, pk=None):
 def document_version_upload(request, case_pk, document_pk):
     case = get_object_or_404(Case, pk=case_pk)
     document = get_object_or_404(Document, pk=document_pk, case=case)
-    _check_access(request, case)
+    require_case_access(request, case)
 
     redirect_url = reverse('szkp:case_detail', kwargs={'pk': case_pk}) + '?tab=dokumenty'
 
@@ -151,11 +145,12 @@ def document_version_upload(request, case_pk, document_pk):
         return render(
             request,
             'szkp/document_version_upload.html',
-            {'case': case, 'document': document, 'errors': form.errors},
+            {'case': case, 'document': document, 'form': form},
         )
 
+    form = DocumentVersionForm()
     return render(
         request,
         'szkp/document_version_upload.html',
-        {'case': case, 'document': document, 'errors': {}},
+        {'case': case, 'document': document, 'form': form},
     )

@@ -1,11 +1,11 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.paginator import Paginator
 from django.db.models import Q, RestrictedError
 from django.shortcuts import get_object_or_404, redirect, render
 
 from szkp.forms import ClientForm, ClientFormSU
 from szkp.models import Client
+from szkp.view_utils import apply_sorting, apply_pagination
 
 
 @login_required
@@ -22,17 +22,12 @@ def client_list(request):
         )
     sort = request.GET.get('sort', 'last_name')
     direction = request.GET.get('dir', 'asc')
-    valid_sort_fields = {
+    qs = apply_sorting(qs, sort, direction, {
         'last_name':  'last_name',
         'type':       'type',
         'created_at': 'created_at',
-    }
-    sort_field = valid_sort_fields.get(sort, 'last_name')
-    if direction == 'desc':
-        sort_field = f'-{sort_field}'
-    qs = qs.order_by(sort_field)
-    paginator = Paginator(qs, 20)
-    page_obj = paginator.get_page(request.GET.get('page', 1))
+    }, 'last_name')
+    page_obj = apply_pagination(qs, request.GET.get('page', 1))
     ctx = {
         'page_obj':  page_obj,
         'q':         q,

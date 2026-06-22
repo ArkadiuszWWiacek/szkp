@@ -1,7 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -9,6 +8,7 @@ from django.utils import timezone
 
 from szkp.forms import CaseForm, CaseLawyerForm, CaseFormSU, CaseLawyerFormSU
 from szkp.permissions import require_case_access, require_case_access_by_pk
+from szkp.view_utils import apply_sorting, apply_pagination
 from szkp.models import (
     Case, CaseLawyer, CaseLawyerRole, CasePriority, CaseStatus, CaseType,
     Client, CourtHearing, Document, Invoice, Lawyer, Task,
@@ -42,20 +42,14 @@ def case_list(request):
 
     sort = request.GET.get('sort', 'case_number')
     direction = request.GET.get('dir', 'asc')
-    valid_sort_fields = {
+    qs = apply_sorting(qs, sort, direction, {
         'case_number':   'case_number',
         'client':        'client__last_name',
         'case_type':     'case_type',
         'status':        'status',
         'case_priority': 'case_priority',
-    }
-    sort_field = valid_sort_fields.get(sort, 'case_number')
-    if direction == 'desc':
-        sort_field = f'-{sort_field}'
-    qs = qs.order_by(sort_field)
-
-    paginator = Paginator(qs, 20)
-    page_obj = paginator.get_page(request.GET.get('page', 1))
+    }, 'case_number')
+    page_obj = apply_pagination(qs, request.GET.get('page', 1))
 
     context = {
         'page_obj': page_obj,
@@ -164,54 +158,21 @@ def case_lawyer_add(request, case_pk):
     ).order_by('last_name', 'first_name')
     available_lawyer_pks = list(available_lawyers.values_list('pk', flat=True))
 
-    role_choices = [
-        (CaseLawyerRole.ASYSTENT, CaseLawyerRole.ASYSTENT.label),
-        (CaseLawyerRole.DORADCA,  CaseLawyerRole.DORADCA.label),
-    ]
     redirect_url = reverse('szkp:case_detail', args=[case_pk]) + '?tab=prawnicy'
+    FormClass = CaseLawyerFormSU if is_su else CaseLawyerForm
+    template = 'szkp/case_lawyer_add_su.html' if is_su else 'szkp/case_lawyer_add.html'
 
     if request.method == 'POST':
-        if is_su:
-            form = CaseLawyerFormSU(request.POST, available_lawyer_pks=available_lawyer_pks)
-        else:
-            form = CaseLawyerForm(request.POST, available_lawyer_pks=available_lawyer_pks)
+        form = FormClass(request.POST, available_lawyer_pks=available_lawyer_pks)
         if form.is_valid():
             cd = form.cleaned_data
-            CaseLawyer.objects.create(
-                case=case,
-                lawyer=Lawyer.objects.get(pk=cd['lawyer']),
-                role=cd['role'],
-            )
+            CaseLawyer.objects.create(case=case, lawyer=cd['lawyer'], role=cd['role'])
             messages.success(request, 'Prawnik został przypisany do sprawy.')
             return redirect(redirect_url)
-        if is_su:
-            return render(request, 'szkp/case_lawyer_add_su.html', {
-                'case': case,
-                'form': form,
-                'available_lawyers': available_lawyers,
-            })
-        return render(request, 'szkp/case_lawyer_add.html', {
-            'case': case,
-            'form_data': request.POST,
-            'errors': form.errors,
-            'available_lawyers': available_lawyers,
-            'role_choices': role_choices,
-        })
+        return render(request, template, {'case': case, 'form': form})
 
-    if is_su:
-        form = CaseLawyerFormSU(available_lawyer_pks=available_lawyer_pks)
-        return render(request, 'szkp/case_lawyer_add_su.html', {
-            'case': case,
-            'form': form,
-            'available_lawyers': available_lawyers,
-        })
-    return render(request, 'szkp/case_lawyer_add.html', {
-        'case': case,
-        'form_data': {},
-        'errors': {},
-        'available_lawyers': available_lawyers,
-        'role_choices': role_choices,
-    })
+    form = FormClass(available_lawyer_pks=available_lawyer_pks)
+    return render(request, template, {'case': case, 'form': form})
 
 
 def _case_form_context(case, form):
